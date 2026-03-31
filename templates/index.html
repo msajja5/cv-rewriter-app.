@@ -83,6 +83,21 @@
                 <textarea id="cv" name="cv" rows="6" required placeholder="Paste your CV text here for the best accuracy..."></textarea>
             </div>
             <div class="form-group">
+                <label for="target-role-family">Target Role Family</label>
+                <select id="target-role-family" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 20px;">
+                    <option value="Auto Detect" selected>Auto Detect</option>
+                    <option value="Demand Planning">Demand Planning</option>
+                    <option value="Supply Planning">Supply Planning</option>
+                    <option value="Inventory">Inventory</option>
+                    <option value="Logistics">Logistics</option>
+                    <option value="Procurement / Buyer">Procurement / Buyer</option>
+                    <option value="Data Analytics">Data Analytics</option>
+                    <option value="S&OP / IBP">S&OP / IBP</option>
+                    <option value="ERP / Planning Systems">ERP / Planning Systems</option>
+                    <option value="Master Data">Master Data</option>
+                </select>
+            </div>
+            <div class="form-group">
                 <label for="response-style">Answer Length Style</label>
                 <select id="response-style" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
                     <option value="live_script" selected>Live Interview Script (Optimized for spoken delivery)</option>
@@ -126,11 +141,16 @@
 
         <h3 style="margin-top: 30px;">Your Answer Script:</h3>
 
+        <label class="checkbox-label hide-in-compact" style="margin-bottom: 10px;">
+            <input type="checkbox" id="debug-toggle" checked> Show Context Debug Panel
+        </label>
+
         <div class="debug-panel hide-in-compact" id="debug-panel">
-            <h4>Context Engine Insights</h4>
+            <h4>Domain Context Insights</h4>
             <p><strong>Question Intent:</strong> <span id="debug-intent">-</span></p>
-            <p><strong>CV Facts Extracted:</strong> <span id="debug-cv">-</span></p>
-            <p><strong>JD Reqs Targeted:</strong> <span id="debug-jd">-</span></p>
+            <p><strong>Detected Role Family:</strong> <span id="debug-role">-</span></p>
+            <p><strong>CV Facts Matched:</strong> <span id="debug-cv">-</span></p>
+            <p><strong>JD Signals Matched:</strong> <span id="debug-jd">-</span></p>
         </div>
 
         <div class="script-box" id="ai-script">
@@ -160,8 +180,10 @@
 
     const debugPanel = document.getElementById('debug-panel');
     const debugIntent = document.getElementById('debug-intent');
+    const debugRole = document.getElementById('debug-role');
     const debugCv = document.getElementById('debug-cv');
     const debugJd = document.getElementById('debug-jd');
+    const debugToggle = document.getElementById('debug-toggle');
 
     let recognitionInterviewer;
     let isRecording = false;
@@ -171,6 +193,7 @@
     let userCv = "";
     let userJobRole = "";
     let userStyle = "normal";
+    let targetRoleFamily = "Auto Detect";
     let interviewContext = [];
 
     const sttStatusSpan = document.getElementById('stt-status');
@@ -230,10 +253,19 @@
         userJobRole = document.getElementById('job-role').value;
         userCv = document.getElementById('cv').value;
         userStyle = document.getElementById('response-style').value;
+        targetRoleFamily = document.getElementById('target-role-family').value;
         interviewContext = []; // Reset context
 
         setupSection.style.display = 'none';
         interviewSection.style.display = 'block';
+    });
+
+    debugToggle.addEventListener('change', (e) => {
+        if (e.target.checked && debugIntent.innerText !== "-") {
+            debugPanel.style.display = 'block';
+        } else {
+            debugPanel.style.display = 'none';
+        }
     });
 
     function setInterviewerMode(active) {
@@ -349,7 +381,8 @@
                     job_role: userJobRole,
                     transcript: questionText,
                     context: interviewContext,
-                    response_style: userStyle
+                    response_style: userStyle,
+                    target_role_family: targetRoleFamily
                 })
             });
 
@@ -363,10 +396,13 @@
                 aiScriptBox.innerText = data.response || "No script generated.";
 
                 // Update Debug Panel
-                debugPanel.style.display = 'block';
+                if (debugToggle.checked) {
+                    debugPanel.style.display = 'block';
+                }
                 debugIntent.innerText = data.intent || "N/A";
+                debugRole.innerText = data.role_family || "N/A";
                 debugCv.innerText = data.cv_facts || "N/A";
-                debugJd.innerText = data.jd_reqs || "N/A";
+                debugJd.innerText = data.jd_signals || "N/A";
 
                 // If it's the mock response, change script background slightly to indicate
                 if (data.provider.includes("Mock")) {

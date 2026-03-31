@@ -28,6 +28,7 @@ class ChatRequest(BaseModel):
     transcript: str
     context: List[Dict[str, str]]
     response_style: str = "normal"
+    target_role_family: str = "Auto Detect"
 
 @app.get("/", response_class=HTMLResponse)
 async def get_home(request: Request):
@@ -54,28 +55,34 @@ async def chat_endpoint(request: ChatRequest):
             cv=request.cv,
             job_role=request.job_role,
             context=request.context,
-            response_style=request.response_style
+            response_style=request.response_style,
+            target_role_family=request.target_role_family
         )
 
         return {
             "success": True,
             "response": response_dict["script"],
             "intent": response_dict["intent"],
+            "role_family": response_dict["role_family"],
             "cv_facts": response_dict["cv_facts"],
-            "jd_reqs": response_dict["jd_reqs"],
+            "jd_signals": response_dict["jd_signals"],
             "provider": provider
         }
     except Exception as e:
         logger.error(f"Error in /chat endpoint: {str(e)}", exc_info=True)
         # Attempt to generate a proper mock response to keep the UI completely functional
         try:
-            fallback_dict = _mock_response(transcript, request.cv, request.job_role, request.response_style)
-        except Exception:
+            from domain_knowledge import detect_role_family
+            role_fam = request.target_role_family if request.target_role_family != "Auto Detect" else detect_role_family(request.job_role)
+            fallback_dict = _mock_response(transcript, request.cv, request.job_role, request.response_style, role_fam)
+        except Exception as e2:
+            logger.error(f"Error in /chat endpoint mock fallback: {str(e2)}", exc_info=True)
             fallback_dict = {
                 "script": "Yeah, absolutely. I couldn't connect to the live AI provider right now, but jumping into safe fallback mode—please continue with the interview.",
                 "intent": "Error Fallback",
+                "role_family": "Error",
                 "cv_facts": "None",
-                "jd_reqs": "None"
+                "jd_signals": "None"
             }
 
         # Return 200 so the frontend fetch() sees response.ok = true
@@ -85,8 +92,9 @@ async def chat_endpoint(request: ChatRequest):
                 "success": False,
                 "response": fallback_dict["script"],
                 "intent": fallback_dict["intent"],
+                "role_family": fallback_dict["role_family"],
                 "cv_facts": fallback_dict["cv_facts"],
-                "jd_reqs": fallback_dict["jd_reqs"],
+                "jd_signals": fallback_dict["jd_signals"],
                 "error": str(e),
                 "provider": "Mock (Error Fallback)"
             }
