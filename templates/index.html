@@ -160,6 +160,7 @@
             <p><strong>Detected Role Family:</strong> <span id="debug-role">-</span></p>
             <p><strong>CV Facts Matched:</strong> <span id="debug-cv">-</span></p>
             <p><strong>JD Signals Matched:</strong> <span id="debug-jd">-</span></p>
+            <p><strong>Provider Used:</strong> <span id="debug-provider">-</span></p>
         </div>
 
         <div class="script-box" id="ai-script">
@@ -192,6 +193,7 @@
     const debugRole = document.getElementById('debug-role');
     const debugCv = document.getElementById('debug-cv');
     const debugJd = document.getElementById('debug-jd');
+    const debugProvider = document.getElementById('debug-provider');
     const debugToggle = document.getElementById('debug-toggle');
 
     let recognitionInterviewer;
@@ -348,12 +350,14 @@
 
     // Compact Mode Toggles
     toggleCompactBtn.addEventListener('click', () => {
+        console.log("Toggling Compact Mode ON");
         document.body.classList.add('compact-mode');
         // Force the layout to recalculate
         window.dispatchEvent(new Event('resize'));
     });
 
     exitCompactBtn.addEventListener('click', () => {
+        console.log("Toggling Compact Mode OFF");
         document.body.classList.remove('compact-mode');
         // Force the layout to recalculate
         window.dispatchEvent(new Event('resize'));
@@ -412,6 +416,7 @@
                 debugRole.innerText = data.role_family || "N/A";
                 debugCv.innerText = data.cv_facts || "N/A";
                 debugJd.innerText = data.jd_signals || "N/A";
+                debugProvider.innerText = data.provider || "N/A";
 
                 // If it's the mock response, change script background slightly to indicate
                 if (data.provider.includes("Mock")) {
