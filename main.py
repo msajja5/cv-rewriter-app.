@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import os
 import logging
 from typing import List, Dict
-from llm_service import generate_ai_response_with_llm
+from llm_service import generate_ai_response_with_llm, _mock_response
 
 # Setup basic logging for Vercel Serverless Function logs
 logging.basicConfig(level=logging.INFO)
@@ -62,12 +62,19 @@ async def chat_endpoint(request: ChatRequest):
         }
     except Exception as e:
         logger.error(f"Error in /chat endpoint: {str(e)}", exc_info=True)
+        # Attempt to generate a proper mock response to keep the UI completely functional
+        try:
+            fallback_script = _mock_response(transcript, request.cv, request.job_role)
+        except Exception:
+            fallback_script = "I could not use the live AI provider, so I switched to safe fallback mode. Please continue the interview."
+
+        # Return 200 so the frontend fetch() sees response.ok = true
         return JSONResponse(
-            status_code=500,
+            status_code=200,
             content={
                 "success": False,
-                "error": "An internal error occurred while processing the request.",
-                "details": str(e),
+                "response": fallback_script,
+                "error": str(e),
                 "provider": "Mock (Error Fallback)"
             }
         )
