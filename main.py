@@ -27,6 +27,7 @@ class ChatRequest(BaseModel):
     job_role: str
     transcript: str
     context: List[Dict[str, str]]
+    response_style: str = "normal"
 
 @app.get("/", response_class=HTMLResponse)
 async def get_home(request: Request):
@@ -52,7 +53,8 @@ async def chat_endpoint(request: ChatRequest):
             question=transcript,
             cv=request.cv,
             job_role=request.job_role,
-            context=request.context
+            context=request.context,
+            response_style=request.response_style
         )
 
         return {
@@ -64,9 +66,9 @@ async def chat_endpoint(request: ChatRequest):
         logger.error(f"Error in /chat endpoint: {str(e)}", exc_info=True)
         # Attempt to generate a proper mock response to keep the UI completely functional
         try:
-            fallback_script = _mock_response(transcript, request.cv, request.job_role)
+            fallback_script = _mock_response(transcript, request.cv, request.job_role, request.response_style)
         except Exception:
-            fallback_script = "I could not use the live AI provider, so I switched to safe fallback mode. Please continue the interview."
+            fallback_script = "Yeah, absolutely. I couldn't connect to the live AI provider right now, but jumping into safe fallback mode—please continue with the interview."
 
         # Return 200 so the frontend fetch() sees response.ok = true
         return JSONResponse(

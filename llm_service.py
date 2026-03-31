@@ -7,17 +7,35 @@ logger = logging.getLogger(__name__)
 
 load_dotenv()
 
-async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, context: list) -> Tuple[str, str]:
+async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, context: list, response_style: str = "normal") -> Tuple[str, str]:
     """
     Calls OpenAI (multiple keys), Groq, and Gemini in sequence to generate a script for the candidate.
     Falls back to mock logic if all fail.
     Returns: (generated_response, provider_name)
     """
+    if response_style == "concise":
+        length_instruction = "Keep the answer extremely concise, maybe 2 sentences max, directly getting to the point."
+    elif response_style == "detailed":
+        length_instruction = "Provide a detailed, thorough answer (5-6 sentences) with a specific STAR method example if applicable."
+    else:
+        length_instruction = "Keep the answer a normal, conversational length (3-4 sentences)."
+
     system_prompt = f"""
-    You are an expert AI Interview Copilot for a candidate applying for the role of '{job_role}'.
-    Your goal is to provide a natural-sounding, conversational script for the candidate to read in response to the interviewer's question.
-    The response must stitch together facts from the candidate's CV to directly answer the question.
-    Do not greet the interviewer. Just provide the direct answer script. Keep it concise (3-4 sentences).
+    You are an expert AI Interview Copilot for a candidate applying for the role of '{job_role}', particularly focused on supply chain, demand planning, S&OP, and analytics.
+    Your goal is to provide a natural-sounding, spoken-English script for the candidate to read live in response to the interviewer's question.
+
+    CRITICAL INSTRUCTIONS:
+    - The response must stitch together facts directly from the candidate's CV to answer the question.
+    - Write exactly how a real person speaks during an interview. Do NOT write formal robotic text.
+    - Start the answer naturally with conversational connectors, such as:
+      "Sure —"
+      "Yeah, absolutely."
+      "So, in my previous role..."
+      "One example that comes to mind is..."
+      "That's a great question. Looking back at my time..."
+    - Include commas and short pauses naturally. Use contractions (e.g., "I'm", "we've", "didn't").
+    - Do not greet the interviewer (e.g., no "Hi there"). Start right into the spoken answer.
+    - {length_instruction}
 
     Candidate's CV:
     {cv}
@@ -110,15 +128,21 @@ async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, c
 
     # Final Fallback to Mock Logic
     logger.info("All LLM providers failed or missing keys. Falling back to mock logic.")
-    return _mock_response(question, cv, job_role), "Mock (Local)"
+    return _mock_response(question, cv, job_role, response_style), "Mock (Local)"
 
-def _mock_response(question: str, cv: str, job_role: str) -> str:
+def _mock_response(question: str, cv: str, job_role: str, style: str = "normal") -> str:
     lower_q = question.lower()
+    prefix = ""
+    if style == "concise":
+        prefix = "(Concise) "
+    elif style == "detailed":
+        prefix = "(Detailed) "
+
     if "supply chain" in lower_q:
-        return f"[Mock] Based on my CV, I have optimized supply chain processes resulting in cost reduction. I utilized data analytics to forecast demand..."
+        return f"{prefix}Yeah, absolutely. Looking at my CV, I've actually optimized our supply chain processes, which resulted in a solid cost reduction. I mainly utilized data analytics to tighten up our demand forecasting..."
     elif "data" in lower_q or "analytics" in lower_q:
-        return f"[Mock] In my previous role, I built dashboards and data pipelines that improved data visibility, directly aligning with the {job_role} requirements."
-    elif "experience" in lower_q:
-        return f"[Mock] I have relevant experience aligning with the {job_role} position."
+        return f"{prefix}Sure — so in my previous role, I built several dashboards and data pipelines. That really improved data visibility across the team, which directly aligns with what you're looking for in this {job_role} position."
+    elif "experience" in lower_q or "background" in lower_q:
+        return f"{prefix}One example that comes to mind is my recent work aligning directly with the {job_role} requirements. I've spent a lot of time focusing on exactly these kinds of operational challenges."
     else:
-        return "[Mock] That's a great question. Let me tell you about my background..."
+        return f"{prefix}That's a great question. So, based on my background, I've always prioritized cross-functional alignment and leveraging data to drive my decisions."

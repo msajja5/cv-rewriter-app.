@@ -14,15 +14,18 @@
         button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
         button:hover { background-color: #0056b3; }
         .interview-interface { display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
-        .script-box { background-color: #e9f7ef; padding: 20px; border-left: 5px solid #28a745; border-radius: 5px; min-height: 100px; font-size: 18px; margin-bottom: 20px; }
-        .transcript-box { height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fafafa; border-radius: 5px; margin-bottom: 20px; }
-        .transcript-line { margin-bottom: 10px; }
+        .script-box { background-color: #e9f7ef; padding: 20px; border-left: 5px solid #28a745; border-radius: 5px; min-height: 100px; font-size: 18px; margin-bottom: 20px; transition: opacity 0.3s; }
+        .script-box.loading { opacity: 0.5; }
         .interviewer { color: #d9534f; font-weight: bold; }
-        .candidate { color: #0275d8; font-weight: bold; }
-        .controls { display: flex; gap: 10px; }
-        .controls button { flex: 1; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .controls button { flex: 1; min-width: 150px; }
         #stop-btn { background-color: #dc3545; }
         #stop-btn:hover { background-color: #c82333; }
+        #generate-btn { background-color: #28a745; font-size: 18px; font-weight: bold;}
+        #generate-btn:hover { background-color: #218838; }
+        #clear-btn { background-color: #6c757d; }
+        #clear-btn:hover { background-color: #5a6268; }
+        .question-box { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -32,7 +35,7 @@
     <p style="text-align: center; color: #666;">For Supply Chain & Data Analytics</p>
 
     <div style="background: #eef7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; border-left: 4px solid #007bff;">
-        <strong>Note:</strong> This app is designed for <em>single-user personal interview practice</em> and is optimized for free browser-based speech recognition. It is able to run in demo/mock mode without any API keys.
+        <strong>Reliability Note:</strong> For the most reliable interview support, <strong>paste your CV and Job Description directly</strong>. Since browser STT cannot differentiate your voice from the interviewer's, <strong>only click "Start Listening" when the interviewer is asking a question</strong>.
     </div>
 
     <div style="background: #fdfdfd; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 0.85em;">
@@ -44,32 +47,43 @@
     <div id="setup-section">
         <form id="setup-form">
             <div class="form-group">
-                <label for="job-role">Job Role (e.g., Supply Chain Analyst)</label>
-                <input type="text" id="job-role" name="job_role" required>
+                <label for="job-role">Target Job Role & Description</label>
+                <textarea id="job-role" name="job_role" rows="4" required placeholder="Paste the target job role title and description here..."></textarea>
             </div>
             <div class="form-group">
                 <label for="cv">Your CV / Resume</label>
-                <textarea id="cv" name="cv" rows="6" required placeholder="Paste your CV text here..."></textarea>
+                <textarea id="cv" name="cv" rows="6" required placeholder="Paste your CV text here for the best accuracy..."></textarea>
             </div>
-            <button type="submit">Start Interview Assistant</button>
+            <div class="form-group">
+                <label for="response-style">Answer Length Style</label>
+                <select id="response-style" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="concise">Concise (1-2 sentences)</option>
+                    <option value="normal" selected>Normal (3-4 sentences)</option>
+                    <option value="detailed">Detailed (STAR Method, 5-6 sentences)</option>
+                </select>
+            </div>
+            <button type="submit">Set Context & Start Interview</button>
         </form>
     </div>
 
     <div class="interview-interface" id="interview-section">
+
+        <h3>Interviewer's Question:</h3>
+        <p style="font-size: 0.85em; color: #666; margin-top: -10px;">Click "Start Listening" when they ask a question, or type it manually below.</p>
         <div class="controls">
-            <button id="start-btn">Connect Audio (Teams/Zoom)</button>
-            <button id="stop-btn" disabled>Stop</button>
+            <button id="start-btn">Start Listening</button>
+            <button id="stop-btn" disabled>Stop Listening</button>
+            <button id="clear-btn">Clear Text</button>
         </div>
+        <textarea id="interviewer-transcript" class="question-box" placeholder="Interviewer speech will appear here..."></textarea>
 
-        <h3 style="margin-top: 20px;">AI Suggested Answer Script:</h3>
+        <button id="generate-btn">Generate Answer Script</button>
+
+        <h3 style="margin-top: 30px;">Your Answer Script:</h3>
         <div class="script-box" id="ai-script">
-            Waiting for interviewer's question... The AI will stitch your CV details here automatically.
+            Waiting for you to generate an answer...
         </div>
 
-        <h3>Live Transcript</h3>
-        <div class="transcript-box" id="transcript">
-            <!-- Transcripts will appear here -->
-        </div>
     </div>
 </div>
 
@@ -77,18 +91,23 @@
     const setupForm = document.getElementById('setup-form');
     const setupSection = document.getElementById('setup-section');
     const interviewSection = document.getElementById('interview-section');
+
     const startBtn = document.getElementById('start-btn');
     const stopBtn = document.getElementById('stop-btn');
-    const transcriptBox = document.getElementById('transcript');
+    const clearBtn = document.getElementById('clear-btn');
+    const generateBtn = document.getElementById('generate-btn');
+
+    const transcriptBox = document.getElementById('interviewer-transcript');
     const aiScriptBox = document.getElementById('ai-script');
 
     let recognitionInterviewer;
-    let recognitionCandidate;
     let isRecording = false;
+    let finalTranscript = '';
 
     // Client-side state management for Serverless backend
     let userCv = "";
     let userJobRole = "";
+    let userStyle = "normal";
     let interviewContext = [];
 
     const sttStatusSpan = document.getElementById('stt-status');
@@ -96,63 +115,25 @@
 
     // Web Speech API for prototyping (browser built-in STT)
     if ('webkitSpeechRecognition' in window) {
-        sttStatusSpan.innerText = "Browser Web Speech API (Active)";
+        sttStatusSpan.innerText = "Browser Web Speech API (Ready)";
         sttStatusSpan.style.color = "green";
 
         recognitionInterviewer = new webkitSpeechRecognition();
         recognitionInterviewer.continuous = true;
-        recognitionInterviewer.interimResults = false;
+        recognitionInterviewer.interimResults = true;
         recognitionInterviewer.lang = 'en-US';
 
-        recognitionInterviewer.onresult = async function(event) {
-            let finalTranscript = '';
+        recognitionInterviewer.onresult = function(event) {
+            let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
+                    finalTranscript += event.results[i][0].transcript + " ";
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
                 }
             }
-            if (finalTranscript.trim().length > 0) {
-                appendTranscript('Interviewer', finalTranscript);
-
-                aiScriptBox.innerText = "Analyzing question and stitching CV facts...";
-
-                // Add to local context
-                interviewContext.push({"role": "interviewer", "text": finalTranscript});
-
-                try {
-                    const response = await fetch('/chat', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            cv: userCv,
-                            job_role: userJobRole,
-                            transcript: finalTranscript,
-                            context: interviewContext
-                        })
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        aiScriptBox.innerText = data.response;
-
-                        // Update LLM Status based on backend response
-                        llmStatusSpan.innerText = data.provider;
-                        llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
-
-                    } else {
-                        aiScriptBox.innerText = "Error analyzing question.";
-                        llmStatusSpan.innerText = "Error";
-                        llmStatusSpan.style.color = "#d9534f";
-                    }
-                } catch (err) {
-                    console.error("Failed to fetch from backend", err);
-                    aiScriptBox.innerText = "Failed to communicate with AI server.";
-                    llmStatusSpan.innerText = "Connection Failed";
-                    llmStatusSpan.style.color = "#d9534f";
-                }
-            }
+            // Update the textarea live
+            transcriptBox.value = finalTranscript + interimTranscript;
         };
 
         recognitionInterviewer.onend = function() {
@@ -161,43 +142,17 @@
             }
         };
 
-        // CANDIDATE SPEECH RECOGNITION (To track but NOT trigger AI)
-        recognitionCandidate = new webkitSpeechRecognition();
-        recognitionCandidate.continuous = true;
-        recognitionCandidate.interimResults = false;
-        recognitionCandidate.lang = 'en-US';
-
-        recognitionCandidate.onresult = function(event) {
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript;
-                }
-            }
-            if (finalTranscript.trim().length > 0) {
-                appendTranscript('Candidate', finalTranscript);
-                // Keep context but don't call backend
-                interviewContext.push({"role": "candidate", "text": finalTranscript});
-            }
-        };
-
-        recognitionCandidate.onend = function() {
-            if (isRecording) {
-                try { recognitionCandidate.start(); } catch(e) {}
-            }
-        };
-
     } else {
         sttStatusSpan.innerText = "Not Supported (Please use Chrome/Edge)";
         sttStatusSpan.style.color = "red";
+        startBtn.disabled = true;
 
-        // Show clear UI message inside the setup area as well
         setupSection.innerHTML = `
             <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 5px; border: 1px solid #f5c6cb; margin-bottom: 20px;">
                 <strong>⚠️ Speech recognition is not supported in this browser.</strong><br/>
-                Please use Chrome or Edge to access the Web Speech API required for real-time transcription.
+                Please use Chrome or Edge for automated listening, or type questions manually.
             </div>
-        `;
+        ` + setupSection.innerHTML;
     }
 
     setupForm.addEventListener('submit', (e) => {
@@ -206,6 +161,7 @@
         // Store data locally
         userJobRole = document.getElementById('job-role').value;
         userCv = document.getElementById('cv').value;
+        userStyle = document.getElementById('response-style').value;
         interviewContext = []; // Reset context
 
         setupSection.style.display = 'none';
@@ -215,40 +171,85 @@
     startBtn.addEventListener('click', () => {
         isRecording = true;
         try { recognitionInterviewer.start(); } catch(e) {}
-        try { recognitionCandidate.start(); } catch(e) {}
 
         startBtn.disabled = true;
         stopBtn.disabled = false;
-        startBtn.innerText = "Listening to Both Sides...";
-        appendTranscript('System', 'Connected and listening for questions (Interviewer) and answers (Candidate).');
+        startBtn.innerText = "Listening...";
+        sttStatusSpan.innerText = "Browser Web Speech API (Listening...)";
     });
 
     stopBtn.addEventListener('click', () => {
         isRecording = false;
         try { recognitionInterviewer.stop(); } catch(e) {}
-        try { recognitionCandidate.stop(); } catch(e) {}
 
         startBtn.disabled = false;
         stopBtn.disabled = true;
-        startBtn.innerText = "Connect Audio (Teams/Zoom)";
-        appendTranscript('System', 'Stopped listening.');
+        startBtn.innerText = "Start Listening";
+        sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
     });
 
-    function appendTranscript(speaker, text) {
-        const line = document.createElement('div');
-        line.className = 'transcript-line';
-        const speakerSpan = document.createElement('span');
-        speakerSpan.className = speaker.toLowerCase() === 'interviewer' ? 'interviewer' : 'candidate';
-        speakerSpan.innerText = `${speaker}: `;
+    clearBtn.addEventListener('click', () => {
+        transcriptBox.value = "";
+        if (typeof finalTranscript !== 'undefined') {
+            finalTranscript = "";
+        }
+    });
 
-        const textSpan = document.createElement('span');
-        textSpan.innerText = text;
+    generateBtn.addEventListener('click', async () => {
+        const questionText = transcriptBox.value.trim();
+        if (!questionText) {
+            alert("Please wait for an interviewer question or type one in the box.");
+            return;
+        }
 
-        line.appendChild(speakerSpan);
-        line.appendChild(textSpan);
-        transcriptBox.appendChild(line);
-        transcriptBox.scrollTop = transcriptBox.scrollHeight;
-    }
+        aiScriptBox.innerText = "Analyzing question and generating live response...";
+        aiScriptBox.classList.add("loading");
+        generateBtn.disabled = true;
+
+        // Add current question to context history
+        interviewContext.push({"role": "interviewer", "text": questionText});
+
+        try {
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    cv: userCv,
+                    job_role: userJobRole,
+                    transcript: questionText,
+                    context: interviewContext,
+                    response_style: userStyle
+                })
+            });
+
+            aiScriptBox.classList.remove("loading");
+            generateBtn.disabled = false;
+
+            if (response.ok) {
+                const data = await response.json();
+                aiScriptBox.innerText = data.response;
+
+                // Track generated answer in history so LLM knows what we said
+                interviewContext.push({"role": "candidate", "text": data.response});
+
+                llmStatusSpan.innerText = data.provider;
+                llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+            } else {
+                aiScriptBox.innerText = "Error analyzing question.";
+                llmStatusSpan.innerText = "Error";
+                llmStatusSpan.style.color = "#d9534f";
+            }
+        } catch (err) {
+            console.error("Failed to fetch from backend", err);
+            aiScriptBox.classList.remove("loading");
+            generateBtn.disabled = false;
+            aiScriptBox.innerText = "Failed to communicate with AI server.";
+            llmStatusSpan.innerText = "Connection Failed";
+            llmStatusSpan.style.color = "#d9534f";
+        }
+    });
 </script>
 
 </body>
