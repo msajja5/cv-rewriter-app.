@@ -17,7 +17,7 @@
         .script-box { background-color: #e9f7ef; padding: 20px; border-left: 5px solid #28a745; border-radius: 5px; min-height: 100px; font-size: 18px; margin-bottom: 20px; transition: opacity 0.3s; }
         .script-box.loading { opacity: 0.5; }
         .interviewer { color: #d9534f; font-weight: bold; }
-        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; align-items: center; }
         .controls button { flex: 1; min-width: 150px; }
         #stop-btn { background-color: #dc3545; }
         #stop-btn:hover { background-color: #c82333; }
@@ -26,6 +26,13 @@
         #clear-btn { background-color: #6c757d; }
         #clear-btn:hover { background-color: #5a6268; }
         .question-box { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+
+        .debug-panel { background: #fff3cd; border-left: 5px solid #ffc107; padding: 15px; border-radius: 5px; margin-bottom: 20px; font-size: 14px; color: #856404; display: none; }
+        .debug-panel h4 { margin-top: 0; margin-bottom: 10px; color: #856404; }
+        .debug-panel p { margin: 5px 0; }
+        .debug-panel strong { color: #533f03; }
+
+        .checkbox-label { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: normal; cursor: pointer; color: #333; }
 
         /* Compact Overlay Mode Styles */
         body.compact-mode { padding: 10px; background-color: white; }
@@ -101,14 +108,31 @@
         <div class="controls">
             <button id="start-btn" style="background-color: #007bff;">Hold Space or Click to Listen</button>
             <button id="clear-btn" class="hide-in-compact" style="flex: 0.5;">Clear</button>
+
+            <label class="checkbox-label hide-in-compact" title="If checked, new speech is added to the existing text instead of overwriting it.">
+                <input type="checkbox" id="append-checkbox" checked> Append Mode
+            </label>
         </div>
 
         <textarea id="interviewer-transcript" class="question-box" placeholder="Interviewer speech will appear here..."></textarea>
 
-        <p style="font-size: 0.85em; color: #666; margin-top: -5px; margin-bottom: 15px;">Edit the recognized question if needed, then click Generate Answer.</p>
+        <div class="controls" style="margin-top: -5px; margin-bottom: 15px;">
+            <p style="font-size: 0.85em; color: #666; margin: 0; flex: 1;">Edit the recognized question if needed, then click Generate Answer.</p>
+            <label class="checkbox-label hide-in-compact" style="flex: 0 auto; margin-right: 10px; color: #28a745; font-weight: bold;">
+                <input type="checkbox" id="auto-gen-checkbox"> Auto-Generate on Release
+            </label>
+        </div>
         <button id="generate-btn">Generate Answer Script</button>
 
         <h3 style="margin-top: 30px;">Your Answer Script:</h3>
+
+        <div class="debug-panel hide-in-compact" id="debug-panel">
+            <h4>Context Engine Insights</h4>
+            <p><strong>Question Intent:</strong> <span id="debug-intent">-</span></p>
+            <p><strong>CV Facts Extracted:</strong> <span id="debug-cv">-</span></p>
+            <p><strong>JD Reqs Targeted:</strong> <span id="debug-jd">-</span></p>
+        </div>
+
         <div class="script-box" id="ai-script">
             Waiting for you to generate an answer...
         </div>
@@ -124,6 +148,8 @@
     const startBtn = document.getElementById('start-btn');
     const clearBtn = document.getElementById('clear-btn');
     const generateBtn = document.getElementById('generate-btn');
+    const appendCheckbox = document.getElementById('append-checkbox');
+    const autoGenCheckbox = document.getElementById('auto-gen-checkbox');
 
     const toggleCompactBtn = document.getElementById('toggle-compact-btn');
     const exitCompactBtn = document.getElementById('exit-compact-btn');
@@ -132,9 +158,14 @@
     const transcriptBox = document.getElementById('interviewer-transcript');
     const aiScriptBox = document.getElementById('ai-script');
 
+    const debugPanel = document.getElementById('debug-panel');
+    const debugIntent = document.getElementById('debug-intent');
+    const debugCv = document.getElementById('debug-cv');
+    const debugJd = document.getElementById('debug-jd');
+
     let recognitionInterviewer;
     let isRecording = false;
-    let finalTranscript = '';
+    let tempSttBuffer = '';
 
     // Client-side state management for Serverless backend
     let userCv = "";
@@ -159,13 +190,18 @@
             let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + " ";
+                    tempSttBuffer += event.results[i][0].transcript + " ";
                 } else {
                     interimTranscript += event.results[i][0].transcript;
                 }
             }
-            // Update the textarea live
-            transcriptBox.value = finalTranscript + interimTranscript;
+
+            // If we are appending, we prepend the *existing text* from the box before our new recording started
+            if (appendCheckbox.checked && window.baseBoxText) {
+                transcriptBox.value = window.baseBoxText + " " + tempSttBuffer + interimTranscript;
+            } else {
+                transcriptBox.value = tempSttBuffer + interimTranscript;
+            }
         };
 
         recognitionInterviewer.onend = function() {
@@ -205,6 +241,9 @@
 
         if (active && !isRecording) {
             isRecording = true;
+            tempSttBuffer = ''; // Reset the temp buffer for this new press
+            window.baseBoxText = appendCheckbox.checked ? transcriptBox.value.trim() : ''; // Snapshot existing text
+
             try { recognitionInterviewer.start(); } catch(e) {}
 
             startBtn.innerText = "Listening to interviewer...";
@@ -223,6 +262,11 @@
 
             modeBadge.innerText = "Candidate Mode (Waiting / Answering)";
             modeBadge.className = "mode-badge mode-candidate";
+
+            // Trigger auto-generate if enabled and we actually captured something
+            if (autoGenCheckbox.checked && transcriptBox.value.trim().length > 5) {
+                generateBtn.click();
+            }
         }
     }
 
@@ -276,9 +320,8 @@
 
     clearBtn.addEventListener('click', () => {
         transcriptBox.value = "";
-        if (typeof finalTranscript !== 'undefined') {
-            finalTranscript = "";
-        }
+        tempSttBuffer = "";
+        window.baseBoxText = "";
     });
 
     generateBtn.addEventListener('click', async () => {
@@ -315,13 +358,35 @@
 
             if (response.ok) {
                 const data = await response.json();
-                aiScriptBox.innerText = data.response;
+
+                // Show Script
+                aiScriptBox.innerText = data.response || "No script generated.";
+
+                // Update Debug Panel
+                debugPanel.style.display = 'block';
+                debugIntent.innerText = data.intent || "N/A";
+                debugCv.innerText = data.cv_facts || "N/A";
+                debugJd.innerText = data.jd_reqs || "N/A";
+
+                // If it's the mock response, change script background slightly to indicate
+                if (data.provider.includes("Mock")) {
+                    aiScriptBox.style.backgroundColor = "#f8d7da";
+                    aiScriptBox.style.borderLeftColor = "#dc3545";
+                } else {
+                    aiScriptBox.style.backgroundColor = "#e9f7ef";
+                    aiScriptBox.style.borderLeftColor = "#28a745";
+                }
 
                 // Track generated answer in history so LLM knows what we said
                 interviewContext.push({"role": "candidate", "text": data.response});
 
                 llmStatusSpan.innerText = data.provider;
                 llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+
+                // Clear the box for the next question automatically
+                transcriptBox.value = "";
+                tempSttBuffer = "";
+                window.baseBoxText = "";
             } else {
                 aiScriptBox.innerText = "Error analyzing question.";
                 llmStatusSpan.innerText = "Error";

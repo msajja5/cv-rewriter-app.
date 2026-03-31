@@ -49,7 +49,7 @@ async def chat_endpoint(request: ChatRequest):
 
         # We append the current interviewer's question to the context history inside the LLM service.
         # The frontend manages the overarching context.
-        response_script, provider = await generate_ai_response_with_llm(
+        response_dict, provider = await generate_ai_response_with_llm(
             question=transcript,
             cv=request.cv,
             job_role=request.job_role,
@@ -59,23 +59,34 @@ async def chat_endpoint(request: ChatRequest):
 
         return {
             "success": True,
-            "response": response_script,
+            "response": response_dict["script"],
+            "intent": response_dict["intent"],
+            "cv_facts": response_dict["cv_facts"],
+            "jd_reqs": response_dict["jd_reqs"],
             "provider": provider
         }
     except Exception as e:
         logger.error(f"Error in /chat endpoint: {str(e)}", exc_info=True)
         # Attempt to generate a proper mock response to keep the UI completely functional
         try:
-            fallback_script = _mock_response(transcript, request.cv, request.job_role, request.response_style)
+            fallback_dict = _mock_response(transcript, request.cv, request.job_role, request.response_style)
         except Exception:
-            fallback_script = "Yeah, absolutely. I couldn't connect to the live AI provider right now, but jumping into safe fallback mode—please continue with the interview."
+            fallback_dict = {
+                "script": "Yeah, absolutely. I couldn't connect to the live AI provider right now, but jumping into safe fallback mode—please continue with the interview.",
+                "intent": "Error Fallback",
+                "cv_facts": "None",
+                "jd_reqs": "None"
+            }
 
         # Return 200 so the frontend fetch() sees response.ok = true
         return JSONResponse(
             status_code=200,
             content={
                 "success": False,
-                "response": fallback_script,
+                "response": fallback_dict["script"],
+                "intent": fallback_dict["intent"],
+                "cv_facts": fallback_dict["cv_facts"],
+                "jd_reqs": fallback_dict["jd_reqs"],
                 "error": str(e),
                 "provider": "Mock (Error Fallback)"
             }
