@@ -7,3 +7,5 @@ pydantic
 openai
 deepgram-sdk
 python-dotenv
+groq
+google-generativeai

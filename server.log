@@ -1,13 +1,13 @@
 INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [5166]
-INFO:     Started server process [6132]
+INFO:     Finished server process [6132]
+INFO:     Started server process [7908]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:3000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:34934 - "GET / HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34934 - "POST /setup HTTP/1.1" 200 OK
-INFO:     127.0.0.1:34940 - "WebSocket /ws" [accepted]
+INFO:     127.0.0.1:46724 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46724 - "POST /setup HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46732 - "WebSocket /ws" [accepted]
 INFO:     connection open
 INFO:     connection closed
