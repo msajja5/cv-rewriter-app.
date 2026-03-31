@@ -26,25 +26,46 @@
         #clear-btn { background-color: #6c757d; }
         #clear-btn:hover { background-color: #5a6268; }
         .question-box { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 16px; margin-bottom: 10px; }
+
+        /* Compact Overlay Mode Styles */
+        body.compact-mode { padding: 10px; background-color: white; }
+        body.compact-mode .container { padding: 10px; box-shadow: none; max-width: 100%; }
+        body.compact-mode .hide-in-compact { display: none !important; }
+        body.compact-mode .script-box { font-size: 24px; font-weight: 500; min-height: 200px; }
+        body.compact-mode h3 { margin-top: 10px; margin-bottom: 5px; font-size: 1.1em; }
+
+        /* Mode Badge */
+        .mode-badge { display: inline-block; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 18px; margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box; }
+        .mode-interviewer { background-color: #ffeaea; border: 2px solid #dc3545; color: #dc3545; animation: pulse 2s infinite; }
+        .mode-candidate { background-color: #f8f9fa; border: 2px solid #6c757d; color: #6c757d; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>AI Interview Copilot 🎙️</h1>
-    <p style="text-align: center; color: #666;">For Supply Chain & Data Analytics</p>
+    <button id="toggle-compact-btn" class="hide-in-compact" style="width: auto; position: absolute; top: 10px; right: 10px; background: #6c757d; font-size: 14px; padding: 5px 10px;">Toggle Compact Overlay Mode</button>
 
-    <div style="background: #eef7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; border-left: 4px solid #007bff;">
-        <strong>Reliability Note:</strong> For the most reliable interview support, <strong>paste your CV and Job Description directly</strong>. Since browser STT cannot differentiate your voice from the interviewer's, <strong>only click "Start Listening" when the interviewer is asking a question</strong>.
+    <h1 class="hide-in-compact">AI Interview Copilot 🎙️</h1>
+    <p class="hide-in-compact" style="text-align: center; color: #666;">For Supply Chain & Data Analytics</p>
+
+    <div class="hide-in-compact" style="background: #eef7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; border-left: 4px solid #007bff;">
+        <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window and place it next to your meeting window. Toggle "Compact Overlay Mode" using the button in the top right to reduce clutter.<br><br>
+        <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.
     </div>
 
-    <div style="background: #fdfdfd; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 0.85em;">
+    <div class="hide-in-compact" style="background: #fdfdfd; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 0.85em;">
         <strong>System Status:</strong><br/>
         Speech-to-Text Mode: <span id="stt-status">Checking browser support...</span><br/>
         LLM Mode: <span id="llm-status">Waiting for input...</span>
     </div>
 
-    <div id="setup-section">
+    <div id="setup-section" class="hide-in-compact">
         <form id="setup-form">
             <div class="form-group">
                 <label for="job-role">Target Job Role & Description</label>
@@ -68,13 +89,21 @@
 
     <div class="interview-interface" id="interview-section">
 
+        <div id="mode-badge" class="mode-badge mode-candidate">
+            Candidate Mode (Waiting / Answering)
+        </div>
+
+        <button id="exit-compact-btn" style="display: none; width: auto; background: #6c757d; font-size: 14px; padding: 5px 10px; float: right;">Exit Overlay Mode</button>
+
         <h3>Interviewer's Question:</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: -10px;">Click "Start Listening" when they ask a question, or type it manually below.</p>
+        <p style="font-size: 0.85em; color: #666; margin-top: -10px;">Press <strong>Space</strong> or click "Start Listening" when they ask a question.</p>
+
         <div class="controls">
             <button id="start-btn">Start Listening</button>
             <button id="stop-btn" disabled>Stop Listening</button>
-            <button id="clear-btn">Clear Text</button>
+            <button id="clear-btn" class="hide-in-compact" style="flex: 0.5;">Clear</button>
         </div>
+
         <textarea id="interviewer-transcript" class="question-box" placeholder="Interviewer speech will appear here..."></textarea>
 
         <button id="generate-btn">Generate Answer Script</button>
@@ -96,6 +125,10 @@
     const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
     const generateBtn = document.getElementById('generate-btn');
+
+    const toggleCompactBtn = document.getElementById('toggle-compact-btn');
+    const exitCompactBtn = document.getElementById('exit-compact-btn');
+    const modeBadge = document.getElementById('mode-badge');
 
     const transcriptBox = document.getElementById('interviewer-transcript');
     const aiScriptBox = document.getElementById('ai-script');
@@ -168,24 +201,65 @@
         interviewSection.style.display = 'block';
     });
 
-    startBtn.addEventListener('click', () => {
-        isRecording = true;
-        try { recognitionInterviewer.start(); } catch(e) {}
+    function setInterviewerMode(active) {
+        if (!recognitionInterviewer) return;
 
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-        startBtn.innerText = "Listening...";
-        sttStatusSpan.innerText = "Browser Web Speech API (Listening...)";
+        if (active && !isRecording) {
+            isRecording = true;
+            try { recognitionInterviewer.start(); } catch(e) {}
+
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+            startBtn.innerText = "Listening...";
+            sttStatusSpan.innerText = "Browser Web Speech API (Listening...)";
+
+            modeBadge.innerText = "Interviewer Mode (Listening...)";
+            modeBadge.className = "mode-badge mode-interviewer";
+        } else if (!active && isRecording) {
+            isRecording = false;
+            try { recognitionInterviewer.stop(); } catch(e) {}
+
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            startBtn.innerText = "Start Listening";
+            sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
+
+            modeBadge.innerText = "Candidate Mode (Waiting / Answering)";
+            modeBadge.className = "mode-badge mode-candidate";
+        }
+    }
+
+    startBtn.addEventListener('click', () => setInterviewerMode(true));
+    stopBtn.addEventListener('click', () => setInterviewerMode(false));
+
+    // Spacebar Toggle Logic
+    document.addEventListener('keydown', (e) => {
+        // Ignore if we are typing in an input or textarea
+        if (e.target.tagName.toLowerCase() === 'textarea' || e.target.tagName.toLowerCase() === 'input') {
+            return;
+        }
+
+        if (e.code === 'Space') {
+            e.preventDefault(); // Prevent page scroll
+
+            // Only toggle if the interview section is visible (i.e. we are past setup)
+            if (interviewSection.style.display === 'block') {
+                setInterviewerMode(!isRecording);
+            }
+        }
     });
 
-    stopBtn.addEventListener('click', () => {
-        isRecording = false;
-        try { recognitionInterviewer.stop(); } catch(e) {}
+    // Compact Mode Toggles
+    toggleCompactBtn.addEventListener('click', () => {
+        document.body.classList.add('compact-mode');
+        toggleCompactBtn.style.display = 'none';
+        exitCompactBtn.style.display = 'block';
+    });
 
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-        startBtn.innerText = "Start Listening";
-        sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
+    exitCompactBtn.addEventListener('click', () => {
+        document.body.classList.remove('compact-mode');
+        toggleCompactBtn.style.display = 'block';
+        exitCompactBtn.style.display = 'none';
     });
 
     clearBtn.addEventListener('click', () => {
