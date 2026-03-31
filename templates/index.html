@@ -78,8 +78,9 @@
             <div class="form-group">
                 <label for="response-style">Answer Length Style</label>
                 <select id="response-style" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                    <option value="live_script" selected>Live Interview Script (Optimized for spoken delivery)</option>
                     <option value="concise">Concise (1-2 sentences)</option>
-                    <option value="normal" selected>Normal (3-4 sentences)</option>
+                    <option value="normal">Normal (3-4 sentences)</option>
                     <option value="detailed">Detailed (STAR Method, 5-6 sentences)</option>
                 </select>
             </div>
@@ -96,16 +97,15 @@
         <button id="exit-compact-btn" style="display: none; width: auto; background: #6c757d; font-size: 14px; padding: 5px 10px; float: right;">Exit Overlay Mode</button>
 
         <h3>Interviewer's Question:</h3>
-        <p style="font-size: 0.85em; color: #666; margin-top: -10px;">Press <strong>Space</strong> or click "Start Listening" when they ask a question.</p>
 
         <div class="controls">
-            <button id="start-btn">Start Listening</button>
-            <button id="stop-btn" disabled>Stop Listening</button>
+            <button id="start-btn" style="background-color: #007bff;">Hold Space or Click to Listen</button>
             <button id="clear-btn" class="hide-in-compact" style="flex: 0.5;">Clear</button>
         </div>
 
         <textarea id="interviewer-transcript" class="question-box" placeholder="Interviewer speech will appear here..."></textarea>
 
+        <p style="font-size: 0.85em; color: #666; margin-top: -5px; margin-bottom: 15px;">Edit the recognized question if needed, then click Generate Answer.</p>
         <button id="generate-btn">Generate Answer Script</button>
 
         <h3 style="margin-top: 30px;">Your Answer Script:</h3>
@@ -122,7 +122,6 @@
     const interviewSection = document.getElementById('interview-section');
 
     const startBtn = document.getElementById('start-btn');
-    const stopBtn = document.getElementById('stop-btn');
     const clearBtn = document.getElementById('clear-btn');
     const generateBtn = document.getElementById('generate-btn');
 
@@ -208,9 +207,8 @@
             isRecording = true;
             try { recognitionInterviewer.start(); } catch(e) {}
 
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
-            startBtn.innerText = "Listening...";
+            startBtn.innerText = "Listening to interviewer...";
+            startBtn.style.backgroundColor = "#dc3545"; // Red to show active
             sttStatusSpan.innerText = "Browser Web Speech API (Listening...)";
 
             modeBadge.innerText = "Interviewer Mode (Listening...)";
@@ -219,9 +217,8 @@
             isRecording = false;
             try { recognitionInterviewer.stop(); } catch(e) {}
 
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            startBtn.innerText = "Start Listening";
+            startBtn.innerText = "Hold Space or Click to Listen";
+            startBtn.style.backgroundColor = "#007bff";
             sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
 
             modeBadge.innerText = "Candidate Mode (Waiting / Answering)";
@@ -229,10 +226,12 @@
         }
     }
 
-    startBtn.addEventListener('click', () => setInterviewerMode(true));
-    stopBtn.addEventListener('click', () => setInterviewerMode(false));
+    // Mouse Hold to Talk
+    startBtn.addEventListener('mousedown', () => setInterviewerMode(true));
+    startBtn.addEventListener('mouseup', () => setInterviewerMode(false));
+    startBtn.addEventListener('mouseleave', () => setInterviewerMode(false));
 
-    // Spacebar Toggle Logic
+    // Spacebar Hold to Talk Logic
     document.addEventListener('keydown', (e) => {
         // Ignore if we are typing in an input, textarea, select, or contenteditable element
         const tag = e.target.tagName.toLowerCase();
@@ -240,13 +239,24 @@
             return;
         }
 
-        if (e.code === 'Space') {
+        if (e.code === 'Space' && !e.repeat) {
             e.preventDefault(); // Prevent page scroll
-
-            // Only toggle if the interview section is visible (i.e. we are past setup)
             if (interviewSection.style.display === 'block') {
-                // Toggles both directions: if currently recording, pass false to stop. If not recording, pass true to start.
-                setInterviewerMode(!isRecording);
+                setInterviewerMode(true);
+            }
+        }
+    });
+
+    document.addEventListener('keyup', (e) => {
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) {
+            return;
+        }
+
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (interviewSection.style.display === 'block') {
+                setInterviewerMode(false);
             }
         }
     });
