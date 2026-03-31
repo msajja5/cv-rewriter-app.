@@ -35,11 +35,17 @@
         .checkbox-label { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: normal; cursor: pointer; color: #333; }
 
         /* Compact Overlay Mode Styles */
-        body.compact-mode { padding: 10px; background-color: white; }
-        body.compact-mode .container { padding: 10px; box-shadow: none; max-width: 100%; }
+        body.compact-mode { padding: 5px; background-color: white; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+        body.compact-mode .container { padding: 5px; box-shadow: none; max-width: 100%; height: 100%; display: flex; flex-direction: column; }
         body.compact-mode .hide-in-compact { display: none !important; }
-        body.compact-mode .script-box { font-size: 24px; font-weight: 500; min-height: 200px; }
-        body.compact-mode h3 { margin-top: 10px; margin-bottom: 5px; font-size: 1.1em; }
+        body.compact-mode .interview-interface { margin-top: 0; border-top: none; padding-top: 0; display: flex; flex-direction: column; height: 100%; }
+        body.compact-mode .script-box { font-size: 26px; font-weight: 600; flex: 1; overflow-y: auto; margin-bottom: 5px; }
+        body.compact-mode .question-box { font-size: 18px; height: 80px; margin-bottom: 5px; }
+        body.compact-mode h3 { display: none; } /* Hide all h3s in compact to save vertical space */
+        body.compact-mode .controls { margin-bottom: 5px; }
+
+        .compact-indicator { display: none; background: #ffc107; color: #856404; font-weight: bold; text-align: center; padding: 5px; border-radius: 5px; margin-bottom: 10px; font-size: 14px; }
+        body.compact-mode .compact-indicator { display: block; }
 
         /* Mode Badge */
         .mode-badge { display: inline-block; padding: 10px 20px; border-radius: 20px; font-weight: bold; font-size: 18px; margin-bottom: 15px; text-align: center; width: 100%; box-sizing: border-box; }
@@ -112,11 +118,14 @@
 
     <div class="interview-interface" id="interview-section">
 
-        <div id="mode-badge" class="mode-badge mode-candidate">
+        <div id="mode-badge" class="mode-badge mode-candidate hide-in-compact">
             Candidate Mode (Waiting / Answering)
         </div>
 
-        <button id="exit-compact-btn" style="display: none; width: auto; background: #6c757d; font-size: 14px; padding: 5px 10px; float: right;">Exit Overlay Mode</button>
+        <div class="compact-indicator">
+            Compact Overlay Mode: ON
+            <button id="exit-compact-btn" style="display: inline-block; width: auto; background: #6c757d; font-size: 12px; padding: 3px 8px; margin-left: 10px; border: none; color: white; cursor: pointer;">Exit</button>
+        </div>
 
         <h3>Interviewer's Question:</h3>
 
@@ -340,14 +349,14 @@
     // Compact Mode Toggles
     toggleCompactBtn.addEventListener('click', () => {
         document.body.classList.add('compact-mode');
-        toggleCompactBtn.style.display = 'none';
-        exitCompactBtn.style.display = 'block';
+        // Force the layout to recalculate
+        window.dispatchEvent(new Event('resize'));
     });
 
     exitCompactBtn.addEventListener('click', () => {
         document.body.classList.remove('compact-mode');
-        toggleCompactBtn.style.display = 'block';
-        exitCompactBtn.style.display = 'none';
+        // Force the layout to recalculate
+        window.dispatchEvent(new Event('resize'));
     });
 
     clearBtn.addEventListener('click', () => {
