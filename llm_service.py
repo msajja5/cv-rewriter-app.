@@ -3,10 +3,13 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, context: list) -> str:
+from typing import Tuple
+
+async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, context: list) -> Tuple[str, str]:
     """
     Calls OpenAI (multiple keys), Groq, and Gemini in sequence to generate a script for the candidate.
     Falls back to mock logic if all fail.
+    Returns: (generated_response, provider_name)
     """
     system_prompt = f"""
     You are an expert AI Interview Copilot for a candidate applying for the role of '{job_role}'.
@@ -40,7 +43,7 @@ async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, c
                     max_tokens=200,
                     temperature=0.7
                 )
-                return response.choices[0].message.content
+                return response.choices[0].message.content, "OpenAI"
             except Exception as e:
                 print(f"OpenAI API Error with key {key[:5]}...: {e}")
                 continue # Try next key
@@ -57,7 +60,7 @@ async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, c
                 max_tokens=200,
                 temperature=0.7
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content, "Groq"
         except Exception as e:
             print(f"Groq API Error: {e}")
 
@@ -103,13 +106,13 @@ async def generate_ai_response_with_llm(question: str, cv: str, job_role: str, c
                 chat = model.start_chat(history=gemini_history)
                 response = chat.send_message(last_msg)
 
-            return response.text
+            return response.text, "Gemini"
         except Exception as e:
              print(f"Gemini API Error: {e}")
 
     # Final Fallback to Mock Logic
     print("All LLM providers failed or missing keys. Falling back to mock logic.")
-    return _mock_response(question, cv, job_role)
+    return _mock_response(question, cv, job_role), "Mock (Local)"
 
 def _mock_response(question: str, cv: str, job_role: str) -> str:
     lower_q = question.lower()

@@ -31,6 +31,16 @@
     <h1>AI Interview Copilot 🎙️</h1>
     <p style="text-align: center; color: #666;">For Supply Chain & Data Analytics</p>
 
+    <div style="background: #eef7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9em; border-left: 4px solid #007bff;">
+        <strong>Note:</strong> This app is designed for <em>single-user personal interview practice</em> and is optimized for free browser-based speech recognition. It is able to run in demo/mock mode without any API keys.
+    </div>
+
+    <div style="background: #fdfdfd; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 0.85em;">
+        <strong>System Status:</strong><br/>
+        Speech-to-Text Mode: <span id="stt-status">Checking browser support...</span><br/>
+        LLM Mode: <span id="llm-status">Waiting for input...</span>
+    </div>
+
     <div id="setup-section">
         <form id="setup-form">
             <div class="form-group">
@@ -81,8 +91,14 @@
     let userJobRole = "";
     let interviewContext = [];
 
+    const sttStatusSpan = document.getElementById('stt-status');
+    const llmStatusSpan = document.getElementById('llm-status');
+
     // Web Speech API for prototyping (browser built-in STT)
     if ('webkitSpeechRecognition' in window) {
+        sttStatusSpan.innerText = "Browser Web Speech API (Active)";
+        sttStatusSpan.style.color = "green";
+
         recognitionInterviewer = new webkitSpeechRecognition();
         recognitionInterviewer.continuous = true;
         recognitionInterviewer.interimResults = false;
@@ -120,12 +136,21 @@
                     if (response.ok) {
                         const data = await response.json();
                         aiScriptBox.innerText = data.response;
+
+                        // Update LLM Status based on backend response
+                        llmStatusSpan.innerText = data.provider;
+                        llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+
                     } else {
                         aiScriptBox.innerText = "Error analyzing question.";
+                        llmStatusSpan.innerText = "Error";
+                        llmStatusSpan.style.color = "#d9534f";
                     }
                 } catch (err) {
                     console.error("Failed to fetch from backend", err);
                     aiScriptBox.innerText = "Failed to communicate with AI server.";
+                    llmStatusSpan.innerText = "Connection Failed";
+                    llmStatusSpan.style.color = "#d9534f";
                 }
             }
         };
@@ -163,7 +188,16 @@
         };
 
     } else {
-        alert("Web Speech API is not supported in this browser. Use Chrome or Edge.");
+        sttStatusSpan.innerText = "Not Supported (Please use Chrome/Edge)";
+        sttStatusSpan.style.color = "red";
+
+        // Show clear UI message inside the setup area as well
+        setupSection.innerHTML = `
+            <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 5px; border: 1px solid #f5c6cb; margin-bottom: 20px;">
+                <strong>⚠️ Speech recognition is not supported in this browser.</strong><br/>
+                Please use Chrome or Edge to access the Web Speech API required for real-time transcription.
+            </div>
+        `;
     }
 
     setupForm.addEventListener('submit', (e) => {

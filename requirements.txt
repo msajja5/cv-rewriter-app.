@@ -1,11 +1,9 @@
 fastapi
 uvicorn
 jinja2
-websockets
 python-multipart
 pydantic
 openai
-deepgram-sdk
 python-dotenv
 groq
 google-generativeai

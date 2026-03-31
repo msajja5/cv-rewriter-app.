@@ -31,11 +31,14 @@ async def chat_endpoint(request: ChatRequest):
 
     # We append the current interviewer's question to the context history inside the LLM service.
     # The frontend manages the overarching context.
-    response_script = await generate_ai_response_with_llm(
+    response_script, provider = await generate_ai_response_with_llm(
         question=transcript,
         cv=request.cv,
         job_role=request.job_role,
         context=request.context
     )
 
-    return {"response": response_script}
+    return {
+        "response": response_script,
+        "provider": provider
+    }
