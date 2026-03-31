@@ -234,8 +234,9 @@
 
     // Spacebar Toggle Logic
     document.addEventListener('keydown', (e) => {
-        // Ignore if we are typing in an input or textarea
-        if (e.target.tagName.toLowerCase() === 'textarea' || e.target.tagName.toLowerCase() === 'input') {
+        // Ignore if we are typing in an input, textarea, select, or contenteditable element
+        const tag = e.target.tagName.toLowerCase();
+        if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) {
             return;
         }
 
@@ -244,6 +245,7 @@
 
             // Only toggle if the interview section is visible (i.e. we are past setup)
             if (interviewSection.style.display === 'block') {
+                // Toggles both directions: if currently recording, pass false to stop. If not recording, pass true to start.
                 setInterviewerMode(!isRecording);
             }
         }
