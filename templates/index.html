@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interview Copilot</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { color: #333; text-align: center; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        textarea, input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; }
+        button:hover { background-color: #0056b3; }
+        .interview-interface { display: none; margin-top: 30px; border-top: 2px solid #eee; padding-top: 20px; }
+        .script-box { background-color: #e9f7ef; padding: 20px; border-left: 5px solid #28a745; border-radius: 5px; min-height: 100px; font-size: 18px; margin-bottom: 20px; }
+        .transcript-box { height: 200px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; background: #fafafa; border-radius: 5px; margin-bottom: 20px; }
+        .transcript-line { margin-bottom: 10px; }
+        .interviewer { color: #d9534f; font-weight: bold; }
+        .candidate { color: #0275d8; font-weight: bold; }
+        .controls { display: flex; gap: 10px; }
+        .controls button { flex: 1; }
+        #stop-btn { background-color: #dc3545; }
+        #stop-btn:hover { background-color: #c82333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AI Interview Copilot 🎙️</h1>
+    <p style="text-align: center; color: #666;">For Supply Chain & Data Analytics</p>
+
+    <div id="setup-section">
+        <form id="setup-form">
+            <div class="form-group">
+                <label for="job-role">Job Role (e.g., Supply Chain Analyst)</label>
+                <input type="text" id="job-role" name="job_role" required>
+            </div>
+            <div class="form-group">
+                <label for="cv">Your CV / Resume</label>
+                <textarea id="cv" name="cv" rows="6" required placeholder="Paste your CV text here..."></textarea>
+            </div>
+            <button type="submit">Start Interview Assistant</button>
+        </form>
+    </div>
+
+    <div class="interview-interface" id="interview-section">
+        <div class="controls">
+            <button id="start-btn">Connect Audio (Teams/Zoom)</button>
+            <button id="stop-btn" disabled>Stop</button>
+        </div>
+
+        <h3 style="margin-top: 20px;">AI Suggested Answer Script:</h3>
+        <div class="script-box" id="ai-script">
+            Waiting for interviewer's question... The AI will stitch your CV details here automatically.
+        </div>
+
+        <h3>Live Transcript</h3>
+        <div class="transcript-box" id="transcript">
+            <!-- Transcripts will appear here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    const setupForm = document.getElementById('setup-form');
+    const setupSection = document.getElementById('setup-section');
+    const interviewSection = document.getElementById('interview-section');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+    const transcriptBox = document.getElementById('transcript');
+    const aiScriptBox = document.getElementById('ai-script');
+
+    let ws;
+    let recognitionInterviewer;
+    let recognitionCandidate;
+    let isRecording = false;
+
+    // Web Speech API for prototyping (browser built-in STT)
+    // Real-world would use Deepgram or Whisper via WebSocket for better accuracy/latency
+    if ('webkitSpeechRecognition' in window) {
+        // Setup Interviewer Recognition (System Audio / Speakers via Loopback in real life, or just Mic for demo)
+        recognitionInterviewer = new webkitSpeechRecognition();
+        recognitionInterviewer.continuous = true;
+        recognitionInterviewer.interimResults = false;
+        recognitionInterviewer.lang = 'en-US';
+
+        recognitionInterviewer.onresult = function(event) {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript.trim().length > 0) {
+                appendTranscript('Interviewer', finalTranscript);
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({ type: 'interviewer_speech', text: finalTranscript }));
+                    aiScriptBox.innerText = "Analyzing question and stitching CV facts...";
+                }
+            }
+        };
+
+        // Handling audio stop/start to keep it running
+        recognitionInterviewer.onend = function() {
+            if (isRecording) {
+                try { recognitionInterviewer.start(); } catch(e) {}
+            }
+        };
+
+        // CANDIDATE SPEECH RECOGNITION (To track but NOT trigger AI)
+        // This is a simplified way to represent dual-stream audio.
+        // In a real WebRTC app, one stream is the system audio (interviewer), one is mic (candidate).
+        // Since we can't easily capture system audio via standard Web Speech API without user setup,
+        // we'll simulate the candidate mic to show we track it but ignore it for AI responses.
+        recognitionCandidate = new webkitSpeechRecognition();
+        recognitionCandidate.continuous = true;
+        recognitionCandidate.interimResults = false;
+        recognitionCandidate.lang = 'en-US';
+
+        // We will pause candidate recognition when interviewer is speaking to simulate turn-taking in this simple demo
+        // but normally they run concurrently on different audio tracks.
+
+        recognitionCandidate.onresult = function(event) {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript.trim().length > 0) {
+                appendTranscript('Candidate', finalTranscript);
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    // Send to server just to keep context, but AI script won't be triggered
+                    ws.send(JSON.stringify({ type: 'candidate_speech', text: finalTranscript }));
+                }
+            }
+        };
+
+        recognitionCandidate.onend = function() {
+            if (isRecording) {
+                try { recognitionCandidate.start(); } catch(e) {}
+            }
+        };
+
+    } else {
+        alert("Web Speech API is not supported in this browser. Use Chrome or Edge.");
+    }
+
+    setupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(setupForm);
+
+        const response = await fetch('/setup', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            setupSection.style.display = 'none';
+            interviewSection.style.display = 'block';
+            connectWebSocket();
+        } else {
+            alert('Failed to setup data.');
+        }
+    });
+
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
+
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.type === 'ai_script') {
+                aiScriptBox.innerText = data.text;
+            }
+        };
+
+        ws.onopen = () => console.log('WebSocket connected');
+        ws.onclose = () => console.log('WebSocket closed');
+    }
+
+    startBtn.addEventListener('click', () => {
+        isRecording = true;
+        try { recognitionInterviewer.start(); } catch(e) {}
+        try { recognitionCandidate.start(); } catch(e) {}
+
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        startBtn.innerText = "Listening to Both Sides...";
+        appendTranscript('System', 'Connected and listening for questions (Interviewer) and answers (Candidate).');
+    });
+
+    stopBtn.addEventListener('click', () => {
+        isRecording = false;
+        try { recognitionInterviewer.stop(); } catch(e) {}
+        try { recognitionCandidate.stop(); } catch(e) {}
+
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        startBtn.innerText = "Connect Audio (Teams/Zoom)";
+        appendTranscript('System', 'Stopped listening.');
+    });
+
+    function appendTranscript(speaker, text) {
+        const line = document.createElement('div');
+        line.className = 'transcript-line';
+        const speakerSpan = document.createElement('span');
+        speakerSpan.className = speaker.toLowerCase() === 'interviewer' ? 'interviewer' : 'candidate';
+        speakerSpan.innerText = `${speaker}: `;
+
+        const textSpan = document.createElement('span');
+        textSpan.innerText = text;
+
+        line.appendChild(speakerSpan);
+        line.appendChild(textSpan);
+        transcriptBox.appendChild(line);
+        transcriptBox.scrollTop = transcriptBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>
