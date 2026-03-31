@@ -72,21 +72,23 @@
     const transcriptBox = document.getElementById('transcript');
     const aiScriptBox = document.getElementById('ai-script');
 
-    let ws;
     let recognitionInterviewer;
     let recognitionCandidate;
     let isRecording = false;
 
+    // Client-side state management for Serverless backend
+    let userCv = "";
+    let userJobRole = "";
+    let interviewContext = [];
+
     // Web Speech API for prototyping (browser built-in STT)
-    // Real-world would use Deepgram or Whisper via WebSocket for better accuracy/latency
     if ('webkitSpeechRecognition' in window) {
-        // Setup Interviewer Recognition (System Audio / Speakers via Loopback in real life, or just Mic for demo)
         recognitionInterviewer = new webkitSpeechRecognition();
         recognitionInterviewer.continuous = true;
         recognitionInterviewer.interimResults = false;
         recognitionInterviewer.lang = 'en-US';
 
-        recognitionInterviewer.onresult = function(event) {
+        recognitionInterviewer.onresult = async function(event) {
             let finalTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
@@ -95,14 +97,39 @@
             }
             if (finalTranscript.trim().length > 0) {
                 appendTranscript('Interviewer', finalTranscript);
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify({ type: 'interviewer_speech', text: finalTranscript }));
-                    aiScriptBox.innerText = "Analyzing question and stitching CV facts...";
+
+                aiScriptBox.innerText = "Analyzing question and stitching CV facts...";
+
+                // Add to local context
+                interviewContext.push({"role": "interviewer", "text": finalTranscript});
+
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            cv: userCv,
+                            job_role: userJobRole,
+                            transcript: finalTranscript,
+                            context: interviewContext
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        aiScriptBox.innerText = data.response;
+                    } else {
+                        aiScriptBox.innerText = "Error analyzing question.";
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch from backend", err);
+                    aiScriptBox.innerText = "Failed to communicate with AI server.";
                 }
             }
         };
 
-        // Handling audio stop/start to keep it running
         recognitionInterviewer.onend = function() {
             if (isRecording) {
                 try { recognitionInterviewer.start(); } catch(e) {}
@@ -110,17 +137,10 @@
         };
 
         // CANDIDATE SPEECH RECOGNITION (To track but NOT trigger AI)
-        // This is a simplified way to represent dual-stream audio.
-        // In a real WebRTC app, one stream is the system audio (interviewer), one is mic (candidate).
-        // Since we can't easily capture system audio via standard Web Speech API without user setup,
-        // we'll simulate the candidate mic to show we track it but ignore it for AI responses.
         recognitionCandidate = new webkitSpeechRecognition();
         recognitionCandidate.continuous = true;
         recognitionCandidate.interimResults = false;
         recognitionCandidate.lang = 'en-US';
-
-        // We will pause candidate recognition when interviewer is speaking to simulate turn-taking in this simple demo
-        // but normally they run concurrently on different audio tracks.
 
         recognitionCandidate.onresult = function(event) {
             let finalTranscript = '';
@@ -131,10 +151,8 @@
             }
             if (finalTranscript.trim().length > 0) {
                 appendTranscript('Candidate', finalTranscript);
-                if (ws && ws.readyState === WebSocket.OPEN) {
-                    // Send to server just to keep context, but AI script won't be triggered
-                    ws.send(JSON.stringify({ type: 'candidate_speech', text: finalTranscript }));
-                }
+                // Keep context but don't call backend
+                interviewContext.push({"role": "candidate", "text": finalTranscript});
             }
         };
 
@@ -148,38 +166,17 @@
         alert("Web Speech API is not supported in this browser. Use Chrome or Edge.");
     }
 
-    setupForm.addEventListener('submit', async (e) => {
+    setupForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const formData = new FormData(setupForm);
 
-        const response = await fetch('/setup', {
-            method: 'POST',
-            body: formData
-        });
+        // Store data locally
+        userJobRole = document.getElementById('job-role').value;
+        userCv = document.getElementById('cv').value;
+        interviewContext = []; // Reset context
 
-        if (response.ok) {
-            setupSection.style.display = 'none';
-            interviewSection.style.display = 'block';
-            connectWebSocket();
-        } else {
-            alert('Failed to setup data.');
-        }
+        setupSection.style.display = 'none';
+        interviewSection.style.display = 'block';
     });
-
-    function connectWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
-
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            if (data.type === 'ai_script') {
-                aiScriptBox.innerText = data.text;
-            }
-        };
-
-        ws.onopen = () => console.log('WebSocket connected');
-        ws.onclose = () => console.log('WebSocket closed');
-    }
 
     startBtn.addEventListener('click', () => {
         isRecording = true;
