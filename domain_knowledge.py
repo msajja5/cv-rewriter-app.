@@ -77,10 +77,19 @@ def detect_question_routing(question: str) -> str:
     """Maps the interviewer question to Manjunath's specific career facts for targeted context."""
     q_lower = question.lower()
 
-    if "sap" in q_lower or "erp" in q_lower or "system" in q_lower:
-        return "ROUTE: ERP / SAP. Focus on Ontex SAP S/4HANA (340+ conflicts resolved, 12 sites) and Solvay MRP (99% data completeness, 1500+ defects fixed)."
-    if "kinaxis" in q_lower or "rapidresponse" in q_lower or "planning tool" in q_lower:
-        return "ROUTE: Kinaxis/Tools. Focus on QuEST Global. ExxonMobil (€12M WC released, planning cycle 2 weeks to 4 hours) and Bombardier (10 days to 2 days, 26% accuracy improvement)."
+    if "ontex" in q_lower:
+        return "ROUTE: Ontex. Focus on €4B ops, 12 plants, Arkieva implementation (27% accuracy), and €60M procurement savings."
+    if "nike" in q_lower or "retail" in q_lower:
+        return "ROUTE: Nike. Focus on €2B retail distribution, Tableau dashboards, and 20% holding cost reduction."
+    if "solvay" in q_lower or "chemical" in q_lower:
+        return "ROUTE: Solvay. Focus on €150M raw materials, SAP MRP, and 1500+ master data defects resolved (99% completeness)."
+    if "quest" in q_lower or "kinaxis" in q_lower or "rapidresponse" in q_lower or "exxon" in q_lower or "bombardier" in q_lower:
+        return "ROUTE: QuEST Global / Kinaxis. Focus on ExxonMobil (€12M WC released, 28% OTIF) and Bombardier (26% accuracy). Emphasize training 280+ users and module integration."
+
+    if "sap" in q_lower or "erp" in q_lower or "system" in q_lower or "implement" in q_lower or "support" in q_lower:
+        return "ROUTE: ERP / Systems Implementation & Support. Focus on Ontex SAP S/4HANA (expert level, 340+ conflicts) and QuEST Global Kinaxis (go-live support, 280+ users trained)."
+    if "interpersonal" in q_lower or "social" in q_lower or "conflict" in q_lower or "stakeholder" in q_lower or "communication" in q_lower:
+        return "ROUTE: Interpersonal / Soft Skills. Focus on S&OP consensus facilitation (getting Sales, Finance, Ops aligned) and bridging technical IT with business users."
     if "forecast" in q_lower or "demand" in q_lower:
         return "ROUTE: Forecasting. Focus on Ontex Arkieva implementation (27% accuracy improvement, 18-month rolling, consensus S&OP)."
     if "inventory" in q_lower or "working capital" in q_lower or "trade-off" in q_lower:
