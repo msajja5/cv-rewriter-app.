@@ -79,47 +79,78 @@
     </div>
 
     <div id="setup-section" class="hide-in-compact">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button type="button" id="tab-interview" style="margin-top: 0; background: #007bff;">1. Interview Details</button>
+            <button type="button" id="tab-cv" style="margin-top: 0; background: #6c757d;">2. My CV</button>
+            <button type="button" id="tab-keys" style="margin-top: 0; background: #6c757d;">3. API Keys</button>
+        </div>
+
         <form id="setup-form">
-            <div class="form-group">
-                <label for="job-role">Target Job Role & Description</label>
-                <textarea id="job-role" name="job_role" rows="4" required placeholder="Paste the target job role title and description here..."></textarea>
+            <!-- TAB 1 -->
+            <div id="panel-interview">
+                <div class="form-group">
+                    <label for="job-role">Target Job Role & Description</label>
+                    <textarea id="job-role" name="job_role" rows="4" required placeholder="Paste the target job role title and description here..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="target-role-family">Target Role Family</label>
+                    <select id="target-role-family" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 20px;">
+                        <option value="Auto Detect" selected>Auto Detect</option>
+                        <option value="Demand Planning">Demand Planning</option>
+                        <option value="Supply Planning">Supply Planning</option>
+                        <option value="Inventory">Inventory</option>
+                        <option value="Logistics">Logistics</option>
+                        <option value="Procurement / Buyer">Procurement / Buyer</option>
+                        <option value="Data Analytics">Data Analytics</option>
+                        <option value="S&OP / IBP">S&OP / IBP</option>
+                        <option value="ERP / Planning Systems">ERP / Planning Systems</option>
+                        <option value="Master Data">Master Data</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="response-style">Answer Length Style</label>
+                    <select id="response-style" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+                        <option value="live_script" selected>Live Interview Script (Optimized for spoken delivery)</option>
+                        <option value="concise">Concise (1-2 sentences)</option>
+                        <option value="normal">Normal (3-4 sentences)</option>
+                        <option value="detailed">Detailed (STAR Method, 5-6 sentences)</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="cv">Your CV / Resume</label>
-                <textarea id="cv" name="cv" rows="6" required placeholder="Paste your CV text here for the best accuracy..."></textarea>
+
+            <!-- TAB 2 -->
+            <div id="panel-cv" style="display: none;">
+                <div class="form-group">
+                    <label for="cv">Your CV / Resume</label>
+                    <textarea id="cv" name="cv" rows="10" required placeholder="Paste your CV text here for the best accuracy..."></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="target-role-family">Target Role Family</label>
-                <select id="target-role-family" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 20px;">
-                    <option value="Auto Detect" selected>Auto Detect</option>
-                    <option value="Demand Planning">Demand Planning</option>
-                    <option value="Supply Planning">Supply Planning</option>
-                    <option value="Inventory">Inventory</option>
-                    <option value="Logistics">Logistics</option>
-                    <option value="Procurement / Buyer">Procurement / Buyer</option>
-                    <option value="Data Analytics">Data Analytics</option>
-                    <option value="S&OP / IBP">S&OP / IBP</option>
-                    <option value="ERP / Planning Systems">ERP / Planning Systems</option>
-                    <option value="Master Data">Master Data</option>
-                </select>
+
+            <!-- TAB 3 -->
+            <div id="panel-keys" style="display: none;">
+                <p style="font-size: 0.9em; color: #666;">These keys are stored locally in your browser. If empty, the app uses built-in Vercel environment variables or mock fallbacks.</p>
+                <div class="form-group">
+                    <label for="gemini-key">Gemini 2.0 API Key</label>
+                    <input type="password" id="gemini-key" placeholder="AIzaSy...">
+                </div>
+                <div class="form-group">
+                    <label for="groq-key">Groq API Key</label>
+                    <input type="password" id="groq-key" placeholder="gsk_...">
+                </div>
+                <div class="form-group">
+                    <label for="or-key">OpenRouter / OpenAI API Key</label>
+                    <input type="password" id="or-key" placeholder="sk-...">
+                </div>
             </div>
-            <div class="form-group">
-                <label for="response-style">Answer Length Style</label>
-                <select id="response-style" style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
-                    <option value="live_script" selected>Live Interview Script (Optimized for spoken delivery)</option>
-                    <option value="concise">Concise (1-2 sentences)</option>
-                    <option value="normal">Normal (3-4 sentences)</option>
-                    <option value="detailed">Detailed (STAR Method, 5-6 sentences)</option>
-                </select>
-            </div>
-            <button type="submit">Set Context & Start Interview</button>
+
+            <button type="submit" id="start-interview-btn">Start Interview</button>
         </form>
     </div>
 
     <div class="interview-interface" id="interview-section">
 
         <div id="mode-badge" class="mode-badge mode-candidate hide-in-compact">
-            Candidate Mode (Waiting / Answering)
+            Me Speaking Mode (Transcribing only)
         </div>
 
         <div class="compact-indicator">
@@ -130,11 +161,11 @@
         <h3>Interviewer's Question:</h3>
 
         <div class="controls">
-            <button id="start-btn" style="background-color: #007bff;">Hold Space or Click to Listen</button>
+            <button id="start-btn" style="background-color: #007bff;">[Space bar] Switch to Interviewer Speaking</button>
             <button id="clear-btn" class="hide-in-compact" style="flex: 0.5;">Clear</button>
 
-            <label class="checkbox-label hide-in-compact" style="font-weight: bold; color: #d9534f; margin-left: 10px; cursor: pointer;" title="Continuously listen and auto-answer after 2 seconds of silence.">
-                <input type="checkbox" id="auto-listen-checkbox"> 🎙️ Hands-Free Auto-Listen
+            <label class="checkbox-label hide-in-compact" style="font-weight: bold; color: #d9534f; margin-left: 10px; cursor: pointer;" title="Continuously listen and auto-answer after 2.5 seconds of silence.">
+                <input type="checkbox" id="auto-listen-checkbox"> 🎙️ Auto-Generate on Silence
             </label>
 
             <label class="checkbox-label hide-in-compact" title="If checked, new speech is added to the existing text instead of overwriting it." style="display: none;">
@@ -180,6 +211,29 @@
     const setupSection = document.getElementById('setup-section');
     const interviewSection = document.getElementById('interview-section');
 
+    // Tabs logic
+    const tabs = {
+        'interview': { btn: document.getElementById('tab-interview'), panel: document.getElementById('panel-interview') },
+        'cv': { btn: document.getElementById('tab-cv'), panel: document.getElementById('panel-cv') },
+        'keys': { btn: document.getElementById('tab-keys'), panel: document.getElementById('panel-keys') }
+    };
+
+    function switchTab(activeId) {
+        Object.keys(tabs).forEach(id => {
+            if (id === activeId) {
+                tabs[id].btn.style.backgroundColor = '#007bff';
+                tabs[id].panel.style.display = 'block';
+            } else {
+                tabs[id].btn.style.backgroundColor = '#6c757d';
+                tabs[id].panel.style.display = 'none';
+            }
+        });
+    }
+
+    tabs['interview'].btn.addEventListener('click', () => switchTab('interview'));
+    tabs['cv'].btn.addEventListener('click', () => switchTab('cv'));
+    tabs['keys'].btn.addEventListener('click', () => switchTab('keys'));
+
     const startBtn = document.getElementById('start-btn');
     const clearBtn = document.getElementById('clear-btn');
     const generateBtn = document.getElementById('generate-btn');
@@ -220,7 +274,9 @@
     const sttStatusSpan = document.getElementById('stt-status');
     const llmStatusSpan = document.getElementById('llm-status');
 
-    // Web Speech API for prototyping (browser built-in STT)
+    let isInterviewerSpeaking = false; // False = Me Speaking, True = Interviewer Speaking
+
+    // Setup Web Speech API — Single Instance Pattern
     if ('webkitSpeechRecognition' in window) {
         sttStatusSpan.innerText = "Browser Web Speech API (Ready)";
         sttStatusSpan.style.color = "green";
@@ -232,42 +288,38 @@
 
         recognitionInterviewer.onresult = function(event) {
             let interimTranscript = '';
-            let finalFound = false;
-
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     tempSttBuffer += event.results[i][0].transcript + " ";
-                    finalFound = true;
                 } else {
                     interimTranscript += event.results[i][0].transcript;
                 }
             }
 
-            // If we are appending, we prepend the *existing text* from the box before our new recording started
-            if (appendCheckbox.checked && window.baseBoxText) {
-                transcriptBox.value = window.baseBoxText + " " + tempSttBuffer + interimTranscript;
-            } else {
-                transcriptBox.value = tempSttBuffer + interimTranscript;
-            }
+            // Only update the question box if the interviewer is speaking
+            if (isInterviewerSpeaking) {
+                if (appendCheckbox.checked && window.baseBoxText) {
+                    transcriptBox.value = window.baseBoxText + " " + tempSttBuffer + interimTranscript;
+                } else {
+                    transcriptBox.value = tempSttBuffer + interimTranscript;
+                }
 
-            // Auto-Listen Silence Detection Logic
-            if (continuousListeningActive) {
-                clearTimeout(silenceTimer);
-
-                // If we have some actual text (interim or final), set a timer to trigger an answer
-                // We use 2.5 seconds of silence as the trigger point that the interviewer has finished asking the question
-                if (transcriptBox.value.trim().length > 5) {
-                    silenceTimer = setTimeout(() => {
-                        console.log("Silence detected, auto-generating answer...");
-                        generateBtn.click();
-                    }, 2500);
+                // Auto-Listen Silence Detection Logic
+                if (continuousListeningActive) {
+                    clearTimeout(silenceTimer);
+                    if (transcriptBox.value.trim().length > 5) {
+                        silenceTimer = setTimeout(() => {
+                            console.log("Silence detected, auto-generating answer...");
+                            generateBtn.click();
+                        }, 2500);
+                    }
                 }
             }
         };
 
         recognitionInterviewer.onend = function() {
-            // In both continuous mode AND hold-to-talk mode, if it stops unexpectedly, restart it
-            if (isRecording || continuousListeningActive) {
+            // Keep the microphone open permanently if continuous mode is active
+            if (continuousListeningActive) {
                 try { recognitionInterviewer.start(); } catch(e) {}
             }
         };
@@ -276,13 +328,7 @@
         sttStatusSpan.innerText = "Not Supported (Please use Chrome/Edge)";
         sttStatusSpan.style.color = "red";
         startBtn.disabled = true;
-
-        setupSection.innerHTML = `
-            <div style="background: #f8d7da; color: #721c24; padding: 20px; border-radius: 5px; border: 1px solid #f5c6cb; margin-bottom: 20px;">
-                <strong>⚠️ Speech recognition is not supported in this browser.</strong><br/>
-                Please use Chrome or Edge for automated listening, or type questions manually.
-            </div>
-        ` + setupSection.innerHTML;
+        setupSection.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:20px;"><strong>⚠️ Speech recognition is not supported in this browser.</strong></div>` + setupSection.innerHTML;
     }
 
     setupForm.addEventListener('submit', (e) => {
@@ -293,10 +339,22 @@
         userCv = document.getElementById('cv').value;
         userStyle = document.getElementById('response-style').value;
         targetRoleFamily = document.getElementById('target-role-family').value;
-        interviewContext = []; // Reset context
 
+        // Stash keys in localStorage
+        localStorage.setItem("geminiKey", document.getElementById('gemini-key').value);
+        localStorage.setItem("groqKey", document.getElementById('groq-key').value);
+        localStorage.setItem("orKey", document.getElementById('or-key').value);
+
+        interviewContext = []; // Reset context
         setupSection.style.display = 'none';
         interviewSection.style.display = 'block';
+    });
+
+    // On Load: Restore keys
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('gemini-key').value = localStorage.getItem("geminiKey") || "";
+        document.getElementById('groq-key').value = localStorage.getItem("groqKey") || "";
+        document.getElementById('or-key').value = localStorage.getItem("orKey") || "";
     });
 
     debugToggle.addEventListener('change', (e) => {
@@ -307,115 +365,72 @@
         }
     });
 
-    function setInterviewerMode(active) {
-        if (!recognitionInterviewer || continuousListeningActive) return; // Prevent manual toggles during Auto-Listen
+    function toggleSpeakerMode() {
+        if (!recognitionInterviewer) return;
 
-        if (active && !isRecording) {
-            isRecording = true;
-            tempSttBuffer = ''; // Reset the temp buffer for this new press
-            window.baseBoxText = appendCheckbox.checked ? transcriptBox.value.trim() : ''; // Snapshot existing text
+        isInterviewerSpeaking = !isInterviewerSpeaking;
 
-            try { recognitionInterviewer.start(); } catch(e) {}
+        if (isInterviewerSpeaking) {
+            // Switch to Interviewer
+            tempSttBuffer = '';
+            window.baseBoxText = appendCheckbox.checked ? transcriptBox.value.trim() : '';
 
-            startBtn.innerText = "Listening to interviewer...";
-            startBtn.style.backgroundColor = "#dc3545"; // Red to show active
-            sttStatusSpan.innerText = "Browser Web Speech API (Listening...)";
+            startBtn.innerText = "[Space bar] Switch to Me Speaking";
+            startBtn.style.backgroundColor = "#dc3545"; // Red
 
-            modeBadge.innerText = "Interviewer Mode (Listening...)";
+            modeBadge.innerText = "Interviewer Mode (Transcribing...)";
             modeBadge.className = "mode-badge mode-interviewer";
-        } else if (!active && isRecording) {
-            isRecording = false;
-            try { recognitionInterviewer.stop(); } catch(e) {}
+        } else {
+            // Switch to Candidate
+            startBtn.innerText = "[Space bar] Switch to Interviewer Speaking";
+            startBtn.style.backgroundColor = "#007bff"; // Blue
 
-            startBtn.innerText = "Hold Space or Click to Listen";
-            startBtn.style.backgroundColor = "#007bff";
-            sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
-
-            modeBadge.innerText = "Candidate Mode (Waiting / Answering)";
-            modeBadge.className = "mode-badge mode-candidate";
-
-            // Trigger auto-generate if enabled and we actually captured something
-            if (autoGenCheckbox.checked && transcriptBox.value.trim().length > 5) {
-                generateBtn.click();
-            }
+            modeBadge.innerText = "Me Speaking Mode (Transcribing only)";
+            modeBadge.style.backgroundColor = "#f3e8ff"; // Purple
+            modeBadge.style.borderColor = "#6f42c1";
+            modeBadge.style.color = "#6f42c1";
         }
     }
 
-    // Hands-Free Auto-Listen Toggle Logic
-    autoListenCheckbox.addEventListener('change', (e) => {
-        if (!recognitionInterviewer) {
-            alert("Speech Recognition not supported in this browser.");
-            e.target.checked = false;
-            return;
-        }
-
+    // Hands-Free Continuous Listen Setup
+    autoListenCheckbox.addEventListener('change', async (e) => {
+        if (!recognitionInterviewer) return;
         continuousListeningActive = e.target.checked;
 
         if (continuousListeningActive) {
-            // Turn ON continuous listening
-            isRecording = false; // Disable manual flag
-            tempSttBuffer = '';
-            window.baseBoxText = '';
-            transcriptBox.value = '';
+            try {
+                // Request microphone and keep it open via AudioContext so Chrome doesn't release it
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const ctx = new window.AudioContext();
+                const src = ctx.createMediaStreamSource(stream);
+                const gain = ctx.createGain();
+                gain.gain.value = 0; // Keep pipeline open but silent
+                src.connect(gain);
 
-            startBtn.disabled = true;
-            startBtn.innerText = "Auto-Listening is Active...";
-            startBtn.style.backgroundColor = "#28a745"; // Green
-            instructionText.innerText = "Listening continuously... Will auto-generate after 2.5s of silence.";
-
-            modeBadge.innerText = "Hands-Free Auto-Listen Mode Active";
-            modeBadge.className = "mode-badge mode-interviewer";
-            sttStatusSpan.innerText = "Browser Web Speech API (Continuous)";
-
-            try { recognitionInterviewer.start(); } catch(e) {}
-
+                recognitionInterviewer.start();
+                sttStatusSpan.innerText = "Browser Web Speech API (Continuous)";
+                instructionText.innerText = "Listening continuously... Hit Space bar to toggle speakers.";
+            } catch(e) {
+                console.error("Mic permission denied", e);
+            }
         } else {
-            // Turn OFF continuous listening
             clearTimeout(silenceTimer);
-            try { recognitionInterviewer.stop(); } catch(e) {}
-
-            startBtn.disabled = false;
-            startBtn.innerText = "Hold Space or Click to Listen";
-            startBtn.style.backgroundColor = "#007bff"; // Back to blue
-            instructionText.innerText = "Edit the recognized question if needed, then click Generate Answer.";
-
-            modeBadge.innerText = "Candidate Mode (Waiting / Answering)";
-            modeBadge.className = "mode-badge mode-candidate";
+            recognitionInterviewer.stop();
             sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
         }
     });
 
-    // Mouse Hold to Talk (only works if auto-listen is OFF)
-    startBtn.addEventListener('mousedown', () => setInterviewerMode(true));
-    startBtn.addEventListener('mouseup', () => setInterviewerMode(false));
-    startBtn.addEventListener('mouseleave', () => setInterviewerMode(false));
+    startBtn.addEventListener('click', toggleSpeakerMode);
 
-    // Spacebar Hold to Talk Logic
+    // Spacebar Toggle Speaker Logic
     document.addEventListener('keydown', (e) => {
-        // Ignore if we are typing in an input, textarea, select, or contenteditable element
         const tag = e.target.tagName.toLowerCase();
-        if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) {
-            return;
-        }
+        if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) return;
 
         if (e.code === 'Space' && !e.repeat) {
-            e.preventDefault(); // Prevent page scroll
-            if (interviewSection.style.display === 'block') {
-                setInterviewerMode(true);
-            }
-        }
-    });
-
-    document.addEventListener('keyup', (e) => {
-        const tag = e.target.tagName.toLowerCase();
-        if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) {
-            return;
-        }
-
-        if (e.code === 'Space') {
             e.preventDefault();
             if (interviewSection.style.display === 'block') {
-                setInterviewerMode(false);
+                toggleSpeakerMode();
             }
         }
     });
@@ -465,56 +480,88 @@
             startBtn.style.backgroundColor = "#ffc107"; // Yellow to indicate working/paused
         }
 
+        // Switch back to "Me Speaking" mode while generating so we don't accidentally record the AI
+        if (isInterviewerSpeaking) {
+            toggleSpeakerMode();
+        }
+
+        aiScriptBox.innerText = ""; // Clear for streaming
+
         try {
+            // Append explicit keys to the request context
+            const payload = {
+                cv: userCv,
+                job_role: userJobRole,
+                transcript: questionText,
+                context: interviewContext,
+                response_style: userStyle,
+                target_role_family: targetRoleFamily
+            };
+
+            // Add custom API keys as a header so the backend can extract them if needed
+            const customHeaders = {
+                'Content-Type': 'application/json',
+                'X-Gemini-Key': document.getElementById('gemini-key').value,
+                'X-Groq-Key': document.getElementById('groq-key').value,
+                'X-Or-Key': document.getElementById('or-key').value
+            };
+
             const response = await fetch('/chat', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    cv: userCv,
-                    job_role: userJobRole,
-                    transcript: questionText,
-                    context: interviewContext,
-                    response_style: userStyle,
-                    target_role_family: targetRoleFamily
-                })
+                headers: customHeaders,
+                body: JSON.stringify(payload)
             });
 
             aiScriptBox.classList.remove("loading");
             generateBtn.disabled = false;
 
             if (response.ok) {
-                const data = await response.json();
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = "";
+                let buffer = ""; // SSE Chunk Buffer
 
-                // Show Script
-                aiScriptBox.innerText = data.response || "No script generated.";
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
 
-                // Update Debug Panel
-                if (debugToggle.checked) {
-                    debugPanel.style.display = 'block';
+                    buffer += decoder.decode(value, { stream: true });
+                    let boundary = buffer.indexOf('\n\n');
+
+                    while (boundary !== -1) {
+                        const chunk = buffer.slice(0, boundary);
+                        buffer = buffer.slice(boundary + 2); // advance past \n\n
+
+                        if (chunk.startsWith("data: ")) {
+                            try {
+                                const data = JSON.parse(chunk.slice(6));
+
+                                if (data.type === "token") {
+                                    fullResponse += data.content;
+                                    aiScriptBox.innerText = fullResponse;
+
+                                    // Update debug info from the first chunk
+                                    if (debugToggle.checked) {
+                                        debugPanel.style.display = 'block';
+                                    }
+                                    debugIntent.innerText = data.intent || "N/A";
+                                    debugRole.innerText = data.role_family || "N/A";
+                                    debugProvider.innerText = data.provider || "N/A";
+                                    llmStatusSpan.innerText = data.provider;
+                                    llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+                                } else if (data.type === "error") {
+                                    aiScriptBox.innerText += "\n[Streaming Error: " + data.content + "]";
+                                }
+                            } catch (parseErr) {
+                                console.error("Error parsing stream chunk", parseErr, chunk);
+                            }
+                        }
+                        boundary = buffer.indexOf('\n\n');
+                    }
                 }
-                debugIntent.innerText = data.intent || "N/A";
-                debugStrategy.innerText = data.answer_strategy || "N/A";
-                debugRole.innerText = data.role_family || "N/A";
-                debugCv.innerText = data.cv_facts || "N/A";
-                debugJd.innerText = data.jd_signals || "N/A";
-                debugProvider.innerText = data.provider || "N/A";
 
-                // If it's the mock response, change script background slightly to indicate
-                if (data.provider.includes("Mock")) {
-                    aiScriptBox.style.backgroundColor = "#f8d7da";
-                    aiScriptBox.style.borderLeftColor = "#dc3545";
-                } else {
-                    aiScriptBox.style.backgroundColor = "#e9f7ef";
-                    aiScriptBox.style.borderLeftColor = "#28a745";
-                }
-
-                // Track generated answer in history so LLM knows what we said
-                interviewContext.push({"role": "candidate", "text": data.response});
-
-                llmStatusSpan.innerText = data.provider;
-                llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+                // Track generated answer in history
+                interviewContext.push({"role": "candidate", "text": fullResponse});
 
                 // Clear the box for the next question automatically
                 transcriptBox.value = "";
@@ -533,14 +580,6 @@
             aiScriptBox.innerText = "Failed to communicate with AI server.";
             llmStatusSpan.innerText = "Connection Failed";
             llmStatusSpan.style.color = "#d9534f";
-        } finally {
-            // Resume continuous listening if it was active
-            if (wasContinuous) {
-                continuousListeningActive = true; // Re-enable flag
-                startBtn.style.backgroundColor = "#28a745"; // Back to green
-                sttStatusSpan.innerText = "Browser Web Speech API (Continuous)";
-                try { recognitionInterviewer.start(); } catch(e) {}
-            }
         }
     });
 </script>

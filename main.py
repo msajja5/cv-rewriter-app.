@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import os
 import logging
 from typing import List, Dict
-from llm_service import generate_ai_response_with_llm, _mock_response
+import json
+from llm_service import generate_ai_response_with_llm_stream, _mock_response
 
 # Setup basic logging for Vercel Serverless Function logs
 logging.basicConfig(level=logging.INFO)
@@ -39,66 +40,37 @@ async def get_home(request: Request):
         return HTMLResponse(content="<h1>Internal Server Error loading homepage.</h1>", status_code=500)
 
 @app.post("/chat")
-async def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request: ChatRequest, req: Request):
     """
-    Stateless endpoint for Serverless execution (e.g. Vercel).
-    The frontend is responsible for maintaining and passing the interview context.
+    Stateless streaming endpoint for Serverless execution (e.g. Vercel).
     """
-    try:
-        logger.info(f"Received chat request for role: {request.job_role}")
-        transcript = request.transcript
+    logger.info(f"Received chat streaming request for role: {request.job_role}")
 
-        # We append the current interviewer's question to the context history inside the LLM service.
-        # The frontend manages the overarching context.
-        response_dict, provider = await generate_ai_response_with_llm(
-            question=transcript,
-            cv=request.cv,
-            job_role=request.job_role,
-            context=request.context,
-            response_style=request.response_style,
-            target_role_family=request.target_role_family
-        )
+    # Pass any custom API keys supplied from the frontend via headers
+    custom_keys = {
+        "X-Gemini-Key": req.headers.get("X-Gemini-Key"),
+        "X-Groq-Key": req.headers.get("X-Groq-Key"),
+        "X-Or-Key": req.headers.get("X-Or-Key")
+    }
 
-        return {
-            "success": True,
-            "response": response_dict["script"],
-            "intent": response_dict["intent"],
-            "answer_strategy": response_dict.get("answer_strategy", "Unknown"),
-            "role_family": response_dict["role_family"],
-            "cv_facts": response_dict["cv_facts"],
-            "jd_signals": response_dict["jd_signals"],
-            "provider": provider
-        }
-    except Exception as e:
-        logger.error(f"Error in /chat endpoint: {str(e)}", exc_info=True)
-        # Attempt to generate a proper mock response to keep the UI completely functional
+    async def stream_tokens_with_keys(req_body: ChatRequest, keys: dict):
         try:
-            from domain_knowledge import detect_role_family
-            role_fam = request.target_role_family if request.target_role_family != "Auto Detect" else detect_role_family(request.job_role)
-            fallback_dict = _mock_response(transcript, request.cv, request.job_role, request.response_style, role_fam)
-        except Exception as e2:
-            logger.error(f"Error in /chat endpoint mock fallback: {str(e2)}", exc_info=True)
-            fallback_dict = {
-                "script": "Yeah, absolutely. I couldn't connect to the live AI provider right now, but jumping into safe fallback mode—please continue with the interview.",
-                "intent": "Error Fallback",
-                "answer_strategy": "Error Fallback",
-                "role_family": "Error",
-                "cv_facts": "None",
-                "jd_signals": "None"
-            }
+            async for chunk in generate_ai_response_with_llm_stream(
+                question=req_body.transcript,
+                cv=req_body.cv,
+                job_role=req_body.job_role,
+                context=req_body.context,
+                response_style=req_body.response_style,
+                target_role_family=req_body.target_role_family,
+                custom_keys=keys
+            ):
+                # Format as Server-Sent Events (SSE)
+                yield f"data: {json.dumps(chunk)}\n\n"
+        except Exception as e:
+            logger.error(f"Streaming error: {str(e)}")
+            yield f"data: {json.dumps({'type': 'error', 'content': 'Server error generating response.'})}\n\n"
 
-        # Return 200 so the frontend fetch() sees response.ok = true
-        return JSONResponse(
-            status_code=200,
-            content={
-                "success": False,
-                "response": fallback_dict["script"],
-                "intent": fallback_dict["intent"],
-                "answer_strategy": fallback_dict.get("answer_strategy", "Unknown"),
-                "role_family": fallback_dict["role_family"],
-                "cv_facts": fallback_dict["cv_facts"],
-                "jd_signals": fallback_dict["jd_signals"],
-                "error": str(e),
-                "provider": "Mock (Error Fallback)"
-            }
-        )
+    return StreamingResponse(
+        stream_tokens_with_keys(request, custom_keys),
+        media_type="text/event-stream"
+    )
