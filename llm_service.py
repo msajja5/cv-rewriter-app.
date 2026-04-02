@@ -70,8 +70,9 @@ async def generate_ai_response_with_llm(
     Your goal is to analyze the interviewer's question, ground your response strictly in the candidate's CV and the Job Description, and provide a script for the candidate to read live.
 
     CRITICAL INSTRUCTIONS:
-    1. INTENT: Classify the exact question meaning (e.g., "introduce yourself", "why this role", "forecasting example", "inventory trade-off", "systems/SAP").
+    1. INTENT: Classify the exact question meaning (e.g., "small talk/logistics", "introduce yourself", "why this role", "forecasting example", "inventory trade-off", "systems/SAP").
     2. ANSWER_STRATEGY: Select one of the following explicit answer strategies to structure your response:
+       - "Small talk / logistics" -> 1-2 word natural confirmation (e.g., "Yes, I can hear you perfectly.", "I'm doing well, thanks.")
        - "Introduce yourself" -> short career journey + current strengths + why relevant now
        - "Why this role" -> motivation + match to JD + value I can bring
        - "Strengths" -> top 2 relevant skills + brief example
@@ -257,7 +258,20 @@ def _mock_response(question: str, cv: str, job_role: str, style: str, role_famil
         "script": ""
     }
 
-    if "yourself" in lower_q or "background" in lower_q:
+    if "hear me" in lower_q or "can you see" in lower_q or "see my screen" in lower_q or "how are you" in lower_q or "hello" in lower_q or "hi" in lower_q and len(lower_q.split()) < 8:
+        response["intent"] = "Small Talk / Logistics"
+        response["answer_strategy"] = "Small talk / logistics -> 1-2 word natural confirmation"
+
+        if "hear me" in lower_q:
+            response["script"] = "Yep, I can hear you perfectly."
+        elif "see" in lower_q or "screen" in lower_q:
+            response["script"] = "Yes, I can see it clearly."
+        elif "how are you" in lower_q:
+            response["script"] = "I'm doing great, thank you! How are you?"
+        else:
+            response["script"] = "Hello! Thanks for having me today."
+
+    elif "yourself" in lower_q or "background" in lower_q:
         response["intent"] = "Introduce Yourself / Background"
         response["answer_strategy"] = "Introduce yourself -> short career journey + current strengths + why relevant now"
 
