@@ -72,10 +72,39 @@
         <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.
     </div>
 
-    <div class="hide-in-compact" style="background: #fdfdfd; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 0.85em;">
-        <strong>System Status:</strong><br/>
-        Speech-to-Text Mode: <span id="stt-status">Checking browser support...</span><br/>
-        LLM Mode: <span id="llm-status">Waiting for input...</span>
+    <div class="hide-in-compact" style="background: #fdfdfd; padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 20px; font-size: 0.85em; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <strong>System Status:</strong><br/>
+            Speech-to-Text Mode: <span id="stt-status">Checking browser support...</span><br/>
+            LLM Mode: <span id="llm-status">Waiting for input...</span>
+        </div>
+        <button id="audio-setup-btn" style="width: auto; background: #17a2b8; color: #212529; font-weight: bold; margin-top: 0; padding: 5px 15px;">🔌 How to connect Zoom/Teams audio</button>
+    </div>
+
+    <!-- Audio Setup Modal -->
+    <div id="audio-modal" class="hide-in-compact" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+        <div style="background: white; padding: 30px; border-radius: 10px; max-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0;">Capturing Interview Audio (Zoom, Teams, Meet)</h3>
+            <p>Web browsers cannot directly "hack" into Zoom or Teams to steal the audio if you are wearing headphones. You have two free options:</p>
+
+            <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #28a745; margin-bottom: 15px;">
+                <strong>Option 1: The Easy Way (Use Speakers)</strong><br/>
+                Do not wear headphones. Let the interviewer's voice come out of your laptop speakers. Your laptop microphone will naturally pick up their voice and transcribe it perfectly.
+            </div>
+
+            <div style="background: #f8f9fa; padding: 15px; border-left: 4px solid #007bff;">
+                <strong>Option 2: The Pro Way (Wear Headphones)</strong><br/>
+                If you must wear headphones, you need to route the meeting audio into your browser microphone using a free Virtual Audio Cable.
+                <ol style="margin-bottom: 0;">
+                    <li>Download and install <strong>VB-Cable</strong> (Windows/Mac) or <strong>BlackHole</strong> (Mac).</li>
+                    <li>In Zoom/Teams, set your Speaker output to "VB-Cable".</li>
+                    <li>In Chrome/Edge settings (or OS Sound settings), set your Microphone input to "VB-Cable".</li>
+                    <li><em>Note: You will also need to turn on "Listen to this device" in your OS sound settings so you can hear the interviewer in your headphones at the same time.</em></li>
+                </ol>
+            </div>
+
+            <button id="close-modal-btn" style="background: #6c757d; margin-top: 20px;">Got it, close</button>
+        </div>
     </div>
 
     <div id="setup-section" class="hide-in-compact">
@@ -257,6 +286,10 @@
     const debugJd = document.getElementById('debug-jd');
     const debugProvider = document.getElementById('debug-provider');
     const debugToggle = document.getElementById('debug-toggle');
+
+    const audioSetupBtn = document.getElementById('audio-setup-btn');
+    const audioModal = document.getElementById('audio-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
 
     let recognitionInterviewer;
     let isRecording = false;
