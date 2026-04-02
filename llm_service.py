@@ -197,7 +197,7 @@ async def generate_ai_response_with_llm_stream(
         await asyncio.sleep(0.02)
 
 def _mock_response(question: str, cv: str, job_role: str, style: str, role_family: str) -> Dict[str, str]:
-        lower_q = question.lower()
+    lower_q = question.lower()
 
     if "company" in lower_q or "know about us" in lower_q or "why us" in lower_q:
         response["intent"] = "Company Knowledge / Fit"
