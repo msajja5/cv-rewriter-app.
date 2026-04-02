@@ -44,17 +44,17 @@ async def generate_ai_response_with_llm(
         length_instruction = "Provide a detailed, thorough script (5-6 sentences) with a specific STAR method example if applicable."
         style_instruction = "Write exactly how a real person speaks during an interview. Use contractions."
     elif response_style == "live_script":
-        length_instruction = "Keep the script extremely conversational and concise enough to read aloud comfortably in one take without running out of breath."
+        length_instruction = "Provide a detailed, natural language response structured for spoken delivery without sounding like a bulleted list or a corporate essay."
         style_instruction = """Write specifically for LIVE spoken delivery.
-    - Use VERY short sentences (7-12 words max).
+    - Use varied sentence lengths. Use conversational pacing.
     - Use contractions everywhere (I'm, we've, they'll).
     - Liberally use dashes (—) and commas to indicate natural pauses.
     - Incorporate natural fillers in moderation (e.g., "you know," "actually," "I mean").
     - Start directly, but VARY YOUR OPENING PHRASES. Do NOT always start with "Yeah, absolutely" or "Sure thing". Use varied openings like "To answer that...", "Well, looking back...", "That's an interesting point...", or just jump straight into the answer.
-    - DO NOT sound like a bulleted list or a corporate essay. Speak like a human having a conversation over coffee."""
+    - Explain your past experience thoroughly and conversationally, but do not read like a book script. Speak like an experienced human having an in-depth conversation over coffee."""
     else:
-        length_instruction = "Keep the script a normal, conversational length (3-4 sentences)."
-        style_instruction = "Write exactly how a real person speaks during an interview. Use contractions."
+        length_instruction = "Provide a detailed, thorough script (3-5 paragraphs) explaining your experience in a natural, conversational manner."
+        style_instruction = "Write exactly how a real person speaks during an in-depth interview. Use contractions."
 
     system_prompt = f"""
     You are an expert AI Interview Copilot for a candidate applying for a '{resolved_role_family}' role.
@@ -73,7 +73,7 @@ async def generate_ai_response_with_llm(
     1. INTENT: Classify the exact question meaning (e.g., "small talk/logistics", "introduce yourself", "why this role", "forecasting example", "inventory trade-off", "systems/SAP").
     2. ANSWER_STRATEGY: Select one of the following explicit answer strategies to structure your response:
        - "Small talk / logistics" -> 1-2 word natural confirmation (e.g., "Yes, I can hear you perfectly.", "I'm doing well, thanks.")
-       - "Introduce yourself" -> short career journey + current strengths + why relevant now
+       - "Introduce yourself" -> 1. The Hook (Value Signal/Continuous delivery) + 2. The Anchors (Discipline & Adaptive Project) + 3. The Curiosity Gap (The Invitation)
        - "Why this role" -> motivation + match to JD + value I can bring
        - "Strengths" -> top 2 relevant skills + brief example
        - "Weakness" -> real development area + active mitigation
@@ -258,7 +258,7 @@ def _mock_response(question: str, cv: str, job_role: str, style: str, role_famil
         "script": ""
     }
 
-    if "hear me" in lower_q or "can you see" in lower_q or "see my screen" in lower_q or "how are you" in lower_q or "hello" in lower_q or "hi" in lower_q and len(lower_q.split()) < 8:
+    if ("hear me" in lower_q or "can you see" in lower_q or "see my screen" in lower_q or "how are you" in lower_q or "hello" in lower_q.split() or "hi" in lower_q.split()) and len(lower_q.split()) < 8:
         response["intent"] = "Small Talk / Logistics"
         response["answer_strategy"] = "Small talk / logistics -> 1-2 word natural confirmation"
 
@@ -273,38 +273,38 @@ def _mock_response(question: str, cv: str, job_role: str, style: str, role_famil
 
     elif "yourself" in lower_q or "background" in lower_q:
         response["intent"] = "Introduce Yourself / Background"
-        response["answer_strategy"] = "Introduce yourself -> short career journey + current strengths + why relevant now"
+        response["answer_strategy"] = "Introduce yourself -> 1. The Hook (Value Signal/Continuous delivery) + 2. The Anchors (Discipline & Adaptive Project) + 3. The Curiosity Gap (The Invitation)"
 
-        response["script"] = f"To start—I've spent the bulk of my career diving really deep into {role_family}. You know, during my time at {company_mention}, my biggest strength was essentially bridging that gap between raw data and actual business execution using {tool_mention}. So right now, I'm just looking to take that hands-on technical foundation and apply it to the exact supply chain challenges you've outlined here."
+        response["script"] = f"I specialize in high-intensity, continuous delivery environments where I've mastered the art of staying physically and mentally sharp during long-haul analytical sessions. I don't just complete tasks; I optimize my personal workflow and my environment to ensure that the quality of my output at hour eight is just as high as it was at hour one.\n\nI've developed a rigorous personal protocol for maintaining focus. For me, peak performance is a result of consistent, hourly resets. This level of self-discipline translates directly into my work—whether it's managing complex {role_family} data at {company_mention} using {tool_mention} or hitting tight deadlines, I have a proven track record of maintaining momentum without burning out.\n\nIn my recent work, I've focused heavily on technical troubleshooting and optimizing our core KPIs. I've found that my best breakthroughs happen when I bridge the gap between deep-focus 'sitting' work and active, lateral thinking. This approach helped me solve massive alignment issues by looking at them from a fresh perspective during one of my planned breaks.\n\nI've actually found that this structured approach to my workday has helped me catch errors that others often miss during long shifts. I'd love to tell you more about how I applied that specific 'reset' mindset to streamline my last project if you're interested."
 
     elif "why" in lower_q and "role" in lower_q:
         response["intent"] = "Motivation / Why this role"
         response["answer_strategy"] = "Why this role -> motivation + match to JD + value I can bring"
 
-        response["script"] = f"Well, what really drew me to this role is your explicit focus on driving measurable {role_family} outcomes. Looking back at my work with {company_mention}, I was already doing exactly that—specifically leveraging {tool_mention} to drop our lead times and really tighten up our planning cycles. I know I can step into this position and immediately bring that same level of value to your team."
+        response["script"] = f"Well, what really drew me to this role is your explicit focus on driving measurable {role_family} outcomes, which completely aligns with how I've built my career. Looking back at my work with {company_mention}, I wasn't just maintaining the status quo—I was actively leveraging {tool_mention} to completely streamline our planning cycles and drop lead times.\n\nI really appreciate that your job description highlights the need for rigorous, data-driven discipline. I've spent years developing exactly that kind of workflow to ensure I don't just execute, but I actually optimize the processes I touch. I know I can step right into this position and immediately bring that same level of continuous value to your team."
 
     elif "forecast" in lower_q or "accuracy" in lower_q:
         response["intent"] = "Forecasting / Demand Planning"
         response["answer_strategy"] = "Forecasting example -> specific achievement with numbers + root cause + action"
 
-        response["script"] = f"Sure. So, back at {company_mention}, we actually had a major issue. Our forecast accuracy was hovering right around 65%—mostly because sales and supply were totally misaligned. I dug into the root cause by pulling all our historical data into {tool_mention}, and I essentially rebuilt our baseline statistical model to automatically flag those outliers. Within about six months, that one action brought our forecast accuracy up to 82%."
+        response["script"] = f"Sure, that's a great area to touch on. Back at {company_mention}, we actually ran into a major issue where our forecast accuracy was hovering right around 65%. The root of the problem was that our sales and supply teams were totally misaligned, operating in silos.\n\nI knew we needed a structural fix, so I took it upon myself to pull all our historical data into {tool_mention}. I essentially rebuilt our baseline statistical model from the ground up to automatically flag those outliers. By applying that deep-focus analytical approach I mentioned earlier, I was able to catch inconsistencies that were previously overlooked. Within about six months, that one major overhaul brought our consensus forecast accuracy up to 82%."
 
     elif "inventory" in lower_q or "trade-off" in lower_q or "service level" in lower_q:
         response["intent"] = "Supply Planning / Inventory Trade-off"
         response["answer_strategy"] = "Inventory trade-off -> framework (cost vs service) + example + KPI logic"
 
-        response["script"] = f"That's a great question. Basically, my framework for that is always balancing our holding costs against the target fill rate. For instance, at {company_mention}, we were carrying way too much safety stock. I ended up using {tool_mention} to run a rigorous ABC/XYZ analysis. That allowed us to dial back inventory on our stable 'A' items while still protecting service levels on our volatile 'Z' items. Ultimately, we reduced working capital by 12% without a single stockout."
+        response["script"] = f"That's an excellent question, as it's really the core of what we do. Basically, my fundamental framework for inventory management is always balancing our holding costs against the required target fill rate. You can't maximize both without being incredibly disciplined with your data.\n\nFor instance, at {company_mention}, we realized we were carrying way too much safety stock just as a buffer against uncertainty. I ended up using {tool_mention} to run a highly rigorous ABC/XYZ analysis. That allowed us to confidently dial back inventory on our stable 'A' items while still fiercely protecting service levels on our highly volatile 'Z' items. Ultimately, we successfully reduced our overall working capital by 12% without suffering a single stockout."
 
     elif "sap" in lower_q or "planning tool" in lower_q or "system" in lower_q:
         response["intent"] = "ERP / Systems / Implementation"
         response["answer_strategy"] = "ERP / SAP / Tools -> systems exposure + business usage + implementation/support angle"
 
-        response["script"] = f"I've actually got extensive hands-on experience with that, particularly with {tool_mention}. While I was with {company_mention}, I wasn't just hitting buttons—I was actually heavily involved in the business side of our system usage. I wrote functional specs, ran the user acceptance testing, and constantly had to clean up our master data. Because honestly, I know firsthand that a planning system is only ever as good as the data you feed it."
+        response["script"] = f"I've actually got extensive, hands-on experience in that area, particularly working deeply with {tool_mention}. While I was with {company_mention}, my role wasn't just about hitting buttons as an end-user—I was heavily involved in the actual business side of how the system functioned.\n\nI personally wrote functional specs, ran the user acceptance testing cycles, and constantly drove the effort to clean up our master data. Honestly, I know firsthand that a complex planning system is only ever as good as the raw data you feed into it, which is why I apply such a rigorous, disciplined approach to system management and data governance."
 
     else:
         response["intent"] = "Unknown / General Behavioral"
         response["answer_strategy"] = "Behavioral STAR story -> Situation, Task, Action, Result"
-        response["script"] = f"That's a really good point. A specific example that comes to mind is from my time over at {company_mention}. We were facing a pretty significant cross-functional breakdown within our {role_family} team. I took the initiative to build out a centralized tracking dashboard in {tool_mention}, which immediately aligned everyone on the same KPIs. And as a direct result, we significantly reduced our operational delays."
+        response["script"] = f"That's a really good point, and a specific example that comes to mind is from my time over at {company_mention}. We were facing a pretty significant cross-functional breakdown within our {role_family} team, which was leading to a lot of frustration and delayed outputs.\n\nI realized the issue wasn't effort, but visibility. So, I took the initiative to build out a centralized, automated tracking dashboard using {tool_mention}. It took some intense, deep-focus work to get the logic right, but it immediately aligned everyone on the exact same real-time KPIs. And as a direct result, we significantly reduced our operational delays across the board."
 
     if style == "concise":
         response["script"] = "(Concise) " + response["script"]
