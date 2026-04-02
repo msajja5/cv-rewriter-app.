@@ -133,7 +133,11 @@
             <button id="start-btn" style="background-color: #007bff;">Hold Space or Click to Listen</button>
             <button id="clear-btn" class="hide-in-compact" style="flex: 0.5;">Clear</button>
 
-            <label class="checkbox-label hide-in-compact" title="If checked, new speech is added to the existing text instead of overwriting it.">
+            <label class="checkbox-label hide-in-compact" style="font-weight: bold; color: #d9534f; margin-left: 10px; cursor: pointer;" title="Continuously listen and auto-answer after 2 seconds of silence.">
+                <input type="checkbox" id="auto-listen-checkbox"> 🎙️ Hands-Free Auto-Listen
+            </label>
+
+            <label class="checkbox-label hide-in-compact" title="If checked, new speech is added to the existing text instead of overwriting it." style="display: none;">
                 <input type="checkbox" id="append-checkbox" checked> Append Mode
             </label>
         </div>
@@ -141,9 +145,9 @@
         <textarea id="interviewer-transcript" class="question-box" placeholder="Interviewer speech will appear here..."></textarea>
 
         <div class="controls" style="margin-top: -5px; margin-bottom: 15px;">
-            <p style="font-size: 0.85em; color: #666; margin: 0; flex: 1;">Edit the recognized question if needed, then click Generate Answer.</p>
-            <label class="checkbox-label hide-in-compact" style="flex: 0 auto; margin-right: 10px; color: #28a745; font-weight: bold;">
-                <input type="checkbox" id="auto-gen-checkbox"> Auto-Generate on Release
+            <p style="font-size: 0.85em; color: #666; margin: 0; flex: 1;" id="instruction-text">Edit the recognized question if needed, then click Generate Answer.</p>
+            <label class="checkbox-label hide-in-compact" style="flex: 0 auto; margin-right: 10px; color: #28a745; font-weight: bold; display: none;">
+                <input type="checkbox" id="auto-gen-checkbox" checked> Auto-Generate on Release
             </label>
         </div>
         <button id="generate-btn">Generate Answer Script</button>
@@ -181,6 +185,8 @@
     const generateBtn = document.getElementById('generate-btn');
     const appendCheckbox = document.getElementById('append-checkbox');
     const autoGenCheckbox = document.getElementById('auto-gen-checkbox');
+    const autoListenCheckbox = document.getElementById('auto-listen-checkbox');
+    const instructionText = document.getElementById('instruction-text');
 
     const toggleCompactBtn = document.getElementById('toggle-compact-btn');
     const exitCompactBtn = document.getElementById('exit-compact-btn');
@@ -201,6 +207,8 @@
     let recognitionInterviewer;
     let isRecording = false;
     let tempSttBuffer = '';
+    let silenceTimer = null;
+    let continuousListeningActive = false;
 
     // Client-side state management for Serverless backend
     let userCv = "";
@@ -224,9 +232,12 @@
 
         recognitionInterviewer.onresult = function(event) {
             let interimTranscript = '';
+            let finalFound = false;
+
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     tempSttBuffer += event.results[i][0].transcript + " ";
+                    finalFound = true;
                 } else {
                     interimTranscript += event.results[i][0].transcript;
                 }
@@ -238,10 +249,25 @@
             } else {
                 transcriptBox.value = tempSttBuffer + interimTranscript;
             }
+
+            // Auto-Listen Silence Detection Logic
+            if (continuousListeningActive) {
+                clearTimeout(silenceTimer);
+
+                // If we have some actual text (interim or final), set a timer to trigger an answer
+                // We use 2.5 seconds of silence as the trigger point that the interviewer has finished asking the question
+                if (transcriptBox.value.trim().length > 5) {
+                    silenceTimer = setTimeout(() => {
+                        console.log("Silence detected, auto-generating answer...");
+                        generateBtn.click();
+                    }, 2500);
+                }
+            }
         };
 
         recognitionInterviewer.onend = function() {
-            if (isRecording) {
+            // In both continuous mode AND hold-to-talk mode, if it stops unexpectedly, restart it
+            if (isRecording || continuousListeningActive) {
                 try { recognitionInterviewer.start(); } catch(e) {}
             }
         };
@@ -282,7 +308,7 @@
     });
 
     function setInterviewerMode(active) {
-        if (!recognitionInterviewer) return;
+        if (!recognitionInterviewer || continuousListeningActive) return; // Prevent manual toggles during Auto-Listen
 
         if (active && !isRecording) {
             isRecording = true;
@@ -315,7 +341,51 @@
         }
     }
 
-    // Mouse Hold to Talk
+    // Hands-Free Auto-Listen Toggle Logic
+    autoListenCheckbox.addEventListener('change', (e) => {
+        if (!recognitionInterviewer) {
+            alert("Speech Recognition not supported in this browser.");
+            e.target.checked = false;
+            return;
+        }
+
+        continuousListeningActive = e.target.checked;
+
+        if (continuousListeningActive) {
+            // Turn ON continuous listening
+            isRecording = false; // Disable manual flag
+            tempSttBuffer = '';
+            window.baseBoxText = '';
+            transcriptBox.value = '';
+
+            startBtn.disabled = true;
+            startBtn.innerText = "Auto-Listening is Active...";
+            startBtn.style.backgroundColor = "#28a745"; // Green
+            instructionText.innerText = "Listening continuously... Will auto-generate after 2.5s of silence.";
+
+            modeBadge.innerText = "Hands-Free Auto-Listen Mode Active";
+            modeBadge.className = "mode-badge mode-interviewer";
+            sttStatusSpan.innerText = "Browser Web Speech API (Continuous)";
+
+            try { recognitionInterviewer.start(); } catch(e) {}
+
+        } else {
+            // Turn OFF continuous listening
+            clearTimeout(silenceTimer);
+            try { recognitionInterviewer.stop(); } catch(e) {}
+
+            startBtn.disabled = false;
+            startBtn.innerText = "Hold Space or Click to Listen";
+            startBtn.style.backgroundColor = "#007bff"; // Back to blue
+            instructionText.innerText = "Edit the recognized question if needed, then click Generate Answer.";
+
+            modeBadge.innerText = "Candidate Mode (Waiting / Answering)";
+            modeBadge.className = "mode-badge mode-candidate";
+            sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
+        }
+    });
+
+    // Mouse Hold to Talk (only works if auto-listen is OFF)
     startBtn.addEventListener('mousedown', () => setInterviewerMode(true));
     startBtn.addEventListener('mouseup', () => setInterviewerMode(false));
     startBtn.addEventListener('mouseleave', () => setInterviewerMode(false));
@@ -385,6 +455,16 @@
         // Add current question to context history
         interviewContext.push({"role": "interviewer", "text": questionText});
 
+        // Temporarily pause continuous listening to avoid recording our own generated answer
+        const wasContinuous = continuousListeningActive;
+        if (wasContinuous) {
+            continuousListeningActive = false; // Disable flag so onend doesn't immediately restart it
+            clearTimeout(silenceTimer);
+            try { recognitionInterviewer.stop(); } catch(e) {}
+            sttStatusSpan.innerText = "Browser Web Speech API (Paused for AI Response)";
+            startBtn.style.backgroundColor = "#ffc107"; // Yellow to indicate working/paused
+        }
+
         try {
             const response = await fetch('/chat', {
                 method: 'POST',
@@ -440,6 +520,7 @@
                 transcriptBox.value = "";
                 tempSttBuffer = "";
                 window.baseBoxText = "";
+
             } else {
                 aiScriptBox.innerText = "Error analyzing question.";
                 llmStatusSpan.innerText = "Error";
@@ -452,6 +533,14 @@
             aiScriptBox.innerText = "Failed to communicate with AI server.";
             llmStatusSpan.innerText = "Connection Failed";
             llmStatusSpan.style.color = "#d9534f";
+        } finally {
+            // Resume continuous listening if it was active
+            if (wasContinuous) {
+                continuousListeningActive = true; // Re-enable flag
+                startBtn.style.backgroundColor = "#28a745"; // Back to green
+                sttStatusSpan.innerText = "Browser Web Speech API (Continuous)";
+                try { recognitionInterviewer.start(); } catch(e) {}
+            }
         }
     });
 </script>

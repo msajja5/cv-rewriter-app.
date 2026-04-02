@@ -46,11 +46,12 @@ async def generate_ai_response_with_llm(
     elif response_style == "live_script":
         length_instruction = "Keep the script extremely conversational and concise enough to read aloud comfortably in one take without running out of breath."
         style_instruction = """Write specifically for LIVE spoken delivery.
-    - Use VERY short sentences.
+    - Use VERY short sentences (7-12 words max).
+    - Use contractions everywhere (I'm, we've, they'll).
     - Liberally use dashes (—) and commas to indicate natural pauses.
     - Incorporate natural fillers in moderation (e.g., "you know," "actually," "I mean").
-    - VARY YOUR OPENING PHRASES. Do NOT always start with "Yeah, absolutely" or "Sure thing". Use varied openings like "To answer that...", "Well, looking back...", "That's an interesting point...", or just jump straight into the answer.
-    - Ensure it sounds completely off-the-cuff and not like an essay."""
+    - Start directly, but VARY YOUR OPENING PHRASES. Do NOT always start with "Yeah, absolutely" or "Sure thing". Use varied openings like "To answer that...", "Well, looking back...", "That's an interesting point...", or just jump straight into the answer.
+    - DO NOT sound like a bulleted list or a corporate essay. Speak like a human having a conversation over coffee."""
     else:
         length_instruction = "Keep the script a normal, conversational length (3-4 sentences)."
         style_instruction = "Write exactly how a real person speaks during an interview. Use contractions."
@@ -260,36 +261,36 @@ def _mock_response(question: str, cv: str, job_role: str, style: str, role_famil
         response["intent"] = "Introduce Yourself / Background"
         response["answer_strategy"] = "Introduce yourself -> short career journey + current strengths + why relevant now"
 
-        response["script"] = f"To start, I've spent the bulk of my career diving deep into {role_family}. During my time at {company_mention}, my biggest strength was bridging the gap between raw data and actual business execution using {tool_mention}. Right now, I'm looking to take that hands-on technical foundation and apply it to the specific supply chain challenges you've outlined in this job description."
+        response["script"] = f"To start—I've spent the bulk of my career diving really deep into {role_family}. You know, during my time at {company_mention}, my biggest strength was essentially bridging that gap between raw data and actual business execution using {tool_mention}. So right now, I'm just looking to take that hands-on technical foundation and apply it to the exact supply chain challenges you've outlined here."
 
     elif "why" in lower_q and "role" in lower_q:
         response["intent"] = "Motivation / Why this role"
         response["answer_strategy"] = "Why this role -> motivation + match to JD + value I can bring"
 
-        response["script"] = f"Well, what really drew me to this role is your explicit focus on driving measurable {role_family} outcomes. Looking back at my work with {company_mention}, I was already doing exactly that—specifically leveraging {tool_mention} to drop our lead times and tighten our planning cycles. I know I can step into this position and immediately bring that same level of value to your team."
+        response["script"] = f"Well, what really drew me to this role is your explicit focus on driving measurable {role_family} outcomes. Looking back at my work with {company_mention}, I was already doing exactly that—specifically leveraging {tool_mention} to drop our lead times and really tighten up our planning cycles. I know I can step into this position and immediately bring that same level of value to your team."
 
     elif "forecast" in lower_q or "accuracy" in lower_q:
         response["intent"] = "Forecasting / Demand Planning"
         response["answer_strategy"] = "Forecasting example -> specific achievement with numbers + root cause + action"
 
-        response["script"] = f"Sure. So at {company_mention}, we had a major issue where our forecast accuracy was hovering around 65% because sales and supply were totally misaligned. I dug into the root cause by pulling historical data into {tool_mention} and essentially rebuilt our baseline statistical model to automatically flag outliers. Within six months, that specific action brought our forecast accuracy up to 82%."
+        response["script"] = f"Sure. So, back at {company_mention}, we actually had a major issue. Our forecast accuracy was hovering right around 65%—mostly because sales and supply were totally misaligned. I dug into the root cause by pulling all our historical data into {tool_mention}, and I essentially rebuilt our baseline statistical model to automatically flag those outliers. Within about six months, that one action brought our forecast accuracy up to 82%."
 
     elif "inventory" in lower_q or "trade-off" in lower_q or "service level" in lower_q:
         response["intent"] = "Supply Planning / Inventory Trade-off"
         response["answer_strategy"] = "Inventory trade-off -> framework (cost vs service) + example + KPI logic"
 
-        response["script"] = f"That's a great question. My framework for that is always balancing our holding costs against the target fill rate. For instance, at {company_mention}, we were carrying way too much safety stock. I used {tool_mention} to run a rigorous ABC/XYZ analysis, which allowed us to dial back inventory on our stable 'A' items while protecting service levels on our volatile 'Z' items. Ultimately, we reduced working capital by 12% without a single stockout."
+        response["script"] = f"That's a great question. Basically, my framework for that is always balancing our holding costs against the target fill rate. For instance, at {company_mention}, we were carrying way too much safety stock. I ended up using {tool_mention} to run a rigorous ABC/XYZ analysis. That allowed us to dial back inventory on our stable 'A' items while still protecting service levels on our volatile 'Z' items. Ultimately, we reduced working capital by 12% without a single stockout."
 
     elif "sap" in lower_q or "planning tool" in lower_q or "system" in lower_q:
         response["intent"] = "ERP / Systems / Implementation"
         response["answer_strategy"] = "ERP / SAP / Tools -> systems exposure + business usage + implementation/support angle"
 
-        response["script"] = f"I've got extensive hands-on experience, particularly with {tool_mention}. While I was with {company_mention}, I wasn't just hitting buttons—I was actually heavily involved in the business side of our system usage. I wrote functional specs, ran user acceptance testing, and constantly had to clean up our master data because I know that a planning system is only as good as the data you feed it."
+        response["script"] = f"I've actually got extensive hands-on experience with that, particularly with {tool_mention}. While I was with {company_mention}, I wasn't just hitting buttons—I was actually heavily involved in the business side of our system usage. I wrote functional specs, ran the user acceptance testing, and constantly had to clean up our master data. Because honestly, I know firsthand that a planning system is only ever as good as the data you feed it."
 
     else:
         response["intent"] = "Unknown / General Behavioral"
         response["answer_strategy"] = "Behavioral STAR story -> Situation, Task, Action, Result"
-        response["script"] = f"That's a good point. A specific example that comes to mind is from my time at {company_mention}. We were facing a pretty significant cross-functional breakdown within our {role_family} team. I took the initiative to build out a centralized tracking dashboard in {tool_mention}, which immediately aligned everyone on the same KPIs. As a result, we significantly reduced our operational delays."
+        response["script"] = f"That's a really good point. A specific example that comes to mind is from my time over at {company_mention}. We were facing a pretty significant cross-functional breakdown within our {role_family} team. I took the initiative to build out a centralized tracking dashboard in {tool_mention}, which immediately aligned everyone on the same KPIs. And as a direct result, we significantly reduced our operational delays."
 
     if style == "concise":
         response["script"] = "(Concise) " + response["script"]
