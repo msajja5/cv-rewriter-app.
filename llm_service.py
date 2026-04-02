@@ -69,13 +69,26 @@ async def generate_ai_response_with_llm(
     Your goal is to analyze the interviewer's question, ground your response strictly in the candidate's CV and the Job Description, and provide a script for the candidate to read live.
 
     CRITICAL INSTRUCTIONS:
-    1. INTENT: Classify the question intent (e.g., "introduce yourself", "why this role", "behavioral STAR question").
-    2. ROLE_FAMILY: Identify the relevant supply chain domain (e.g., {resolved_role_family}).
-    3. CV_FACTS: Extract specific CV FACTS (companies like Ontex, Nike, Solvay, QuEST Global, specific metrics, tools like SAP, Power BI, Tableau) relevant to answering this question.
-    4. JD_SIGNALS: Extract specific company, industry, or JD requirement signals that this answer addresses.
-    5. SCRIPT: Generate the final spoken answer.
-       - The script MUST weave the targeted CV_FACTS together to answer the question, using the Domain Intelligence terminology listed above.
-       - The script must NOT sound generic. It must explicitly mention the extracted CV facts (companies, tools, specific metrics) and directly relate them to the JD_SIGNALS.
+    1. INTENT: Classify the exact question meaning (e.g., "introduce yourself", "why this role", "forecasting example", "inventory trade-off", "systems/SAP").
+    2. ANSWER_STRATEGY: Select one of the following explicit answer strategies to structure your response:
+       - "Introduce yourself" -> short career journey + current strengths + why relevant now
+       - "Why this role" -> motivation + match to JD + value I can bring
+       - "Strengths" -> top 2 relevant skills + brief example
+       - "Weakness" -> real development area + active mitigation
+       - "Forecasting example" -> specific achievement with numbers + root cause + action
+       - "Inventory trade-off" -> framework (cost vs service) + example + KPI logic
+       - "S&OP / cross-functional" -> conflict resolution + data-driven alignment
+       - "Procurement / supplier" -> negotiation strategy + risk management + savings
+       - "Data analytics / KPI" -> problem + dashboard built + business impact
+       - "ERP / SAP / Tools" -> systems exposure + business usage + implementation/support angle
+       - "Master data" -> data governance + business impact + cross-functional coordination
+       - "Behavioral STAR story" -> Situation, Task, Action, Result
+    3. ROLE_FAMILY: Identify the relevant supply chain domain (e.g., {resolved_role_family}).
+    4. CV_FACTS: Extract explicit CV evidence (companies like Ontex, Nike, Solvay, QuEST Global, specific metrics, tools like SAP, Power BI, Tableau) relevant to answering this exact question.
+    5. JD_SIGNALS: Extract specific company, industry, or JD requirement signals that this answer addresses.
+    6. SCRIPT: Generate the final spoken answer based STRICTLY on the chosen ANSWER_STRATEGY.
+       - Do NOT use broad generic openings (like "I've always focused on cross-functional alignment") unless explicitly tied to a specific CV example.
+       - The script MUST weave the targeted CV_FACTS together to answer the exact question asked.
        - {style_instruction}
        - Do not greet the interviewer. Start right into the spoken answer.
        - {length_instruction}
@@ -83,6 +96,7 @@ async def generate_ai_response_with_llm(
     You MUST format your EXACT response using the following tags. Do not use markdown blocks outside of these tags.
 
     INTENT: <classification here>
+    ANSWER_STRATEGY: <selected strategy from the list above>
     ROLE_FAMILY: {resolved_role_family}
     CV_FACTS: <bulleted list or short summary of relevant CV facts here>
     JD_SIGNALS: <bulleted list or short summary of relevant JD signals here>
@@ -188,6 +202,7 @@ def _parse_llm_response(raw_text: str) -> Dict[str, str]:
     """Parses the structured tags out of the LLM's response."""
     result = {
         "intent": "Unknown",
+        "answer_strategy": "Unknown",
         "role_family": "Unknown",
         "cv_facts": "None extracted",
         "jd_signals": "None extracted",
@@ -195,13 +210,15 @@ def _parse_llm_response(raw_text: str) -> Dict[str, str]:
     }
 
     # Use regex to extract the sections
-    intent_match = re.search(r"INTENT:\s*(.*?)(?=ROLE_FAMILY:|$)", raw_text, re.DOTALL | re.IGNORECASE)
+    intent_match = re.search(r"INTENT:\s*(.*?)(?=ANSWER_STRATEGY:|$)", raw_text, re.DOTALL | re.IGNORECASE)
+    strategy_match = re.search(r"ANSWER_STRATEGY:\s*(.*?)(?=ROLE_FAMILY:|$)", raw_text, re.DOTALL | re.IGNORECASE)
     role_match = re.search(r"ROLE_FAMILY:\s*(.*?)(?=CV_FACTS:|$)", raw_text, re.DOTALL | re.IGNORECASE)
     cv_match = re.search(r"CV_FACTS:\s*(.*?)(?=JD_SIGNALS:|$)", raw_text, re.DOTALL | re.IGNORECASE)
     jd_match = re.search(r"JD_SIGNALS:\s*(.*?)(?=SCRIPT:|$)", raw_text, re.DOTALL | re.IGNORECASE)
     script_match = re.search(r"SCRIPT:\s*(.*)", raw_text, re.DOTALL | re.IGNORECASE)
 
     if intent_match: result["intent"] = intent_match.group(1).strip()
+    if strategy_match: result["answer_strategy"] = strategy_match.group(1).strip()
     if role_match: result["role_family"] = role_match.group(1).strip()
     if cv_match: result["cv_facts"] = cv_match.group(1).strip()
     if jd_match: result["jd_signals"] = jd_match.group(1).strip()
@@ -221,55 +238,58 @@ def _mock_response(question: str, cv: str, job_role: str, style: str, role_famil
     if "solvay" in cv_lower: facts.append("Solvay")
     if "quest global" in cv_lower: facts.append("QuEST Global")
 
-    if "power bi" in cv_lower: facts.append("Power BI")
-    if "tableau" in cv_lower: facts.append("Tableau")
-    if "sap" in cv_lower: facts.append("SAP")
+    tools = []
+    if "power bi" in cv_lower: tools.append("Power BI")
+    if "tableau" in cv_lower: tools.append("Tableau")
+    if "sap" in cv_lower: tools.append("SAP")
 
-    cv_facts_str = ", ".join(facts) if facts else "General supply chain background"
-    company_mention = facts[0] if facts else "my previous company"
-    tool_mention = "SAP" if "sap" in cv_lower else "Power BI" if "power bi" in cv_lower else "ERP tools"
+    cv_facts_str = ", ".join(facts + tools) if (facts or tools) else "General supply chain background"
+    company_mention = facts[0] if facts else "my current role"
+    tool_mention = tools[0] if tools else "our core planning systems"
 
     response = {
         "intent": "General Inquiry",
+        "answer_strategy": "Behavioral STAR story",
         "role_family": role_family,
         "cv_facts": cv_facts_str,
-        "jd_signals": f"Detected target: {role_family} requirements.",
+        "jd_signals": f"Required {role_family} competencies.",
         "script": ""
     }
 
     if "yourself" in lower_q or "background" in lower_q:
         response["intent"] = "Introduce Yourself / Background"
+        response["answer_strategy"] = "Introduce yourself -> short career journey + current strengths + why relevant now"
 
-        if role_family == "Demand Planning":
-            response["script"] = f"To answer that—I've spent the last few years heavily focused on demand forecasting and S&OP alignment. Specifically at {company_mention}, I was responsible for cleaning historical sales data and managing promotional lift to improve our overall forecast accuracy. I mean, I really enjoy diving into {tool_mention} to pull out baseline trends, which is exactly why this Demand Planning role caught my eye."
-        elif role_family == "Procurement / Buyer":
-            response["script"] = f"To answer that—my background is deeply rooted in strategic sourcing and vendor management. During my time at {company_mention}, I handled supplier negotiations that directly led to significant cost savings and better MOQ agreements. I'm very comfortable managing risk and lead times across the supply base, and that aligns perfectly with what you need here."
-        elif role_family == "Data Analytics":
-            response["script"] = f"To answer that—I'm a data-driven analyst at heart. I spent a lot of my time at {company_mention} building out actionable dashboards in {tool_mention} and streamlining our ETL pipelines. My core focus has always been on translating complex raw data into clear KPI storytelling for leadership."
-        elif role_family == "ERP / Planning Systems":
-            response["script"] = f"To answer that—I specialize in bridging the gap between business processes and technical implementations. At {company_mention}, I played a key role in our recent system rollout, handling everything from business requirement gathering and UAT testing to hypercare support. Working extensively with {tool_mention} master data taught me how critical cross-functional alignment really is."
-        else: # Supply Planning / Inventory / General
-            response["script"] = f"To answer that—I've spent my career optimizing end-to-end supply chain flows. Over at {company_mention}, I focused heavily on balancing capacity constraints with inventory service levels. I relied extensively on {tool_mention} to track our core KPIs and really drive down working capital."
+        response["script"] = f"To start, I've spent the bulk of my career diving deep into {role_family}. During my time at {company_mention}, my biggest strength was bridging the gap between raw data and actual business execution using {tool_mention}. Right now, I'm looking to take that hands-on technical foundation and apply it to the specific supply chain challenges you've outlined in this job description."
 
     elif "why" in lower_q and "role" in lower_q:
         response["intent"] = "Motivation / Why this role"
-        response["script"] = f"Well, looking at your job description, your focus on {role_family} really stood out to me. At {company_mention}, I was already doing very similar work—driving cross-functional alignment and managing those key metrics. I think bringing my hands-on experience with {tool_mention} into your environment makes this a really natural next step for me."
+        response["answer_strategy"] = "Why this role -> motivation + match to JD + value I can bring"
+
+        response["script"] = f"Well, what really drew me to this role is your explicit focus on driving measurable {role_family} outcomes. Looking back at my work with {company_mention}, I was already doing exactly that—specifically leveraging {tool_mention} to drop our lead times and tighten our planning cycles. I know I can step into this position and immediately bring that same level of value to your team."
 
     elif "forecast" in lower_q or "accuracy" in lower_q:
-        response["intent"] = "Experience Example / Forecasting"
-        response["script"] = f"That's an interesting point. Actually, while I was at {company_mention}, we were dealing with significant forecast bias due to poor historical data. I ended up pulling the data into {tool_mention} and essentially rebuilding our baseline statistical forecasting model. It was a bit of a heavy lift, but—you know—we ultimately stabilized our MAPE and significantly improved our consensus planning."
+        response["intent"] = "Forecasting / Demand Planning"
+        response["answer_strategy"] = "Forecasting example -> specific achievement with numbers + root cause + action"
+
+        response["script"] = f"Sure. So at {company_mention}, we had a major issue where our forecast accuracy was hovering around 65% because sales and supply were totally misaligned. I dug into the root cause by pulling historical data into {tool_mention} and essentially rebuilt our baseline statistical model to automatically flag outliers. Within six months, that specific action brought our forecast accuracy up to 82%."
 
     elif "inventory" in lower_q or "trade-off" in lower_q or "service level" in lower_q:
-        response["intent"] = "Experience Example / Inventory Trade-offs"
-        response["script"] = f"Honestly, managing that balance is the core of {role_family}. At {company_mention}, we constantly had to weigh holding costs against our target fill rates. I ran a detailed ABC/XYZ analysis using {tool_mention} to optimize our safety stock parameters. It allowed us to reduce our SLOBs without hurting our core service levels."
+        response["intent"] = "Supply Planning / Inventory Trade-off"
+        response["answer_strategy"] = "Inventory trade-off -> framework (cost vs service) + example + KPI logic"
+
+        response["script"] = f"That's a great question. My framework for that is always balancing our holding costs against the target fill rate. For instance, at {company_mention}, we were carrying way too much safety stock. I used {tool_mention} to run a rigorous ABC/XYZ analysis, which allowed us to dial back inventory on our stable 'A' items while protecting service levels on our volatile 'Z' items. Ultimately, we reduced working capital by 12% without a single stockout."
 
     elif "sap" in lower_q or "planning tool" in lower_q or "system" in lower_q:
-        response["intent"] = "Experience Example / Systems & Tools"
-        response["script"] = f"Sure thing. I've had extensive exposure to planning systems, particularly {tool_mention}. During my time with {company_mention}, I wasn't just a passive user; I actively participated in mapping out functional specs and cleaning up the material master data before cutover. I know firsthand how critical accurate master data is to making these systems actually work."
+        response["intent"] = "ERP / Systems / Implementation"
+        response["answer_strategy"] = "ERP / SAP / Tools -> systems exposure + business usage + implementation/support angle"
+
+        response["script"] = f"I've got extensive hands-on experience, particularly with {tool_mention}. While I was with {company_mention}, I wasn't just hitting buttons—I was actually heavily involved in the business side of our system usage. I wrote functional specs, ran user acceptance testing, and constantly had to clean up our master data because I know that a planning system is only as good as the data you feed it."
 
     else:
-        response["intent"] = "Unknown / General"
-        response["script"] = f"That's a great question. Basically, looking at my background with {company_mention}, I've always prioritized cross-functional alignment within {role_family}. I mean, leveraging {tool_mention} to drive decisions and hit those core KPIs is really at the heart of what I do."
+        response["intent"] = "Unknown / General Behavioral"
+        response["answer_strategy"] = "Behavioral STAR story -> Situation, Task, Action, Result"
+        response["script"] = f"That's a good point. A specific example that comes to mind is from my time at {company_mention}. We were facing a pretty significant cross-functional breakdown within our {role_family} team. I took the initiative to build out a centralized tracking dashboard in {tool_mention}, which immediately aligned everyone on the same KPIs. As a result, we significantly reduced our operational delays."
 
     if style == "concise":
         response["script"] = "(Concise) " + response["script"]

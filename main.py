@@ -63,6 +63,7 @@ async def chat_endpoint(request: ChatRequest):
             "success": True,
             "response": response_dict["script"],
             "intent": response_dict["intent"],
+            "answer_strategy": response_dict.get("answer_strategy", "Unknown"),
             "role_family": response_dict["role_family"],
             "cv_facts": response_dict["cv_facts"],
             "jd_signals": response_dict["jd_signals"],
@@ -80,6 +81,7 @@ async def chat_endpoint(request: ChatRequest):
             fallback_dict = {
                 "script": "Yeah, absolutely. I couldn't connect to the live AI provider right now, but jumping into safe fallback mode—please continue with the interview.",
                 "intent": "Error Fallback",
+                "answer_strategy": "Error Fallback",
                 "role_family": "Error",
                 "cv_facts": "None",
                 "jd_signals": "None"
@@ -92,6 +94,7 @@ async def chat_endpoint(request: ChatRequest):
                 "success": False,
                 "response": fallback_dict["script"],
                 "intent": fallback_dict["intent"],
+                "answer_strategy": fallback_dict.get("answer_strategy", "Unknown"),
                 "role_family": fallback_dict["role_family"],
                 "cv_facts": fallback_dict["cv_facts"],
                 "jd_signals": fallback_dict["jd_signals"],

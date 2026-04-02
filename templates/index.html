@@ -157,8 +157,9 @@
         <div class="debug-panel hide-in-compact" id="debug-panel">
             <h4>Domain Context Insights</h4>
             <p><strong>Question Intent:</strong> <span id="debug-intent">-</span></p>
+            <p><strong>Selected Strategy:</strong> <span id="debug-strategy">-</span></p>
             <p><strong>Detected Role Family:</strong> <span id="debug-role">-</span></p>
-            <p><strong>CV Facts Matched:</strong> <span id="debug-cv">-</span></p>
+            <p><strong>CV Evidence Used:</strong> <span id="debug-cv">-</span></p>
             <p><strong>JD Signals Matched:</strong> <span id="debug-jd">-</span></p>
             <p><strong>Provider Used:</strong> <span id="debug-provider">-</span></p>
         </div>
@@ -190,6 +191,7 @@
 
     const debugPanel = document.getElementById('debug-panel');
     const debugIntent = document.getElementById('debug-intent');
+    const debugStrategy = document.getElementById('debug-strategy');
     const debugRole = document.getElementById('debug-role');
     const debugCv = document.getElementById('debug-cv');
     const debugJd = document.getElementById('debug-jd');
@@ -413,6 +415,7 @@
                     debugPanel.style.display = 'block';
                 }
                 debugIntent.innerText = data.intent || "N/A";
+                debugStrategy.innerText = data.answer_strategy || "N/A";
                 debugRole.innerText = data.role_family || "N/A";
                 debugCv.innerText = data.cv_facts || "N/A";
                 debugJd.innerText = data.jd_signals || "N/A";
