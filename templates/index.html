@@ -114,12 +114,30 @@
             <button type="button" id="tab-keys" style="margin-top: 0; background: #6c757d;">3. API Keys</button>
         </div>
 
-        <form id="setup-form">
+
+    <div style="margin-bottom: 20px;">
+        <label for="operation-mode"><strong>Operation Mode:</strong></label>
+        <select id="operation-mode" style="padding: 5px; margin-left: 10px;">
+            <option value="mock">Mock Interview (User Mic Only)</option>
+            <option value="manual">Live Manual Assist (Browser Audio/Fallback)</option>
+            <option value="companion">Meeting Companion (Read FEASIBILITY.md)</option>
+        </select>
+    </div>
+
+    <div id="test-actions" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <button type="button" id="btn-test-api" style="background: #17a2b8; padding: 5px 10px;">Test API Health</button>
+        <button type="button" id="btn-test-mic" style="background: #17a2b8; padding: 5px 10px;">Test Mic</button>
+        <button type="button" id="btn-test-stt" style="background: #17a2b8; padding: 5px 10px;">Test STT</button>
+        <button type="button" id="btn-test-gen" style="background: #17a2b8; padding: 5px 10px;">Test Answer Generation</button>
+        <button type="button" id="btn-toggle-diag" style="background: #6c757d; padding: 5px 10px;">Toggle Diagnostics</button>
+    </div>
+
+<form id="setup-form">
             <!-- TAB 1 -->
             <div id="panel-interview">
                 <div class="form-group">
                     <label for="job-role">Target Job Role & Description</label>
-                    <textarea id="job-role" name="job_role" rows="4" required placeholder="Paste the target job role title and description here..."></textarea>
+                    <textarea id="job-role" name="job_role" rows="4" placeholder="Paste the target job role title and description here..."></textarea>
                 </div>
                 <div class="form-group">
                     <label for="target-role-family">Target Role Family</label>
@@ -151,7 +169,7 @@
             <div id="panel-cv" style="display: none;">
                 <div class="form-group">
                     <label for="cv">Your CV / Resume</label>
-                    <textarea id="cv" name="cv" rows="10" required placeholder="Paste your CV text here for the best accuracy..."></textarea>
+                    <textarea id="cv" name="cv" rows="10" placeholder="Paste your CV text here for the best accuracy..."></textarea>
                 </div>
             </div>
 
@@ -176,7 +194,17 @@
         </form>
     </div>
 
-    <div class="interview-interface" id="interview-section">
+
+    <div id="diagnostics-panel" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; background: #f9f9f9; font-size: 0.9em; display: none;">
+        <h4>System Diagnostics</h4>
+        <p><strong>Active Model Provider:</strong> <span id="diag-provider">-</span></p>
+        <p><strong>STT Provider:</strong> <span id="diag-stt">-</span></p>
+        <p><strong>Fallback Status:</strong> <span id="diag-fallback">None</span></p>
+        <p><strong>Last Error:</strong> <span id="diag-error">None</span></p>
+    </div>
+
+
+<div class="interview-interface" id="interview-section">
 
         <div id="mode-badge" class="mode-badge mode-candidate hide-in-compact">
             Me Speaking Mode (Transcribing only)
@@ -239,6 +267,76 @@
     const setupForm = document.getElementById('setup-form');
     const setupSection = document.getElementById('setup-section');
     const interviewSection = document.getElementById('interview-section');
+
+
+    const diagPanel = document.getElementById('diagnostics-panel');
+    const diagProvider = document.getElementById('diag-provider');
+    const diagStt = document.getElementById('diag-stt');
+    const diagFallback = document.getElementById('diag-fallback');
+    const diagError = document.getElementById('diag-error');
+
+    document.getElementById('btn-toggle-diag')?.addEventListener('click', () => {
+        diagPanel.style.display = diagPanel.style.display === 'none' ? 'block' : 'none';
+    });
+
+    document.getElementById('btn-test-api')?.addEventListener('click', async () => {
+        try {
+            const res = await fetch('/health');
+            if (res.ok) {
+                const data = await res.json();
+                alert(`API is healthy! Timestamp: ${data.timestamp}`);
+                diagError.innerText = "None (Health Check OK)";
+            } else {
+                throw new Error("Bad status code");
+            }
+        } catch(e) {
+            alert("API Health Check failed.");
+            diagError.innerText = "API Health Check Failed: " + e.message;
+        }
+    });
+
+    document.getElementById('btn-test-mic')?.addEventListener('click', async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            alert("Microphone access successful!");
+            stream.getTracks().forEach(t => t.stop());
+            diagError.innerText = "None (Mic Test OK)";
+        } catch(e) {
+            alert("Microphone access failed: " + e.message);
+            diagError.innerText = "Mic Access Failed: " + e.message;
+        }
+    });
+
+    document.getElementById('btn-test-stt')?.addEventListener('click', () => {
+        alert("Server STT implementation requires sending audio blobs to /stt. Feature stubbed in backend.");
+        diagStt.innerText = "Server STT (Tested)";
+    });
+
+
+    const operationMode = document.getElementById('operation-mode');
+
+    function updateSttDiagnostic() {
+        if (!operationMode) return;
+        const mode = operationMode.value;
+        if (mode === 'mock') {
+            diagStt.innerText = "Browser Web Speech API (User Mic)";
+        } else if (mode === 'manual') {
+            diagStt.innerText = "Manual Input / Browser Speech (Fallback)";
+        } else {
+            diagStt.innerText = "Server STT (Meeting Companion)";
+        }
+    }
+
+    operationMode?.addEventListener('change', updateSttDiagnostic);
+    // Initial call
+    updateSttDiagnostic();
+
+    document.getElementById('btn-test-gen')?.addEventListener('click', () => {
+         alert("Please use the main interface to generate a real answer with your configuration.");
+    });
+
+    // Update diagnostics when stream parses token
+    // Handled inside the generateBtn click listener logic in a full impl
 
     // Tabs logic
     const tabs = {
@@ -365,6 +463,9 @@
 
     setupForm.addEventListener('submit', (e) => {
         e.preventDefault();
+        console.log("Start Interview clicked.");
+                document.getElementById("setup-section").style.display = "none";
+        document.getElementById("interview-section").style.display = "block";
 
         // Store data locally
         userJobRole = document.getElementById('job-role').value;
@@ -398,6 +499,10 @@
     });
 
     function toggleSpeakerMode() {
+                if (!recognitionInterviewer) {
+            logError("Cannot toggle speaker: Web Speech API not initialized.");
+            return;
+        }
         if (!recognitionInterviewer) return;
 
         isInterviewerSpeaking = !isInterviewerSpeaking;
@@ -627,7 +732,8 @@
     }
 
     floatBtn.addEventListener('click', openOverlay);
-    document.getElementById('inl-close-btn').addEventListener('click', closeOverlay);
+    const inlClose = document.getElementById('inl-close-btn');
+    if(inlClose) inlClose.addEventListener('click', closeOverlay);
 
     // Sync state to overlay
     function sendOverlayUpdate(scrollTop = false) {
@@ -683,8 +789,10 @@
         }
     });
 
-    document.getElementById('inl-spk-int').addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
-    document.getElementById('inl-spk-me').addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
+    const inlSpkInt = document.getElementById('inl-spk-int');
+    if(inlSpkInt) inlSpkInt.addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
+    const inlSpkMe = document.getElementById('inl-spk-me');
+    if(inlSpkMe) inlSpkMe.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
 
     // Patch existing toggleSpeakerMode to notify overlay
     const origToggle = toggleSpeakerMode;

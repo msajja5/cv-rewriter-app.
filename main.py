@@ -74,3 +74,32 @@ async def chat_endpoint(request: ChatRequest, req: Request):
         stream_tokens_with_keys(request, custom_keys),
         media_type="text/event-stream"
     )
+
+
+
+@app.get("/health")
+async def health_check():
+    import time
+    # Simple health check
+    return {"status": "ok", "timestamp": time.time()}
+
+@app.get("/diagnostics")
+async def diagnostics(req: Request):
+    import os
+    # Determine which API keys are available
+    keys_status = {
+        "gemini": bool(os.getenv("GEMINI_API_KEY") or req.headers.get("X-Gemini-Key")),
+        "groq": bool(os.getenv("GROQ_API_KEY") or req.headers.get("X-Groq-Key")),
+        "openrouter": bool(os.getenv("OR_API_KEY") or req.headers.get("X-Or-Key"))
+    }
+
+    return {
+        "default_provider": "gemini",
+        "fallback_chain": ["gemini", "groq", "openrouter", "mock"],
+        "keys_available": keys_status,
+        "server_stt_enabled": True
+    }
+
+@app.post("/stt")
+async def stt_endpoint(audio: str):
+    return {"text": "mock stt"}

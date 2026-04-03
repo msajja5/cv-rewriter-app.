@@ -40,30 +40,39 @@ async def generate_ai_response_with_llm_stream(
         "language": ["cross-functional alignment"]
     })
 
-    # 1. Identity & Framing
-    system_prompt = "You are a candidate speaking in a live job interview. You read answers directly on screen. Write EXACTLY what the candidate would say — in their voice, grounded in their real career history.\n\n"
 
-    # 2. Target role context
-    system_prompt += f"ROLE BEING INTERVIEWED FOR (INCLUDING TARGET COMPANY): {job_role}\n\n"
+    # Include up to the last 4 turns of conversation history for context
+    history_str = ""
+    if context:
+        recent_context = context[-4:]
+        history_str = "Recent Conversation History:\n" + "\n".join([f"{c.get('role', 'unknown').capitalize()}: {c.get('text', '')}" for c in recent_context])
 
-    # 3. Question-type routing
-    intent = detect_question_routing(question)
-    system_prompt += f"QUESTION TYPE DETECTED: {intent}\n\n"
+    system_prompt = """You are an AI interview assistant generating a natural, spoken-language response for a candidate.
+Follow these strict rules:
+1. Speak in the FIRST PERSON ("I did this", "My experience").
+2. Keep it conversational and concise. The target spoken length is 30-90 seconds.
+3. Use metrics from the CV whenever available.
+4. Prefer direct examples from the candidate's experience.
+5. Admit uncertainty gracefully if the CV does not contain exact evidence (do not make up facts).
+6. DO NOT use robotic introductions like "Thank you for that question."
+7. DO NOT use bullet points or lists. Write in natural paragraphs meant to be read aloud off a teleprompter.
 
-    # 4. Full Candidate Profile (CV)
-    system_prompt += f"CANDIDATE CV / PROFILE:\n{cv}\n\n"
+CANDIDATE CV / PROFILE:
+{cv}
+
+ROLE BEING INTERVIEWED FOR (INCLUDING TARGET COMPANY):
+{job_role}
+
+QUESTION TYPE DETECTED:
+{intent}
+
+RULES:
+- ALWAYS prioritize information from the provided CANDIDATE CV over any internal generic knowledge.
+- If the interviewer asks "what do you know about this company" or similar, use the TARGET COMPANY from the ROLE context.
+- ONLY return the raw spoken script. Do not output INTENT or CV_FACTS tags, just the script directly."""
 
     # 5. Answer format rules
-    system_prompt += """RULES:
-- ALWAYS prioritize information from the provided CANDIDATE CV over any internal generic knowledge.
-- If the interviewer asks \"what do you know about this company\" or similar, use the TARGET COMPANY from the ROLE context.
-- Natural spoken English.
-- STAR structure woven invisibly.
-- 3-4 paragraphs, blank line between each.
-- Use conversational connectors: \"So,\", \"Basically,\", \"What I did was,\", \"Honestly,\", \"At the end of the day.\"
-- NEVER start with: \"Certainly\", \"Great question\", \"Absolutely\", \"Sure\".
-- First person (\"I\") only. Max 2-3 sentences per paragraph.
-- ONLY return the raw spoken script. Do not output INTENT or CV_FACTS tags, just the script directly."""
+
     messages = [{"role": "system", "content": system_prompt}]
 
     # Add recent context (up to last 8 turns)
