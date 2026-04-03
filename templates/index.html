@@ -271,8 +271,7 @@
     const autoListenCheckbox = document.getElementById('auto-listen-checkbox');
     const instructionText = document.getElementById('instruction-text');
 
-    const toggleCompactBtn = document.getElementById('toggle-compact-btn');
-    const exitCompactBtn = document.getElementById('exit-compact-btn');
+
     const modeBadge = document.getElementById('mode-badge');
 
     const transcriptBox = document.getElementById('interviewer-transcript');
@@ -487,8 +486,8 @@
         const tag = e.target.tagName.toLowerCase();
         if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) return;
 
-        if (e.code === \'Space\' && !e.repeat) {
-            if (interviewSection.style.display === \'block\') {
+        if (e.code === 'Space' && !e.repeat) {
+            if (interviewSection.style.display === 'block') {
                 e.preventDefault();
                 toggleSpeakerMode();
             }
@@ -539,7 +538,7 @@
                 <div id="pip-banner" class="banner interviewer">Interviewer Speaking (Auto-Answer)</div>
                 <div id="pip-q" class="q-box">Waiting for question...</div>
                 <div id="pip-text" class="ans-box"></div>
-                <script>
+                <scr` + `ipt>
                     window.addEventListener("message", (e) => {
                         const d = e.data;
                         if (!d || d.type !== "ic-update") return;
@@ -577,7 +576,7 @@
                             btnInt.classList.remove("active");
                         }
                     }
-                </script>
+                </scr" + "ipt>
             </body>
             </html>
         `;
@@ -695,20 +694,7 @@
     };
 
 
-    // Compact Mode Toggles
-    toggleCompactBtn.addEventListener('click', () => {
-        console.log("Toggling Compact Mode ON");
-        document.body.classList.add('compact-mode');
-        // Force the layout to recalculate
-        window.dispatchEvent(new Event('resize'));
-    });
 
-    exitCompactBtn.addEventListener('click', () => {
-        console.log("Toggling Compact Mode OFF");
-        document.body.classList.remove('compact-mode');
-        // Force the layout to recalculate
-        window.dispatchEvent(new Event('resize'));
-    });
 
     clearBtn.addEventListener('click', () => {
         transcriptBox.value = "";

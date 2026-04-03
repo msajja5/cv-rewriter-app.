@@ -1,11 +1,9 @@
 INFO:     Shutting down
 INFO:     Waiting for application shutdown.
 INFO:     Application shutdown complete.
-INFO:     Finished server process [559947]
-INFO:     Started server process [584118]
+INFO:     Finished server process [584118]
+INFO:     Started server process [663204]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:3000 (Press CTRL+C to quit)
-INFO:main:Received chat streaming request for role: test
-INFO:     127.0.0.1:38684 - "POST /chat HTTP/1.1" 200 OK
-INFO:llm_service:All LLM providers failed or missing keys. Falling back to mock logic.
+INFO:     127.0.0.1:53804 - "GET / HTTP/1.1" 200 OK
