@@ -650,7 +650,12 @@
 
                         if (d.q !== undefined) document.getElementById("pip-q").textContent = d.q;
                         if (d.text !== undefined) {
-                            document.getElementById("pip-text").textContent = d.text;
+                            // Append streaming tokens smoothly instead of replacing all
+                            if (d.scrollTop) {
+                                document.getElementById("pip-text").textContent = d.text || "";
+                            } else if (d.text !== undefined) {
+                                document.getElementById("pip-text").textContent = d.text;
+                            }
                         }
                         if (d.fs) document.getElementById("pip-text").style.fontSize = d.fs + "px";
                         if (d.speaker) updateSpeakerUI(d.speaker);
@@ -893,8 +898,20 @@
 
                                 if (data.type === "token") {
                                     fullResponse += data.content;
+                                    const wasAtTop = aiScriptBox.scrollTop < 50;
                                     aiScriptBox.innerText = fullResponse;
+                                    if (fullResponse.trim().split(/\s+/).length < 5) {
+                                        // New answer starting — scroll to top
+                                        aiScriptBox.scrollTop = 0;
+                                    }
                                     sendOverlayUpdate();
+                                    // Light STAR badges based on word count progress
+                                    const wc = fullResponse.trim().split(/\s+/).length;
+                                    const starEls = document.querySelectorAll('.star-badge, .inl-star, .ps');
+                                    const thresholds = [1, 40, 90, 150];
+                                    starEls.forEach((el, i) => {
+                                        if (i < 4) el.style.opacity = wc >= thresholds[i] ? '1' : '0.2';
+                                    });
 
                                     // Update debug info from the first chunk
                                     if (debugToggle.checked) {

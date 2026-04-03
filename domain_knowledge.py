@@ -111,4 +111,22 @@ def detect_question_routing(question: str) -> str:
     if "hear me" in q_lower or "see my screen" in q_lower or "how are you" in q_lower:
         return "ROUTE: Small Talk. Provide 1-2 sentence confirmation. NO interview details."
 
+    if any(w in q_lower for w in ["tell me about yourself", "walk me through", "introduce yourself", "your background", "about you"]):
+        return """ROUTE: Introduction / Tell me about yourself.
+Use this EXACT career arc narrative:
+Start: 'So, I have about 7 years in supply chain — I started as a Kinaxis consultant at QuEST Global, working on two major implementations: ExxonMobil (6 plants, €12M working capital released, planning cycle cut from 2 weeks to 4 hours) and Bombardier (forecast accuracy up 26%). That gave me a very deep technical foundation in planning systems.'
+Middle: 'From there I moved to Solvay in France — smaller scale but incredibly rigorous data environment. Raw materials planning for €150M, and I essentially rebuilt their master data governance from scratch — went from about 60% data completeness to 99% and cleared 1500+ defects.'
+Nike: 'Then Nike EMEA for retail demand forecasting across a €2B distribution network — very different from manufacturing, much more commercial-facing, built Tableau dashboards the commercial team actually used.'
+Ontex: 'And most recently Ontex BV in Belgium — that was the most complex role. 12 global manufacturing plants, €4B operations. I led the Arkieva APS implementation, drove 27% forecast accuracy improvement, managed €60M in procurement savings, and built out the consensus S&OP process from scratch.'
+Close: Connect to target role using the job_role variable."""
+
+    if any(w in q_lower for w in ["strength", "best quality", "excel at", "good at"]):
+        return """ROUTE: Strengths. Pick the 2 most relevant to the target role_family and give a specific example from Ontex or QuEST for each."""
+
+    if any(w in q_lower for w in ["weakness", "improve", "development area", "work on"]):
+        return """ROUTE: Weakness. Give a genuine development area (e.g., delegation — tendency to go deep into data personally rather than trusting team), show active mitigation steps."""
+
+    if any(w in q_lower for w in ["why this role", "why us", "why this company", "what attracted", "what drew"]):
+        return f"""ROUTE: Motivation / Why this role. Match 2-3 specific requirements from job_role to Ontex/QuEST achievements. Be specific about the company."""
+
     return "ROUTE: General Behavioral. Pull from Ontex (highest level strategic impact) or QuEST (deep technical problem solving) based on the question."

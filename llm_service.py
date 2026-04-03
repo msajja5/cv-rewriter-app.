@@ -41,39 +41,64 @@ async def generate_ai_response_with_llm_stream(
     })
 
 
-    # Include up to the last 4 turns of conversation history for context
+    # 1. Detect question routing BEFORE building prompt
+    intent = detect_question_routing(question)
+
+    # Length and style guidance based on response_style setting
+    if response_style == "concise":
+        length_guide = "ANSWER LENGTH: 2-3 sentences maximum. One sharp example. Done."
+        style_guide  = "Extremely direct. No warm-up. Lead with the result, then one line of context."
+    elif response_style == "detailed":
+        length_guide = "ANSWER LENGTH: Full STAR story. 180-240 words. Rich detail, specific numbers, step-by-step actions, measurable outcome."
+        style_guide  = "Full depth. Walk through Situation, Task, Action, Result with real names (Ontex, Nike, etc.) and exact metrics."
+    elif response_style == "live_script":
+        length_guide = "ANSWER LENGTH: 110-145 words. Structured for spoken delivery — reads naturally in 25-35 seconds."
+        style_guide  = "Natural spoken rhythm. Vary sentence length deliberately. Use dashes for pauses. Conversational, not corporate."
+    else:  # normal
+        length_guide = "ANSWER LENGTH: 100-140 words. One clear example with a metric. Reads in about 25-30 seconds."
+        style_guide  = "Warm and direct. Like a confident professional talking to a peer, not presenting to a board."
+
+    # Include up to the last 8 turns of conversation history for context
     history_str = ""
     if context:
-        recent_context = context[-4:]
-        history_str = "Recent Conversation History:\n" + "\n".join([f"{c.get('role', 'unknown').capitalize()}: {c.get('text', '')}" for c in recent_context])
+        recent_context = context[-8:]
+        history_str = "Recent Conversation History:
+" + "
+".join([f"{c.get('role', 'unknown').capitalize()}: {c.get('text', '')}" for c in recent_context])
 
-    system_prompt = """You are an AI interview assistant generating a natural, spoken-language response for a candidate.
-Follow these strict rules:
-1. Speak in the FIRST PERSON ("I did this", "My experience").
-2. Keep it conversational and concise. The target spoken length is 30-90 seconds.
-3. Use metrics from the CV whenever available.
-4. Prefer direct examples from the candidate's experience.
-5. Admit uncertainty gracefully if the CV does not contain exact evidence (do not make up facts).
-6. DO NOT use robotic introductions like "Thank you for that question."
-7. DO NOT use bullet points or lists. Write in natural paragraphs meant to be read aloud off a teleprompter.
+    # 2. Build system prompt as f-string so all variables are substituted
+    system_prompt = f"""You are Manjunath Sajjan speaking in a live job interview. Write EXACTLY what he would say — natural, confident, warm. He reads your words directly on screen word-for-word.
 
-CANDIDATE CV / PROFILE:
-{cv}
+ROLE BEING INTERVIEWED FOR: {job_role}
 
-ROLE BEING INTERVIEWED FOR (INCLUDING TARGET COMPANY):
-{job_role}
-
-QUESTION TYPE DETECTED:
+QUESTION TYPE AND ROUTING:
 {intent}
 
-RULES:
-- ALWAYS prioritize information from the provided CANDIDATE CV over any internal generic knowledge.
-- If the interviewer asks "what do you know about this company" or similar, use the TARGET COMPANY from the ROLE context.
-- ONLY return the raw spoken script. Do not output INTENT or CV_FACTS tags, just the script directly."""
+CANDIDATE PROFILE (use these EXACT metrics in every answer):
+{MANJUNATH_PROFILE}
 
-    # 5. Answer format rules
+ALSO USE THIS CV/JD IF PROVIDED:
+{cv}
+
+{length_guide}
+{style_guide}
+
+ANSWER FORMAT — CRITICAL RULES:
+- Natural spoken English. STAR structure (Situation→Task→Action→Result) woven invisibly.
+- 4 short paragraphs, blank line between each. Max 2-3 sentences per paragraph.
+- Use natural connectors: "So,", "Basically,", "What I did was,", "And what's interesting is,", "Honestly,"
+- Mix short punchy sentences with longer flowing ones. Comma pauses for breathing.
+- Plain words: "fixed" not "remediated", "built" not "developed", "cut" not "optimised"
+- NEVER start with: Certainly, Great question, Absolutely, Sure, Thank you for that question
+- First person only. Start immediately with the first spoken word — zero warm-up.
+- Small talk questions (can you hear me, how are you): 1-2 sentences ONLY. Nothing more.
+
+{history_str}
+"""
+    logger.info(f"Prompt length: {len(system_prompt)} chars — profile included: {'Ontex' in system_prompt}")
 
     messages = [{"role": "system", "content": system_prompt}]
+
 
     # Add recent context (up to last 8 turns)
     for msg in context[-8:]:
@@ -92,14 +117,26 @@ RULES:
         return keys
 
     # 1. Try Gemini (gemini-2.0-flash or 1.5 fallback)
+    BUILTIN_GEMINI_KEY = "AIzaSyA--fSpeDoN48NhPLorgOinMmKRCrLoypU"
     gemini_keys = get_keys("GEMINI_API_KEY", "X-Gemini-Key") or get_keys("GEMINI_KEYS", "X-Gemini-Key")
+    if not gemini_keys:
+        gemini_keys = [BUILTIN_GEMINI_KEY]
+        logger.info("Using built-in Gemini key as fallback")
+    elif BUILTIN_GEMINI_KEY not in gemini_keys:
+        gemini_keys.append(BUILTIN_GEMINI_KEY)  # add as last resort
 
     for key in gemini_keys:
         try:
             import google.generativeai as genai
             genai.configure(api_key=key)
-            # Try 2.0 first, then 1.5
-            model = genai.GenerativeModel('gemini-2.0-flash', system_instruction=system_prompt)
+
+            # Try 2.0 first (faster), fall back to 1.5 if unavailable
+            for gemini_model_name in ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']:
+                try:
+                    model = genai.GenerativeModel(gemini_model_name, system_instruction=system_prompt)
+                    break
+                except Exception:
+                    continue
 
             gemini_history = []
             for msg in messages[1:-1]: # Skip system and last user
@@ -160,31 +197,57 @@ RULES:
 
     # 3. Fallback to OpenAI / OpenRouter
     or_keys = get_keys("OR_KEYS", "X-Or-Key") or get_keys("OPENAI_API_KEYS", "X-Or-Key")
+
+    # Verified working OR free models (as of 2025) — try each on 404/no-endpoint error
+    OR_FREE_MODELS = [
+        "google/gemini-2.0-flash-exp:free",
+        "deepseek/deepseek-chat:free",
+        "meta-llama/llama-3.3-70b-instruct:free",
+        "qwen/qwen3-30b-a3b:free",
+        "mistralai/mistral-small-3.1-24b-instruct:free",
+    ]
+
     for key in or_keys:
         try:
             import openai
             base_url = "https://openrouter.ai/api/v1" if key.startswith("sk-or") else None
-            model_name = "meta-llama/llama-3.3-70b-instruct:free" if key.startswith("sk-or") else "gpt-4o-mini"
-            client = openai.AsyncOpenAI(api_key=key, base_url=base_url)
 
-            response = await client.chat.completions.create(
-                model=model_name,
-                messages=messages,
-                max_tokens=900,
-                temperature=0.72,
-                stream=True
-            )
-            async for chunk in response:
-                token = chunk.choices[0].delta.content
-                if token:
-                    yield {
-                        "type": "token",
-                        "content": token,
-                        "provider": model_name,
-                        "intent": intent,
-                        "role_family": resolved_role_family
-                    }
-            return # Success
+            models_to_try = OR_FREE_MODELS if key.startswith("sk-or") else ["gpt-4o-mini"]
+
+            success = False
+            for model_name in models_to_try:
+                try:
+                    client = openai.AsyncOpenAI(api_key=key, base_url=base_url)
+                    response = await client.chat.completions.create(
+                        model=model_name,
+                        messages=messages,
+                        max_tokens=900,
+                        temperature=0.72,
+                        stream=True
+                    )
+
+                    async for chunk in response:
+                        token = chunk.choices[0].delta.content
+                        if token:
+                            yield {
+                                "type": "token",
+                                "content": token,
+                                "provider": model_name,
+                                "intent": intent,
+                                "role_family": resolved_role_family
+                            }
+                    success = True
+                    break # Break out of inner model loop if successful
+                except Exception as model_err:
+                    logger.warning(f"Model {model_name} failed: {str(model_err)}")
+                    continue
+
+            if success:
+                return # Success, exit overall function
+            else:
+                logger.warning(f"All models failed for key {key[:10]}...")
+                continue # Try next key
+
         except Exception as e:
             logger.warning(f"OpenRouter/OpenAI API Error: {str(e)}")
             continue
@@ -208,6 +271,11 @@ RULES:
 def _mock_response(question: str, cv: str, job_role: str, style: str, role_family: str) -> Dict[str, str]:
     response = {}
     lower_q = question.lower()
+
+    cv_lower = cv.lower()
+    company_mention = "Ontex" if "ontex" in cv_lower else ("Nike" if "nike" in cv_lower else ("QuEST Global" if "quest" in cv_lower else "my previous role"))
+    tool_mention = "Power BI" if "power bi" in cv_lower else ("Tableau" if "tableau" in cv_lower else ("SAP" if "sap" in cv_lower else ("Arkieva" if "arkieva" in cv_lower else "our planning system")))
+
 
     if "company" in lower_q or "know about us" in lower_q or "why us" in lower_q:
         response["intent"] = "Company Knowledge / Fit"
