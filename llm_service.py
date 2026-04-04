@@ -115,12 +115,12 @@ ANSWER FORMAT — CRITICAL RULES:
         return keys
 
     # 1. Try Gemini (gemini-2.0-flash or 1.5 fallback)
-    BUILTIN_GEMINI_KEY = "AIzaSyA--fSpeDoN48NhPLorgOinMmKRCrLoypU"
+    BUILTIN_GEMINI_KEY = os.getenv("BUILTIN_GEMINI_KEY", "")
     gemini_keys = get_keys("GEMINI_API_KEY", "X-Gemini-Key") or get_keys("GEMINI_KEYS", "X-Gemini-Key")
-    if not gemini_keys:
+    if not gemini_keys and BUILTIN_GEMINI_KEY:
         gemini_keys = [BUILTIN_GEMINI_KEY]
         logger.info("Using built-in Gemini key as fallback")
-    elif BUILTIN_GEMINI_KEY not in gemini_keys:
+    elif BUILTIN_GEMINI_KEY and BUILTIN_GEMINI_KEY not in gemini_keys:
         gemini_keys.append(BUILTIN_GEMINI_KEY)  # add as last resort
 
     for key in gemini_keys:

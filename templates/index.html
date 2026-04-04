@@ -57,7 +57,22 @@
             70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
             100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
         }
-    </style>
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        .blink { animation: blink 1s infinite; color: #ff4444; }
+        @media (max-width: 800px) {
+            #inline-overlay {
+                left: 0 !important;
+                right: 0 !important;
+                top: auto !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 55vh !important;
+                border-left: none !important;
+                border-top: 2px solid #00c9a7 !important;
+            }
+        }
+</style>
 </head>
 <body>
 
@@ -393,6 +408,7 @@
     let tempSttBuffer = '';
     let silenceTimer = null;
     let continuousListeningActive = false;
+    let overlayUpdateThrottle = null;
 
     // Client-side state management for Serverless backend
     let userCv = "";
@@ -434,7 +450,7 @@
                     transcriptBox.value = tempSttBuffer + interimTranscript;
                 }
 
-                // Auto-Listen Silence Detection Logic
+// Auto-Listen Silence Detection Logic
                 if (continuousListeningActive) {
                     clearTimeout(silenceTimer);
                     if (transcriptBox.value.trim().length > 5) {
@@ -444,12 +460,17 @@
                         }, 2500);
                     }
                 }
+
+                // throttle overlay updates to once per 300ms
+                clearTimeout(overlayUpdateThrottle);
+                overlayUpdateThrottle = setTimeout(() => sendOverlayUpdate(), 300);, 2500);
+                    }
+                }
             }
         };
 
         recognitionInterviewer.onend = function() {
-            // Keep the microphone open permanently if continuous mode is active
-            if (continuousListeningActive) {
+            if (continuousListeningActive || isInterviewerSpeaking) {
                 try { recognitionInterviewer.start(); } catch(e) {}
             }
         };
@@ -457,7 +478,7 @@
     } else {
         sttStatusSpan.innerText = "Not Supported (Please use Chrome/Edge)";
         sttStatusSpan.style.color = "red";
-        startBtn.disabled = true;
+        startBtn.disabled = false;
         setupSection.innerHTML = `<div style="background:#f8d7da; color:#721c24; padding:20px;"><strong>⚠️ Speech recognition is not supported in this browser.</strong></div>` + setupSection.innerHTML;
     }
 
@@ -473,10 +494,17 @@
         userStyle = document.getElementById('response-style').value;
         targetRoleFamily = document.getElementById('target-role-family').value;
 
-        // Stash keys in localStorage
-        localStorage.setItem("geminiKey", document.getElementById('gemini-key').value);
-        localStorage.setItem("groqKey", document.getElementById('groq-key').value);
-        localStorage.setItem("orKey", document.getElementById('or-key').value);
+        // Stash keys in memory and try localStorage
+        window.sessionKeys = {
+            gemini: document.getElementById('gemini-key').value,
+            groq: document.getElementById('groq-key').value,
+            or: document.getElementById('or-key').value
+        };
+        try {
+            localStorage.setItem("geminiKey", window.sessionKeys.gemini);
+            localStorage.setItem("groqKey", window.sessionKeys.groq);
+            localStorage.setItem("orKey", window.sessionKeys.or);
+        } catch(e) { console.warn("localStorage not available, using sessionKeys"); }
 
         interviewContext = []; // Reset context
         setupSection.style.display = 'none';
@@ -499,34 +527,27 @@
     });
 
     function toggleSpeakerMode() {
-                if (!recognitionInterviewer) {
-            logError("Cannot toggle speaker: Web Speech API not initialized.");
-            return;
-        }
         if (!recognitionInterviewer) return;
-
         isInterviewerSpeaking = !isInterviewerSpeaking;
 
         if (isInterviewerSpeaking) {
-            // Switch to Interviewer
             tempSttBuffer = '';
-            window.baseBoxText = appendCheckbox.checked ? transcriptBox.value.trim() : '';
-
+            window.baseBoxText = (appendCheckbox && appendCheckbox.checked) ? transcriptBox.value.trim() : '';
             startBtn.innerText = "[Space bar] Switch to Me Speaking";
-            startBtn.style.backgroundColor = "#dc3545"; // Red
-
+            startBtn.style.backgroundColor = "#dc3545";
             modeBadge.innerText = "Interviewer Mode (Transcribing...)";
             modeBadge.className = "mode-badge mode-interviewer";
+            // START the microphone
+            try { recognitionInterviewer.start(); } catch(e) { /* already running is OK */ }
         } else {
-            // Switch to Candidate
             startBtn.innerText = "[Space bar] Switch to Interviewer Speaking";
-            startBtn.style.backgroundColor = "#007bff"; // Blue
-
+            startBtn.style.backgroundColor = "#007bff";
             modeBadge.innerText = "Me Speaking Mode (Transcribing only)";
-            modeBadge.style.backgroundColor = "#f3e8ff"; // Purple
-            modeBadge.style.borderColor = "#6f42c1";
-            modeBadge.style.color = "#6f42c1";
+            modeBadge.className = "mode-badge mode-candidate";
+            // STOP the microphone
+            try { recognitionInterviewer.stop(); } catch(e) {}
         }
+        sendOverlayUpdate(); // always sync overlay on mode change
     }
 
     autoListenCheckbox.addEventListener('change', async (e) => {
@@ -605,6 +626,7 @@
     let pipWin = null;
     let popupWin = null;
     let overlayFs = 26;
+    let overlayHeartbeat = null;
 
     const floatBtn = document.getElementById('float-btn');
     const inlineOverlay = document.getElementById('inline-overlay');
@@ -628,7 +650,22 @@
                     .controls button { background: #333; color: white; border: none; padding: 5px 10px; margin: 0 2px; cursor: pointer; border-radius: 3px; }
                     .controls button:hover { background: #555; }
                     .spk-btn.active { border: 2px solid white; }
-                </style>
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+        .blink { animation: blink 1s infinite; color: #ff4444; }
+        @media (max-width: 800px) {
+            #inline-overlay {
+                left: 0 !important;
+                right: 0 !important;
+                top: auto !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                height: 55vh !important;
+                border-left: none !important;
+                border-top: 2px solid #00c9a7 !important;
+            }
+        }
+</style>
             </head>
             <body>
                 <div class="topbar">
@@ -693,46 +730,40 @@
     }
 
     async function openOverlay() {
-        if (overlayMode !== "none") return closeOverlay();
-
-        // Tier 1: Document PiP
-        if ('documentPictureInPicture' in window && window === window.top) {
-            try {
-                pipWin = await window.documentPictureInPicture.requestWindow({
-                    width: 500, height: 600
-                });
-                pipWin.document.write(buildPipHTML());
-                pipWin.document.close();
-                overlayMode = "pip";
-                pipWin.addEventListener("pagehide", () => closeOverlay());
-                return;
-            } catch (e) {
-                console.warn("PiP failed, trying popup", e);
-            }
+        if (overlayMode === "inline") {
+            document.getElementById("inline-overlay").style.display = "none";
+            overlayMode = "none";
+            floatBtn.innerText = "⧉ Float Overlay";
+            floatBtn.style.background = "#00c9a7";
+        } else {
+            document.getElementById("inline-overlay").style.display = "flex";
+            overlayMode = "inline";
+            floatBtn.innerText = "✕ Close Overlay";
+            floatBtn.style.background = "#dc3545";
+            sendOverlayUpdate(true);
         }
+    }
 
-        // Tier 2: Popup
+    document.getElementById('popup-btn')?.addEventListener('click', async () => {
         try {
-            popupWin = window.open('', 'InterviewOverlay', 'width=500,height=600,left=1000,top=100,resizable=yes');
+            popupWin = window.open('', 'InterviewOverlay', 'width=480,height=650,left=1000,top=50,resizable=yes');
             if (popupWin) {
                 popupWin.document.write(buildPipHTML());
                 popupWin.document.close();
                 overlayMode = "popup";
-                return;
+                setTimeout(() => sendOverlayUpdate(true), 600);
+                overlayHeartbeat = setInterval(() => {
+                    if (!popupWin || popupWin.closed) { clearInterval(overlayHeartbeat); overlayMode = "none"; return; }
+                    sendOverlayUpdate();
+                }, 2000);
             }
-        } catch(e) {
-            console.warn("Popup failed, using inline", e);
-        }
-
-        // Tier 3: Inline
-        inlineOverlay.style.display = "flex";
-        overlayMode = "inline";
-    }
+        } catch(e) { alert("Popup blocked. Use the inline overlay instead."); }
+    });
 
     function closeOverlay() {
         if (pipWin) { pipWin.close(); pipWin = null; }
         if (popupWin) { popupWin.close(); popupWin = null; }
-        inlineOverlay.style.display = "none";
+        document.getElementById("inline-overlay").style.display = "none";
         overlayMode = "none";
     }
 
@@ -799,12 +830,6 @@
     const inlSpkMe = document.getElementById('inl-spk-me');
     if(inlSpkMe) inlSpkMe.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
 
-    // Patch existing toggleSpeakerMode to notify overlay
-    const origToggle = toggleSpeakerMode;
-    toggleSpeakerMode = function() {
-        origToggle();
-        sendOverlayUpdate();
-    };
 
 
 
@@ -861,9 +886,9 @@
             // Add custom API keys as a header so the backend can extract them if needed
             const customHeaders = {
                 'Content-Type': 'application/json',
-                'X-Gemini-Key': document.getElementById('gemini-key').value,
-                'X-Groq-Key': document.getElementById('groq-key').value,
-                'X-Or-Key': document.getElementById('or-key').value
+                'X-Gemini-Key': window.sessionKeys ? window.sessionKeys.gemini : document.getElementById('gemini-key').value,
+                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : document.getElementById('groq-key').value,
+                'X-Or-Key': window.sessionKeys ? window.sessionKeys.or : document.getElementById('or-key').value
             };
 
             const response = await fetch('/chat', {
@@ -933,13 +958,24 @@
                     }
                 }
 
-                // Track generated answer in history
+// Track generated answer in history
                 interviewContext.push({"role": "candidate", "text": fullResponse});
 
                 // Clear the box for the next question automatically
                 transcriptBox.value = "";
                 tempSttBuffer = "";
                 window.baseBoxText = "";
+
+                // Re-enable continuous listening if it was active before generation
+                if (wasContinuous) {
+                    continuousListeningActive = true;
+                    isInterviewerSpeaking = true; // switch back to interviewer mode automatically
+                    try { recognitionInterviewer.start(); } catch(e) {}
+                    sttStatusSpan.innerText = "Browser Web Speech API (Continuous - Listening)";
+                    startBtn.style.backgroundColor = "#dc3545";
+                    modeBadge.innerText = "Interviewer Mode (Transcribing...)";
+                    modeBadge.className = "mode-badge mode-interviewer";
+                }
 
             } else {
                 aiScriptBox.innerText = "Error analyzing question.";
