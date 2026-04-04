@@ -62,9 +62,7 @@ async def generate_ai_response_with_llm_stream(
     history_str = ""
     if context:
         recent_context = context[-8:]
-        history_str = "Recent Conversation History:
-" + "
-".join([f"{c.get('role', 'unknown').capitalize()}: {c.get('text', '')}" for c in recent_context])
+        history_str = "Recent Conversation History:\n" + "\n".join([f"{c.get('role', 'unknown').capitalize()}: {c.get('text', '')}" for c in recent_context])
 
     # 2. Build system prompt as f-string so all variables are substituted
     system_prompt = f"""You are Manjunath Sajjan speaking in a live job interview. Write EXACTLY what he would say — natural, confident, warm. He reads your words directly on screen word-for-word.
