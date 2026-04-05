@@ -463,9 +463,7 @@
 
                 // throttle overlay updates to once per 300ms
                 clearTimeout(overlayUpdateThrottle);
-                overlayUpdateThrottle = setTimeout(() => sendOverlayUpdate(), 300);, 2500);
-                    }
-                }
+                overlayUpdateThrottle = setTimeout(() => sendOverlayUpdate(), 300);
             }
         };
 
