@@ -331,6 +331,110 @@
 
     const operationMode = document.getElementById('operation-mode');
 
+
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecordingAudio = false;
+
+    async function startSystemAudioCapture() {
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: true, // required by some browsers to get system audio
+                audio: true
+            });
+
+            // Check if audio track exists
+            if (stream.getAudioTracks().length === 0) {
+                alert("No audio track detected! Make sure you check 'Share tab audio' in the screen share prompt.");
+                stream.getTracks().forEach(t => t.stop());
+                return;
+            }
+
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                audioChunks = [];
+                // Send to backend
+                await sendAudioToBackend(audioBlob);
+
+                if (isRecordingAudio && isInterviewerSpeaking) {
+                    try { mediaRecorder.start(); } catch(e){}
+                    setTimeout(() => {
+                        if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                    }, 4000); // chunk every 4 seconds
+                }
+            };
+
+            isRecordingAudio = true;
+            sttStatusSpan.innerText = "Listening to Shared Tab Audio (Groq/Whisper)";
+
+            if (isInterviewerSpeaking) {
+                try { mediaRecorder.start(); } catch(e){}
+                setTimeout(() => {
+                    if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                }, 4000);
+            }
+
+            // handle user stopping stream
+            stream.getVideoTracks()[0].onended = () => {
+                isRecordingAudio = false;
+                if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                sttStatusSpan.innerText = "System audio stopped.";
+            };
+        } catch (e) {
+            console.error("System audio capture error:", e);
+            alert("Could not capture system audio. Did you grant permission and check 'Share tab audio'?");
+            sttStatusSpan.innerText = "Failed to capture shared tab";
+        }
+    }
+
+    async function sendAudioToBackend(blob) {
+        if (!blob || blob.size === 0) return;
+
+        const formData = new FormData();
+        formData.append("file", blob, "chunk.webm");
+
+        try {
+            const customHeaders = {
+                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : document.getElementById('groq-key').value,
+            };
+
+            const resp = await fetch('/transcribe', {
+                method: 'POST',
+                headers: customHeaders,
+                body: formData
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data.text && data.text.trim().length > 0) {
+                    transcriptBox.value += (transcriptBox.value ? " " : "") + data.text;
+                    // Auto generate logic
+                    if (document.getElementById('auto-gen-checkbox').checked) {
+                        clearTimeout(silenceTimer);
+                        silenceTimer = setTimeout(() => {
+                            if (transcriptBox.value.trim().length > 5 && isInterviewerSpeaking) {
+                                generateBtn.click();
+                            }
+                        }, 2000);
+                    }
+                    sendOverlayUpdate();
+                }
+            }
+        } catch(e) {
+            console.error("STT endpoint error", e);
+        }
+    }
+
+    // Insert after updateSttDiagnostic declaration
+
     function updateSttDiagnostic() {
         if (!operationMode) return;
         const mode = operationMode.value;
@@ -343,7 +447,26 @@
         }
     }
 
-    operationMode?.addEventListener('change', updateSttDiagnostic);
+
+    operationMode?.addEventListener('change', () => {
+        updateSttDiagnostic();
+        const mode = operationMode.value;
+        if (mode === "Shared Tab (System Audio)") {
+            if (typeof startSystemAudioCapture === "function") {
+                startSystemAudioCapture();
+            } else {
+                alert("Shared tab capture not found");
+            }
+        } else {
+            // Stop logic
+            if (typeof mediaRecorder !== 'undefined' && mediaRecorder) {
+                if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                isRecordingAudio = false;
+                if (mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            }
+        }
+    });
+
     // Initial call
     updateSttDiagnostic();
 
@@ -528,324 +651,38 @@
     }
 
     function toggleSpeakerMode() {
-        if (!recognitionInterviewer) return;
         isInterviewerSpeaking = !isInterviewerSpeaking;
 
         if (isInterviewerSpeaking) {
-            tempSttBuffer = '';
-            window.baseBoxText = (appendCheckbox && appendCheckbox.checked) ? transcriptBox.value.trim() : '';
+            if (continuousListeningActive && recognitionInterviewer) {
+                try { recognitionInterviewer.start(); } catch(e){}
+            }
+            if (isRecordingAudio && mediaRecorder) {
+                try { mediaRecorder.start(); } catch(e){}
+                setTimeout(() => {
+                    if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+                }, 4000);
+            }
             startBtn.innerText = "[Space bar] Switch to Me Speaking";
-            startBtn.style.backgroundColor = "#dc3545";
+            startBtn.style.backgroundColor = "#dc3545"; // Red for interviewer
+            transcriptBox.style.borderColor = "#dc3545";
             modeBadge.innerText = "Interviewer Mode (Transcribing...)";
             modeBadge.className = "mode-badge mode-interviewer";
-            // START the microphone
-            try { recognitionInterviewer.start(); } catch(e) { /* already running is OK */ }
+            document.body.classList.remove('me-speaking');
         } else {
+            if (recognitionInterviewer) { try { recognitionInterviewer.stop(); } catch(e){} }
+            if (isRecordingAudio && mediaRecorder) {
+                if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            }
             startBtn.innerText = "[Space bar] Switch to Interviewer Speaking";
-            startBtn.style.backgroundColor = "#007bff";
+            startBtn.style.backgroundColor = "#007bff"; // Blue for me
+            transcriptBox.style.borderColor = "#ccc";
             modeBadge.innerText = "Me Speaking Mode (Transcribing only)";
             modeBadge.className = "mode-badge mode-candidate";
-            // STOP the microphone
-            try { recognitionInterviewer.stop(); } catch(e) {}
+            document.body.classList.add('me-speaking');
         }
-        sendOverlayUpdate(); // always sync overlay on mode change
-    }
-
-    autoListenCheckbox.addEventListener('change', async (e) => {
-        if (!recognitionInterviewer) return;
-        continuousListeningActive = e.target.checked;
-
-        if (continuousListeningActive) {
-            try {
-                // Request screen share (tab audio) for Zoom/Teams/Meet
-                // If the user doesn't want to share screen, they can just use microphone instead by checking a different box.
-                // We'll update the logic to try getDisplayMedia first to capture tab audio
-                alert("Please select the tab where your interview is happening and ensure 'Share tab audio' is checked.");
-                const stream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true,
-                    audio: true
-                });
-
-                // We don't need the video, just the audio for keeping the pipeline alive.
-                // Note: Web Speech API still primarily uses the default microphone.
-                // To actually route tab audio to Web Speech API is tricky because Web Speech
-                // natively listens to the default OS mic.
-                // However, by capturing it here, we at least keep the stream active.
-                // For a true native experience without VB-Cable, users would need a custom STT backend.
-                // We will keep the default getUserMedia for now, but add a note.
-
-                const ctx = new window.AudioContext();
-                const src = ctx.createMediaStreamSource(stream);
-                const gain = ctx.createGain();
-                gain.gain.value = 0; // Keep pipeline open but silent
-                src.connect(gain);
-
-                recognitionInterviewer.start();
-                sttStatusSpan.innerText = "Browser Web Speech API (Continuous Screen Audio)";
-                instructionText.innerText = "Listening continuously via Tab Audio... Hit Space bar to toggle speakers.";
-
-                // Handle stream end
-                stream.getVideoTracks()[0].onended = () => {
-                    autoListenCheckbox.checked = false;
-                    continuousListeningActive = false;
-                    clearTimeout(silenceTimer);
-                    recognitionInterviewer.stop();
-                    sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
-                };
-
-            } catch(e) {
-                console.error("Screen/Audio permission denied", e);
-                alert("Failed to get tab audio. Please ensure you share a tab with audio.");
-                e.target.checked = false;
-                continuousListeningActive = false;
-            }
-        } else {
-            clearTimeout(silenceTimer);
-            recognitionInterviewer.stop();
-            sttStatusSpan.innerText = "Browser Web Speech API (Idle)";
-        }
-    });
-
-    startBtn.addEventListener('click', toggleSpeakerMode);
-
-    // Spacebar Toggle Speaker Logic
-    document.addEventListener('keydown', (e) => {
-        const tag = e.target.tagName.toLowerCase();
-        if (tag === 'textarea' || tag === 'input' || tag === 'select' || e.target.isContentEditable) return;
-
-        if (e.code === 'Space' && !e.repeat) {
-            if (interviewSection.style.display === 'block') {
-                e.preventDefault();
-                toggleSpeakerMode();
-            }
-        }
-    });
-
-
-    // Overlay State
-    let overlayMode = "none"; // "pip", "popup", "inline", "none"
-    let pipWin = null;
-    let popupWin = null;
-    let overlayFs = 26;
-    let overlayHeartbeat = null;
-
-    const floatBtn = document.getElementById('float-btn');
-    const inlineOverlay = document.getElementById('inline-overlay');
-    const inlText = document.getElementById('inl-text');
-    const inlQ = document.getElementById('inl-q');
-    const inlBanner = document.getElementById('inl-banner');
-
-    // PiP HTML Template
-    function buildPipHTML() {
-        return `
-            <html>
-            <head>
-                <style>
-                    body { background: #080a14; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-                    .topbar { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; background: #111; }
-                    .banner { text-align: center; font-weight: bold; padding: 5px; font-size: 14px; transition: background 0.2s; }
-                    .banner.interviewer { background: #28a745; color: white; }
-                    .banner.me { background: #6f42c1; color: white; }
-                    .q-box { padding: 10px; font-size: 14px; color: #aaa; border-bottom: 1px solid #333; min-height: 40px; background: #1a1a24; }
-                    .ans-box { flex: 1; overflow-y: auto; padding: 20px; font-size: ${overlayFs}px; line-height: 1.5; white-space: pre-wrap; }
-                    .controls button { background: #333; color: white; border: none; padding: 5px 10px; margin: 0 2px; cursor: pointer; border-radius: 3px; }
-                    .controls button:hover { background: #555; }
-                    .spk-btn.active { border: 2px solid white; }
-
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-        .blink { animation: blink 1s infinite; color: #ff4444; }
-        @media (max-width: 800px) {
-            #inline-overlay {
-                left: 0 !important;
-                right: 0 !important;
-                top: auto !important;
-                bottom: 0 !important;
-                width: 100% !important;
-                height: 55vh !important;
-                border-left: none !important;
-                border-top: 2px solid #00c9a7 !important;
-            }
-        }
-</style>
-            </head>
-            <body>
-                <div class="topbar">
-                    <div><strong>AI Copilot</strong></div>
-                    <div class="controls">
-                        <button id="btn-int" class="spk-btn active" style="background: #28a745;" onclick="setSpk('interviewer')">🎤 Interviewer</button>
-                        <button id="btn-me" class="spk-btn" style="background: #6f42c1;" onclick="setSpk('me')">🙋 Me</button>
-                        <button onclick="changeFs(2)">A+</button>
-                        <button onclick="changeFs(-2)">A-</button>
-                    </div>
-                </div>
-                <div id="pip-banner" class="banner interviewer">Interviewer Speaking (Auto-Answer)</div>
-                <div id="pip-q" class="q-box">Waiting for question...</div>
-                <div id="pip-text" class="ans-box"></div>
-                <scr` + `ipt>
-                    window.addEventListener("message", (e) => {
-                        const d = e.data;
-                        if (!d || d.type !== "ic-update") return;
-
-                        if (d.q !== undefined) document.getElementById("pip-q").textContent = d.q;
-                        if (d.text !== undefined) {
-                            // Append streaming tokens smoothly instead of replacing all
-                            if (d.scrollTop) {
-                                document.getElementById("pip-text").textContent = d.text || "";
-                            } else if (d.text !== undefined) {
-                                document.getElementById("pip-text").textContent = d.text;
-                            }
-                        }
-                        if (d.fs) document.getElementById("pip-text").style.fontSize = d.fs + "px";
-                        if (d.speaker) updateSpeakerUI(d.speaker);
-                        if (d.scrollTop) {
-                            document.getElementById("pip-text").scrollTop = 0;
-                        }
-                    });
-
-                    function setSpk(who) {
-                        window.opener.postMessage({type: "ic-speaker", speaker: who}, "*");
-                    }
-                    function changeFs(delta) {
-                        window.opener.postMessage({type: "ic-fs", delta: delta}, "*");
-                    }
-                    function updateSpeakerUI(who) {
-                        const banner = document.getElementById("pip-banner");
-                        const btnInt = document.getElementById("btn-int");
-                        const btnMe = document.getElementById("btn-me");
-                        if (who === "interviewer") {
-                            banner.className = "banner interviewer";
-                            banner.textContent = "Interviewer Speaking (Auto-Answer)";
-                            btnInt.classList.add("active");
-                            btnMe.classList.remove("active");
-                        } else {
-                            banner.className = "banner me";
-                            banner.textContent = "Me Speaking (Transcribing Only)";
-                            btnMe.classList.add("active");
-                            btnInt.classList.remove("active");
-                        }
-                    }
-                </scr" + "ipt>
-            </body>
-            </html>
-        `;
-    }
-
-    async function openOverlay() {
-        if (overlayMode !== "none") {
-            closeOverlay();
-            floatBtn.innerText = "⧉ Float Overlay";
-            floatBtn.style.background = "#00c9a7";
-            return;
-        }
-
-        // Try Document Picture-in-Picture API first (Chrome 116+)
-        if ('documentPictureInPicture' in window) {
-            try {
-                const pipWindow = await window.documentPictureInPicture.requestWindow({
-                    width: 480,
-                    height: 650
-                });
-                pipWin = pipWindow;
-                overlayMode = "pip";
-
-                // Copy styles
-                [...document.styleSheets].forEach((styleSheet) => {
-                    try {
-                        const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-                        const style = document.createElement('style');
-                        style.textContent = cssRules;
-                        pipWindow.document.head.appendChild(style);
-                    } catch (e) {
-                        const link = document.createElement('link');
-                        link.rel = 'stylesheet';
-                        link.type = styleSheet.type;
-                        link.media = styleSheet.media;
-                        link.href = styleSheet.href;
-                        pipWindow.document.head.appendChild(link);
-                    }
-                });
-
-                // Write HTML structure to PiP window
-                pipWindow.document.body.innerHTML = buildPipHTML();
-                pipWindow.document.body.style.margin = "0";
-                pipWindow.document.body.style.padding = "0";
-                pipWindow.document.body.style.background = "rgba(8, 10, 20, 0.96)";
-
-                // Setup PiP listeners
-                pipWindow.addEventListener("pagehide", () => {
-                    overlayMode = "none";
-                    pipWin = null;
-                    floatBtn.innerText = "⧉ Float Overlay";
-                    floatBtn.style.background = "#00c9a7";
-                });
-
-                // Setup buttons inside PiP
-                setTimeout(() => {
-                    pipWindow.document.getElementById('spk-int')?.addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
-                    pipWindow.document.getElementById('spk-me')?.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
-                    sendOverlayUpdate(true);
-                }, 100);
-
-                floatBtn.innerText = "✕ Close Overlay";
-                floatBtn.style.background = "#dc3545";
-                return;
-            } catch (err) {
-                console.warn("Document PiP failed, falling back to popup", err);
-            }
-        }
-
-        // Fallback to Window.open Popup
-        try {
-            popupWin = window.open('', 'InterviewOverlay', 'width=480,height=650,left=1000,top=50,resizable=yes');
-            if (popupWin) {
-                popupWin.document.write(buildPipHTML());
-                popupWin.document.close();
-                overlayMode = "popup";
-
-                // Setup buttons in Popup
-                setTimeout(() => {
-                    popupWin.document.getElementById('spk-int')?.addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
-                    popupWin.document.getElementById('spk-me')?.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
-                    sendOverlayUpdate(true);
-                }, 300);
-
-                overlayHeartbeat = setInterval(() => {
-                    if (!popupWin || popupWin.closed) {
-                        clearInterval(overlayHeartbeat);
-                        overlayMode = "none";
-                        floatBtn.innerText = "⧉ Float Overlay";
-                        floatBtn.style.background = "#00c9a7";
-                        return;
-                    }
-                }, 2000);
-
-                floatBtn.innerText = "✕ Close Overlay";
-                floatBtn.style.background = "#dc3545";
-                return;
-            }
-        } catch(e) { console.warn("Popup blocked."); }
-
-        // Final fallback: Inline
-        document.getElementById("inline-overlay").style.display = "flex";
-        overlayMode = "inline";
-        floatBtn.innerText = "✕ Close Overlay";
-        floatBtn.style.background = "#dc3545";
-        sendOverlayUpdate(true);
-    }
-
-
-    document.getElementById('popup-btn')?.addEventListener('click', async () => {
-        try {
-            popupWin = window.open('', 'InterviewOverlay', 'width=480,height=650,left=1000,top=50,resizable=yes');
-            if (popupWin) {
-                popupWin.document.write(buildPipHTML());
-                popupWin.document.close();
-                overlayMode = "popup";
-                setTimeout(() => sendOverlayUpdate(true), 600);
-                overlayHeartbeat = setInterval(() => {
-                    if (!popupWin || popupWin.closed) { clearInterval(overlayHeartbeat); overlayMode = "none"; return; }
-                    sendOverlayUpdate();
-                }, 2000);
+        sendOverlayUpdate();
+    }, 2000);
             }
         } catch(e) { alert("Popup blocked. Use the inline overlay instead."); }
     });
@@ -874,7 +711,37 @@
             scrollTop: scrollTop
         };
 
-        if (overlayMode === "pip" && pipWin) pipWin.postMessage(payload, "*");
+        const applyToDoc = (doc) => {
+            const qEl = doc.getElementById('ov-q');
+            const txtEl = doc.getElementById('ov-text');
+            const banEl = doc.getElementById('ov-banner');
+            const btnInt = doc.getElementById('spk-int');
+            const btnMe = doc.getElementById('spk-me');
+
+            if (qEl) qEl.textContent = payload.q || "Waiting for question...";
+            if (txtEl) {
+                txtEl.textContent = payload.text;
+                txtEl.style.fontSize = payload.fs + "px";
+                if (payload.scrollTop && txtEl.parentElement) txtEl.parentElement.scrollTop = 0;
+            }
+            if (banEl) {
+                if (payload.speaker === "interviewer") {
+                    banEl.className = "banner interviewer";
+                    banEl.textContent = "Interviewer Speaking (Auto-Answer)";
+                } else {
+                    banEl.className = "banner me";
+                    banEl.textContent = "Me Speaking (Muted)";
+                }
+            }
+            if (btnInt && btnMe) {
+                btnInt.style.border = payload.speaker === "interviewer" ? "2px solid white" : "none";
+                btnMe.style.border = payload.speaker === "me" ? "2px solid white" : "none";
+            }
+        };
+
+        if (overlayMode === "pip" && pipWin) {
+            try { applyToDoc(pipWin.document); } catch(e) { console.error(e); }
+        }
         if (overlayMode === "popup" && popupWin) popupWin.postMessage(payload, "*");
         if (overlayMode === "inline") {
             try {
