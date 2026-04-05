@@ -516,13 +516,15 @@
         document.getElementById('or-key').value = localStorage.getItem("orKey") || "";
     });
 
-    debugToggle.addEventListener('change', (e) => {
-        if (e.target.checked && debugIntent.innerText !== "-") {
-            debugPanel.style.display = 'block';
-        } else {
-            debugPanel.style.display = 'none';
-        }
-    });
+    if (debugToggle) {
+        debugToggle.addEventListener('change', (e) => {
+            if (e.target.checked && debugIntent && debugIntent.innerText !== "-") {
+                if (debugPanel) debugPanel.style.display = 'block';
+            } else {
+                if (debugPanel) debugPanel.style.display = 'none';
+            }
+        });
+    }
 
     function toggleSpeakerMode() {
         if (!recognitionInterviewer) return;
@@ -785,26 +787,37 @@
         if (overlayMode === "pip" && pipWin) pipWin.postMessage(payload, "*");
         if (overlayMode === "popup" && popupWin) popupWin.postMessage(payload, "*");
         if (overlayMode === "inline") {
-            inlQ.textContent = payload.q;
-            inlText.textContent = payload.text;
-            inlText.style.fontSize = payload.fs + "px";
-            updateInlineSpeakerUI(payload.speaker);
-            if (scrollTop) inlText.parentElement.scrollTop = 0;
+            try {
+                if (inlQ) inlQ.textContent = payload.q;
+                if (inlText) {
+                    inlText.textContent = payload.text;
+                    inlText.style.fontSize = payload.fs + "px";
+                    if (scrollTop && inlText.parentElement) inlText.parentElement.scrollTop = 0;
+                }
+                updateInlineSpeakerUI(payload.speaker);
+            } catch(e) { console.error("Inline Overlay update error", e); }
         }
     }
 
     function updateInlineSpeakerUI(who) {
-        if (who === "interviewer") {
-            inlBanner.style.background = "#28a745";
-            inlBanner.textContent = "Interviewer Speaking (Auto-Answer)";
-            document.getElementById('inl-spk-int').style.border = "2px solid white";
-            document.getElementById('inl-spk-me').style.border = "none";
-        } else {
-            inlBanner.style.background = "#6f42c1";
-            inlBanner.textContent = "Me Speaking (Transcribing Only)";
-            document.getElementById('inl-spk-me').style.border = "2px solid white";
-            document.getElementById('inl-spk-int').style.border = "none";
-        }
+        try {
+            if (!inlBanner) return;
+            if (who === "interviewer") {
+                inlBanner.style.background = "#28a745";
+                inlBanner.textContent = "Interviewer Speaking (Auto-Answer)";
+                const spkInt = document.getElementById('inl-spk-int');
+                const spkMe = document.getElementById('inl-spk-me');
+                if (spkInt) spkInt.style.border = "2px solid white";
+                if (spkMe) spkMe.style.border = "none";
+            } else {
+                inlBanner.style.background = "#6f42c1";
+                inlBanner.textContent = "Me Speaking (Transcribing Only)";
+                const spkInt = document.getElementById('inl-spk-int');
+                const spkMe = document.getElementById('inl-spk-me');
+                if (spkMe) spkMe.style.border = "2px solid white";
+                if (spkInt) spkInt.style.border = "none";
+            }
+        } catch(e) { console.error("updateInlineSpeakerUI error", e); }
     }
 
     // Listen for messages from PiP/Popup
@@ -932,19 +945,28 @@
                                     const wc = fullResponse.trim().split(/\s+/).length;
                                     const starEls = document.querySelectorAll('.star-badge, .inl-star, .ps');
                                     const thresholds = [1, 40, 90, 150];
-                                    starEls.forEach((el, i) => {
-                                        if (i < 4) el.style.opacity = wc >= thresholds[i] ? '1' : '0.2';
-                                    });
+                                    try {
+                                        let starIdx = 0;
+                                        starEls.forEach((el) => {
+                                            // Handle looping over multiple sets of 4 stars safely
+                                            el.style.opacity = wc >= thresholds[starIdx % 4] ? '1' : '0.2';
+                                            starIdx++;
+                                        });
+                                    } catch(err) { console.error("Star badge error", err); }
 
                                     // Update debug info from the first chunk
                                     if (debugToggle.checked) {
                                         debugPanel.style.display = 'block';
                                     }
-                                    debugIntent.innerText = data.intent || "N/A";
-                                    debugRole.innerText = data.role_family || "N/A";
-                                    debugProvider.innerText = data.provider || "N/A";
-                                    llmStatusSpan.innerText = data.provider;
-                                    llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+                                    try {
+                                        if (debugIntent) debugIntent.innerText = data.intent || "N/A";
+                                        if (debugRole) debugRole.innerText = data.role_family || "N/A";
+                                        if (debugProvider) debugProvider.innerText = data.provider || "N/A";
+                                        if (llmStatusSpan) {
+                                            llmStatusSpan.innerText = data.provider;
+                                            llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+                                        }
+                                    } catch(e) {}
                                 } else if (data.type === "error") {
                                     aiScriptBox.innerText += "\n[Streaming Error: " + data.content + "]";
                                 }
