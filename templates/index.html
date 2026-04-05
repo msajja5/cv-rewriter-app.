@@ -132,8 +132,9 @@
 
     <div style="margin-bottom: 20px;">
         <label for="operation-mode"><strong>Operation Mode:</strong></label>
-        <select id="operation-mode" style="padding: 5px; margin-left: 10px;">
+                <select id="operation-mode" style="padding: 5px; margin-left: 10px;">
             <option value="mock">Mock Interview (User Mic Only)</option>
+            <option value="Shared Tab (System Audio)">Shared Tab (System Audio via Whisper)</option>
             <option value="manual">Live Manual Assist (Browser Audio/Fallback)</option>
             <option value="companion">Meeting Companion (Read FEASIBILITY.md)</option>
         </select>
@@ -730,19 +731,108 @@
     }
 
     async function openOverlay() {
-        if (overlayMode === "inline") {
-            document.getElementById("inline-overlay").style.display = "none";
-            overlayMode = "none";
+        if (overlayMode !== "none") {
+            closeOverlay();
             floatBtn.innerText = "⧉ Float Overlay";
             floatBtn.style.background = "#00c9a7";
-        } else {
-            document.getElementById("inline-overlay").style.display = "flex";
-            overlayMode = "inline";
-            floatBtn.innerText = "✕ Close Overlay";
-            floatBtn.style.background = "#dc3545";
-            sendOverlayUpdate(true);
+            return;
         }
+
+        // Try Document Picture-in-Picture API first (Chrome 116+)
+        if ('documentPictureInPicture' in window) {
+            try {
+                const pipWindow = await window.documentPictureInPicture.requestWindow({
+                    width: 480,
+                    height: 650
+                });
+                pipWin = pipWindow;
+                overlayMode = "pip";
+
+                // Copy styles
+                [...document.styleSheets].forEach((styleSheet) => {
+                    try {
+                        const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+                        const style = document.createElement('style');
+                        style.textContent = cssRules;
+                        pipWindow.document.head.appendChild(style);
+                    } catch (e) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.type = styleSheet.type;
+                        link.media = styleSheet.media;
+                        link.href = styleSheet.href;
+                        pipWindow.document.head.appendChild(link);
+                    }
+                });
+
+                // Write HTML structure to PiP window
+                pipWindow.document.body.innerHTML = buildPipHTML();
+                pipWindow.document.body.style.margin = "0";
+                pipWindow.document.body.style.padding = "0";
+                pipWindow.document.body.style.background = "rgba(8, 10, 20, 0.96)";
+
+                // Setup PiP listeners
+                pipWindow.addEventListener("pagehide", () => {
+                    overlayMode = "none";
+                    pipWin = null;
+                    floatBtn.innerText = "⧉ Float Overlay";
+                    floatBtn.style.background = "#00c9a7";
+                });
+
+                // Setup buttons inside PiP
+                setTimeout(() => {
+                    pipWindow.document.getElementById('spk-int')?.addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
+                    pipWindow.document.getElementById('spk-me')?.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
+                    sendOverlayUpdate(true);
+                }, 100);
+
+                floatBtn.innerText = "✕ Close Overlay";
+                floatBtn.style.background = "#dc3545";
+                return;
+            } catch (err) {
+                console.warn("Document PiP failed, falling back to popup", err);
+            }
+        }
+
+        // Fallback to Window.open Popup
+        try {
+            popupWin = window.open('', 'InterviewOverlay', 'width=480,height=650,left=1000,top=50,resizable=yes');
+            if (popupWin) {
+                popupWin.document.write(buildPipHTML());
+                popupWin.document.close();
+                overlayMode = "popup";
+
+                // Setup buttons in Popup
+                setTimeout(() => {
+                    popupWin.document.getElementById('spk-int')?.addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
+                    popupWin.document.getElementById('spk-me')?.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
+                    sendOverlayUpdate(true);
+                }, 300);
+
+                overlayHeartbeat = setInterval(() => {
+                    if (!popupWin || popupWin.closed) {
+                        clearInterval(overlayHeartbeat);
+                        overlayMode = "none";
+                        floatBtn.innerText = "⧉ Float Overlay";
+                        floatBtn.style.background = "#00c9a7";
+                        return;
+                    }
+                }, 2000);
+
+                floatBtn.innerText = "✕ Close Overlay";
+                floatBtn.style.background = "#dc3545";
+                return;
+            }
+        } catch(e) { console.warn("Popup blocked."); }
+
+        // Final fallback: Inline
+        document.getElementById("inline-overlay").style.display = "flex";
+        overlayMode = "inline";
+        floatBtn.innerText = "✕ Close Overlay";
+        floatBtn.style.background = "#dc3545";
+        sendOverlayUpdate(true);
     }
+
 
     document.getElementById('popup-btn')?.addEventListener('click', async () => {
         try {

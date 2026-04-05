@@ -100,6 +100,47 @@ async def diagnostics(req: Request):
         "server_stt_enabled": True
     }
 
+
+from fastapi import UploadFile, File
+import httpx
+
+@app.post("/transcribe")
+async def transcribe_endpoint(req: Request, file: UploadFile = File(...)):
+    # Read custom key from header if available
+    groq_key = req.headers.get("X-Groq-Key") or os.getenv("GROQ_API_KEY")
+
+    if not groq_key:
+        return {"text": ""}
+
+    try:
+        audio_bytes = await file.read()
+
+        # Use httpx to call Groq Whisper API directly to avoid temp files on Vercel
+        files = {
+            'file': (file.filename, audio_bytes, file.content_type),
+        }
+        data = {
+            'model': 'whisper-large-v3-turbo',
+            'response_format': 'json',
+            'language': 'en'
+        }
+        headers = {
+            'Authorization': f'Bearer {groq_key}'
+        }
+
+        async with httpx.AsyncClient() as client:
+            resp = await client.post('https://api.groq.com/openai/v1/audio/transcriptions',
+                                     files=files, data=data, headers=headers, timeout=10.0)
+            if resp.status_code == 200:
+                result = resp.json()
+                return {"text": result.get("text", "")}
+            else:
+                logger.error(f"Groq STT failed: {resp.text}")
+                return {"text": ""}
+    except Exception as e:
+        logger.error(f"Transcription error: {str(e)}")
+        return {"text": ""}
+
 @app.post("/stt")
 async def stt_endpoint(audio: str):
     return {"text": "mock stt"}
