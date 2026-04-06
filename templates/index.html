@@ -505,7 +505,7 @@
     tabs['cv'].btn.addEventListener('click', () => switchTab('cv'));
     tabs['keys'].btn.addEventListener('click', () => switchTab('keys'));
 
-    const startBtn = document.getElementById('start-btn');
+
     const clearBtn = document.getElementById('clear-btn');
         const appendCheckbox = document.getElementById('append-checkbox');
     const autoGenCheckbox = document.getElementById('auto-gen-checkbox');
@@ -647,7 +647,20 @@
 
     // On Load: Restore keys
     document.addEventListener("DOMContentLoaded", () => {
-    const generateBtn = document.getElementById('generate-btn');
+    generateBtn = document.getElementById('generate-btn');
+    startBtn = document.getElementById('start-btn');
+
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+            e.preventDefault(); // Prevent page scrolling
+            toggleSpeakerMode();
+        }
+    });
+
+    startBtn.addEventListener('click', () => {
+        toggleSpeakerMode();
+    });
+
 generateBtn.addEventListener('click', async (e) => {
         console.log('Generate button clicked');
         e.preventDefault();
@@ -811,17 +824,6 @@ generateBtn.addEventListener('click', async (e) => {
         }
     });
 
-
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
-            e.preventDefault(); // Prevent page scrolling
-            toggleSpeakerMode();
-        }
-    });
-
-    startBtn.addEventListener('click', () => {
-        toggleSpeakerMode();
-    });
 
         document.getElementById('gemini-key').value = localStorage.getItem("geminiKey") || "";
         document.getElementById('groq-key').value = localStorage.getItem("groqKey") || "";
