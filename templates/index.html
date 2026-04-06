@@ -682,10 +682,7 @@
             document.body.classList.add('me-speaking');
         }
         sendOverlayUpdate();
-    }, 2000);
-            }
-        } catch(e) { alert("Popup blocked. Use the inline overlay instead."); }
-    });
+    }
 
     function closeOverlay() {
         if (pipWin) { pipWin.close(); pipWin = null; }
