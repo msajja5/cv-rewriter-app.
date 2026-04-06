@@ -507,8 +507,7 @@
 
     const startBtn = document.getElementById('start-btn');
     const clearBtn = document.getElementById('clear-btn');
-    const generateBtn = document.getElementById('generate-btn');
-    const appendCheckbox = document.getElementById('append-checkbox');
+        const appendCheckbox = document.getElementById('append-checkbox');
     const autoGenCheckbox = document.getElementById('auto-gen-checkbox');
     const autoListenCheckbox = document.getElementById('auto-listen-checkbox');
     const instructionText = document.getElementById('instruction-text');
@@ -648,6 +647,171 @@
 
     // On Load: Restore keys
     document.addEventListener("DOMContentLoaded", () => {
+    const generateBtn = document.getElementById('generate-btn');
+generateBtn.addEventListener('click', async (e) => {
+        console.log('Generate button clicked');
+        e.preventDefault();
+        const questionText = transcriptBox.value.trim();
+        if (!questionText) {
+            alert("Please wait for an interviewer question or type one in the box.");
+            return;
+        }
+
+        aiScriptBox.innerText = "Analyzing question and generating live response...";
+        aiScriptBox.classList.add("loading");
+        generateBtn.disabled = true;
+
+        // Add current question to context history
+        interviewContext.push({"role": "interviewer", "text": questionText});
+
+        // Temporarily pause continuous listening to avoid recording our own generated answer
+        const wasContinuous = continuousListeningActive;
+        if (wasContinuous) {
+            continuousListeningActive = false; // Disable flag so onend doesn't immediately restart it
+            clearTimeout(silenceTimer);
+            try { recognitionInterviewer.stop(); } catch(e) {}
+            sttStatusSpan.innerText = "Browser Web Speech API (Paused for AI Response)";
+            startBtn.style.backgroundColor = "#ffc107"; // Yellow to indicate working/paused
+        }
+
+        // Switch back to "Me Speaking" mode while generating so we don't accidentally record the AI
+        if (isInterviewerSpeaking) {
+            toggleSpeakerMode();
+        }
+
+        aiScriptBox.innerText = ""; // Clear for streaming
+        sendOverlayUpdate(true);
+
+        try {
+            // Append explicit keys to the request context
+            const payload = {
+                cv: userCv,
+                job_role: userJobRole,
+                transcript: questionText,
+                context: interviewContext,
+                response_style: userStyle,
+                target_role_family: targetRoleFamily
+            };
+
+            // Add custom API keys as a header so the backend can extract them if needed
+            const customHeaders = {
+                'Content-Type': 'application/json',
+                'X-Gemini-Key': window.sessionKeys ? window.sessionKeys.gemini : document.getElementById('gemini-key').value,
+                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : document.getElementById('groq-key').value,
+                'X-Or-Key': window.sessionKeys ? window.sessionKeys.or : document.getElementById('or-key').value
+            };
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: customHeaders,
+                body: JSON.stringify(payload)
+            });
+
+            aiScriptBox.classList.remove("loading");
+            generateBtn.disabled = false;
+
+            if (response.ok) {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = "";
+                let buffer = ""; // SSE Chunk Buffer
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    let boundary = buffer.indexOf('\n\n');
+
+                    while (boundary !== -1) {
+                        const chunk = buffer.slice(0, boundary);
+                        buffer = buffer.slice(boundary + 2); // advance past \n\n
+
+                        if (chunk.startsWith("data: ")) {
+                            try {
+                                const data = JSON.parse(chunk.slice(6));
+
+                                if (data.type === "token") {
+                                    fullResponse += data.content;
+                                    const wasAtTop = aiScriptBox.scrollTop < 50;
+                                    aiScriptBox.innerText = fullResponse;
+                                    if (fullResponse.trim().split(/\s+/).length < 5) {
+                                        // New answer starting — scroll to top
+                                        aiScriptBox.scrollTop = 0;
+                                    }
+                                    sendOverlayUpdate();
+                                    // Light STAR badges based on word count progress
+                                    const wc = fullResponse.trim().split(/\s+/).length;
+                                    const starEls = document.querySelectorAll('.star-badge, .inl-star, .ps');
+                                    const thresholds = [1, 40, 90, 150];
+                                    try {
+                                        let starIdx = 0;
+                                        starEls.forEach((el) => {
+                                            // Handle looping over multiple sets of 4 stars safely
+                                            el.style.opacity = wc >= thresholds[starIdx % 4] ? '1' : '0.2';
+                                            starIdx++;
+                                        });
+                                    } catch(err) { console.error("Star badge error", err); }
+
+                                    // Update debug info from the first chunk
+                                    if (debugToggle.checked) {
+                                        debugPanel.style.display = 'block';
+                                    }
+                                    try {
+                                        if (debugIntent) debugIntent.innerText = data.intent || "N/A";
+                                        if (debugRole) debugRole.innerText = data.role_family || "N/A";
+                                        if (debugProvider) debugProvider.innerText = data.provider || "N/A";
+                                        if (llmStatusSpan) {
+                                            llmStatusSpan.innerText = data.provider;
+                                            llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
+                                        }
+                                    } catch(e) {}
+                                } else if (data.type === "error") {
+                                    aiScriptBox.innerText += "\n[Streaming Error: " + data.content + "]";
+                                }
+                            } catch (parseErr) {
+                                console.error("Error parsing stream chunk", parseErr, chunk);
+                            }
+                        }
+                        boundary = buffer.indexOf('\n\n');
+                    }
+                }
+
+// Track generated answer in history
+                interviewContext.push({"role": "candidate", "text": fullResponse});
+
+                // Clear the box for the next question automatically
+                transcriptBox.value = "";
+                tempSttBuffer = "";
+                window.baseBoxText = "";
+
+                // Re-enable continuous listening if it was active before generation
+                if (wasContinuous) {
+                    continuousListeningActive = true;
+                    isInterviewerSpeaking = true; // switch back to interviewer mode automatically
+                    try { recognitionInterviewer.start(); } catch(e) {}
+                    sttStatusSpan.innerText = "Browser Web Speech API (Continuous - Listening)";
+                    startBtn.style.backgroundColor = "#dc3545";
+                    modeBadge.innerText = "Interviewer Mode (Transcribing...)";
+                    modeBadge.className = "mode-badge mode-interviewer";
+                }
+
+            } else {
+                aiScriptBox.innerText = "Error analyzing question.";
+                llmStatusSpan.innerText = "Error";
+                llmStatusSpan.style.color = "#d9534f";
+            }
+        } catch (err) {
+            console.error("Failed to fetch from backend", err);
+            aiScriptBox.classList.remove("loading");
+            generateBtn.disabled = false;
+            aiScriptBox.innerText = "Failed to communicate with AI server.";
+            llmStatusSpan.innerText = "Connection Failed";
+            llmStatusSpan.style.color = "#d9534f";
+        }
+    });
+
+
     document.addEventListener('keydown', (e) => {
         if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
             e.preventDefault(); // Prevent page scrolling
@@ -874,167 +1038,7 @@
         window.baseBoxText = "";
     });
 
-    if (generateBtn) generateBtn.addEventListener('click', async () => {
-        const questionText = transcriptBox.value.trim();
-        if (!questionText) {
-            alert("Please wait for an interviewer question or type one in the box.");
-            return;
-        }
-
-        aiScriptBox.innerText = "Analyzing question and generating live response...";
-        aiScriptBox.classList.add("loading");
-        generateBtn.disabled = true;
-
-        // Add current question to context history
-        interviewContext.push({"role": "interviewer", "text": questionText});
-
-        // Temporarily pause continuous listening to avoid recording our own generated answer
-        const wasContinuous = continuousListeningActive;
-        if (wasContinuous) {
-            continuousListeningActive = false; // Disable flag so onend doesn't immediately restart it
-            clearTimeout(silenceTimer);
-            try { recognitionInterviewer.stop(); } catch(e) {}
-            sttStatusSpan.innerText = "Browser Web Speech API (Paused for AI Response)";
-            startBtn.style.backgroundColor = "#ffc107"; // Yellow to indicate working/paused
-        }
-
-        // Switch back to "Me Speaking" mode while generating so we don't accidentally record the AI
-        if (isInterviewerSpeaking) {
-            toggleSpeakerMode();
-        }
-
-        aiScriptBox.innerText = ""; // Clear for streaming
-        sendOverlayUpdate(true);
-
-        try {
-            // Append explicit keys to the request context
-            const payload = {
-                cv: userCv,
-                job_role: userJobRole,
-                transcript: questionText,
-                context: interviewContext,
-                response_style: userStyle,
-                target_role_family: targetRoleFamily
-            };
-
-            // Add custom API keys as a header so the backend can extract them if needed
-            const customHeaders = {
-                'Content-Type': 'application/json',
-                'X-Gemini-Key': window.sessionKeys ? window.sessionKeys.gemini : document.getElementById('gemini-key').value,
-                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : document.getElementById('groq-key').value,
-                'X-Or-Key': window.sessionKeys ? window.sessionKeys.or : document.getElementById('or-key').value
-            };
-
-            const response = await fetch('/chat', {
-                method: 'POST',
-                headers: customHeaders,
-                body: JSON.stringify(payload)
-            });
-
-            aiScriptBox.classList.remove("loading");
-            generateBtn.disabled = false;
-
-            if (response.ok) {
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let fullResponse = "";
-                let buffer = ""; // SSE Chunk Buffer
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    let boundary = buffer.indexOf('\n\n');
-
-                    while (boundary !== -1) {
-                        const chunk = buffer.slice(0, boundary);
-                        buffer = buffer.slice(boundary + 2); // advance past \n\n
-
-                        if (chunk.startsWith("data: ")) {
-                            try {
-                                const data = JSON.parse(chunk.slice(6));
-
-                                if (data.type === "token") {
-                                    fullResponse += data.content;
-                                    const wasAtTop = aiScriptBox.scrollTop < 50;
-                                    aiScriptBox.innerText = fullResponse;
-                                    if (fullResponse.trim().split(/\s+/).length < 5) {
-                                        // New answer starting — scroll to top
-                                        aiScriptBox.scrollTop = 0;
-                                    }
-                                    sendOverlayUpdate();
-                                    // Light STAR badges based on word count progress
-                                    const wc = fullResponse.trim().split(/\s+/).length;
-                                    const starEls = document.querySelectorAll('.star-badge, .inl-star, .ps');
-                                    const thresholds = [1, 40, 90, 150];
-                                    try {
-                                        let starIdx = 0;
-                                        starEls.forEach((el) => {
-                                            // Handle looping over multiple sets of 4 stars safely
-                                            el.style.opacity = wc >= thresholds[starIdx % 4] ? '1' : '0.2';
-                                            starIdx++;
-                                        });
-                                    } catch(err) { console.error("Star badge error", err); }
-
-                                    // Update debug info from the first chunk
-                                    if (debugToggle.checked) {
-                                        debugPanel.style.display = 'block';
-                                    }
-                                    try {
-                                        if (debugIntent) debugIntent.innerText = data.intent || "N/A";
-                                        if (debugRole) debugRole.innerText = data.role_family || "N/A";
-                                        if (debugProvider) debugProvider.innerText = data.provider || "N/A";
-                                        if (llmStatusSpan) {
-                                            llmStatusSpan.innerText = data.provider;
-                                            llmStatusSpan.style.color = data.provider.includes("Mock") ? "#d9534f" : "#28a745";
-                                        }
-                                    } catch(e) {}
-                                } else if (data.type === "error") {
-                                    aiScriptBox.innerText += "\n[Streaming Error: " + data.content + "]";
-                                }
-                            } catch (parseErr) {
-                                console.error("Error parsing stream chunk", parseErr, chunk);
-                            }
-                        }
-                        boundary = buffer.indexOf('\n\n');
-                    }
-                }
-
-// Track generated answer in history
-                interviewContext.push({"role": "candidate", "text": fullResponse});
-
-                // Clear the box for the next question automatically
-                transcriptBox.value = "";
-                tempSttBuffer = "";
-                window.baseBoxText = "";
-
-                // Re-enable continuous listening if it was active before generation
-                if (wasContinuous) {
-                    continuousListeningActive = true;
-                    isInterviewerSpeaking = true; // switch back to interviewer mode automatically
-                    try { recognitionInterviewer.start(); } catch(e) {}
-                    sttStatusSpan.innerText = "Browser Web Speech API (Continuous - Listening)";
-                    startBtn.style.backgroundColor = "#dc3545";
-                    modeBadge.innerText = "Interviewer Mode (Transcribing...)";
-                    modeBadge.className = "mode-badge mode-interviewer";
-                }
-
-            } else {
-                aiScriptBox.innerText = "Error analyzing question.";
-                llmStatusSpan.innerText = "Error";
-                llmStatusSpan.style.color = "#d9534f";
-            }
-        } catch (err) {
-            console.error("Failed to fetch from backend", err);
-            aiScriptBox.classList.remove("loading");
-            generateBtn.disabled = false;
-            aiScriptBox.innerText = "Failed to communicate with AI server.";
-            llmStatusSpan.innerText = "Connection Failed";
-            llmStatusSpan.style.color = "#d9534f";
-        }
-    });
-</script>
+    </script>
 
 
 <!-- Inline Overlay Fallback -->
