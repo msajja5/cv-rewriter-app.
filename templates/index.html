@@ -532,6 +532,14 @@
     const audioModal = document.getElementById('audio-modal');
     const closeModalBtn = document.getElementById('close-modal-btn');
 
+    audioSetupBtn.addEventListener('click', () => {
+        audioModal.style.display = 'flex';
+    });
+    closeModalBtn.addEventListener('click', () => {
+        audioModal.style.display = 'none';
+    });
+
+
     let recognitionInterviewer;
     let isRecording = false;
     let tempSttBuffer = '';
@@ -866,7 +874,7 @@
         window.baseBoxText = "";
     });
 
-    generateBtn.addEventListener('click', async () => {
+    if (generateBtn) generateBtn.addEventListener('click', async () => {
         const questionText = transcriptBox.value.trim();
         if (!questionText) {
             alert("Please wait for an interviewer question or type one in the box.");
