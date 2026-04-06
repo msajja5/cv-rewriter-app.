@@ -280,6 +280,11 @@
 </div>
 
 <script>
+
+    let pipWin = null;
+    let popupWin = null;
+    let overlayMode = "none";
+
     const setupForm = document.getElementById('setup-form');
     const setupSection = document.getElementById('setup-section');
     const interviewSection = document.getElementById('interview-section');
@@ -635,6 +640,17 @@
 
     // On Load: Restore keys
     document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
+            e.preventDefault(); // Prevent page scrolling
+            toggleSpeakerMode();
+        }
+    });
+
+    startBtn.addEventListener('click', () => {
+        toggleSpeakerMode();
+    });
+
         document.getElementById('gemini-key').value = localStorage.getItem("geminiKey") || "";
         document.getElementById('groq-key').value = localStorage.getItem("groqKey") || "";
         document.getElementById('or-key').value = localStorage.getItem("orKey") || "";
@@ -682,6 +698,51 @@
             document.body.classList.add('me-speaking');
         }
         sendOverlayUpdate();
+    }
+
+
+    async function openOverlay() {
+        if (!('documentPictureInPicture' in window)) {
+            alert("Document Picture-in-Picture is not supported in this browser. Please use Chrome 116+ or Edge.");
+            document.getElementById("inline-overlay").style.display = "flex";
+            overlayMode = "inline";
+            sendOverlayUpdate();
+            return;
+        }
+
+        try {
+            pipWin = await documentPictureInPicture.requestWindow({
+                width: 420,
+                height: 600
+            });
+
+            overlayMode = "pip";
+
+            pipWin.document.body.innerHTML = `
+                <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333; background: #080a14; color: white; font-family: sans-serif;">
+                    <div><strong>AI Copilot</strong></div>
+                    <div style="font-size: 0.8em; color: #aaa;">PiP Mode</div>
+                </div>
+                <div id="ov-banner" style="background: #dc3545; color: white; text-align: center; padding: 5px; font-size: 0.9em; font-family: sans-serif;">Interviewer Speaking</div>
+                <div style="padding: 10px; display: flex; flex-direction: column; height: calc(100vh - 80px); background: #080a14; color: white; font-family: sans-serif;">
+                    <div id="ov-q" style="font-size: 0.9em; color: #00c9a7; min-height: 40px; margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px;"></div>
+                    <div id="ov-text" style="font-size: 24px; flex-grow: 1; overflow-y: auto; line-height: 1.4; white-space: pre-wrap;"></div>
+                </div>
+            `;
+
+            pipWin.document.body.style.margin = "0";
+            pipWin.document.body.style.background = "#080a14";
+
+            pipWin.addEventListener("pagehide", (event) => {
+                pipWin = null;
+                overlayMode = "none";
+            });
+
+            sendOverlayUpdate();
+        } catch(e) {
+            console.error(e);
+            alert("Failed to open PiP overlay.");
+        }
     }
 
     function closeOverlay() {
