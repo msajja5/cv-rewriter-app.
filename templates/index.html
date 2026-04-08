@@ -130,15 +130,7 @@
         </div>
 
 
-    <div style="margin-bottom: 20px;">
-        <label for="operation-mode"><strong>Operation Mode:</strong></label>
-                <select id="operation-mode" style="padding: 5px; margin-left: 10px;">
-            <option value="mock">Mock Interview (User Mic Only)</option>
-            <option value="Shared Tab (System Audio)">Shared Tab (System Audio via Whisper)</option>
-            <option value="manual">Live Manual Assist (Browser Audio/Fallback)</option>
-            <option value="companion">Meeting Companion (Read FEASIBILITY.md)</option>
-        </select>
-    </div>
+
 
     <div id="test-actions" style="margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
         <button type="button" id="btn-test-api" style="background: #17a2b8; padding: 5px 10px;">Test API Health</button>
@@ -222,9 +214,7 @@
 
 <div class="interview-interface" id="interview-section">
 
-        <div id="mode-badge" class="mode-badge mode-candidate hide-in-compact">
-            Me Speaking Mode (Transcribing only)
-        </div>
+
 
         <div class="compact-indicator">
             Compact Overlay Mode: ON
@@ -234,7 +224,7 @@
         <h3>Interviewer's Question:</h3>
 
         <div class="controls">
-            <button id="start-btn" style="background-color: #007bff;">[Space bar] Switch to Interviewer Speaking</button>
+
             <button id="clear-btn" class="hide-in-compact" style="flex: 0.5;">Clear</button>
 
             <label class="checkbox-label hide-in-compact" style="font-weight: bold; color: #d9534f; margin-left: 10px; cursor: pointer;" title="Continuously listen and auto-answer after 2.5 seconds of silence.">
@@ -334,7 +324,6 @@
     });
 
 
-    const operationMode = document.getElementById('operation-mode');
 
 
     let mediaRecorder = null;
@@ -363,13 +352,14 @@
                 }
             };
 
+
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 audioChunks = [];
                 // Send to backend
                 await sendAudioToBackend(audioBlob);
 
-                if (isRecordingAudio && isInterviewerSpeaking) {
+                if (isRecordingAudio) {
                     try { mediaRecorder.start(); } catch(e){}
                     setTimeout(() => {
                         if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
@@ -378,14 +368,13 @@
             };
 
             isRecordingAudio = true;
-            sttStatusSpan.innerText = "Listening to Shared Tab Audio (Groq/Whisper)";
+            sttStatusSpan.innerText += " + System Audio (Groq/Whisper)";
 
-            if (isInterviewerSpeaking) {
-                try { mediaRecorder.start(); } catch(e){}
-                setTimeout(() => {
-                    if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-                }, 4000);
-            }
+            try { mediaRecorder.start(); } catch(e){}
+            setTimeout(() => {
+                if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
+            }, 4000);
+
 
             // handle user stopping stream
             stream.getVideoTracks()[0].onended = () => {
@@ -425,7 +414,7 @@
                     if (document.getElementById('auto-gen-checkbox').checked) {
                         clearTimeout(silenceTimer);
                         silenceTimer = setTimeout(() => {
-                            if (transcriptBox.value.trim().length > 5 && isInterviewerSpeaking) {
+                            if (transcriptBox.value.trim().length > 5) {
                                 generateBtn.click();
                             }
                         }, 2000);
@@ -441,38 +430,11 @@
     // Insert after updateSttDiagnostic declaration
 
     function updateSttDiagnostic() {
-        if (!operationMode) return;
-        const mode = operationMode.value;
-        if (mode === 'mock') {
-            diagStt.innerText = "Browser Web Speech API (User Mic)";
-        } else if (mode === 'manual') {
-            diagStt.innerText = "Manual Input / Browser Speech (Fallback)";
-        } else {
-            diagStt.innerText = "Server STT (Meeting Companion)";
-        }
+        diagStt.innerText = "All-Time Listening (Mic + System)";
     }
 
 
-    operationMode?.addEventListener('change', () => {
-        updateSttDiagnostic();
-        const mode = operationMode.value;
-        if (mode === "Shared Tab (System Audio)") {
-            if (typeof startSystemAudioCapture === "function") {
-                startSystemAudioCapture();
-            } else {
-                alert("Shared tab capture not found");
-            }
-        } else {
-            // Stop logic
-            if (typeof mediaRecorder !== 'undefined' && mediaRecorder) {
-                if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-                isRecordingAudio = false;
-                if (mediaRecorder.stream) mediaRecorder.stream.getTracks().forEach(t => t.stop());
-            }
-        }
-    });
-
-    // Initial call
+        // Initial call
     updateSttDiagnostic();
 
     document.getElementById('btn-test-gen')?.addEventListener('click', () => {
@@ -556,7 +518,7 @@
     const sttStatusSpan = document.getElementById('stt-status');
     const llmStatusSpan = document.getElementById('llm-status');
 
-    let isInterviewerSpeaking = false; // False = Me Speaking, True = Interviewer Speaking
+
 
     // Setup Web Speech API — Single Instance Pattern
     if ('webkitSpeechRecognition' in window) {
@@ -579,7 +541,7 @@
             }
 
             // Only update the question box if the interviewer is speaking
-            if (isInterviewerSpeaking) {
+            if (true) {
                 if (appendCheckbox.checked && window.baseBoxText) {
                     transcriptBox.value = window.baseBoxText + " " + tempSttBuffer + interimTranscript;
                 } else {
@@ -604,7 +566,7 @@
         };
 
         recognitionInterviewer.onend = function() {
-            if (continuousListeningActive || isInterviewerSpeaking) {
+            if (continuousListeningActive) {
                 try { recognitionInterviewer.start(); } catch(e) {}
             }
         };
@@ -648,20 +610,9 @@
     // On Load: Restore keys
     document.addEventListener("DOMContentLoaded", () => {
     generateBtn = document.getElementById('generate-btn');
-    startBtn = document.getElementById('start-btn');
 
-    document.addEventListener('keydown', (e) => {
-        if (e.code === 'Space' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
-            e.preventDefault(); // Prevent page scrolling
-            toggleSpeakerMode();
-        }
-    });
 
-    startBtn.addEventListener('click', () => {
-        toggleSpeakerMode();
-    });
-
-generateBtn.addEventListener('click', async (e) => {
+        generateBtn.addEventListener('click', async (e) => {
         console.log('Generate button clicked');
         e.preventDefault();
         const questionText = transcriptBox.value.trim();
@@ -684,11 +635,11 @@ generateBtn.addEventListener('click', async (e) => {
             clearTimeout(silenceTimer);
             try { recognitionInterviewer.stop(); } catch(e) {}
             sttStatusSpan.innerText = "Browser Web Speech API (Paused for AI Response)";
-            startBtn.style.backgroundColor = "#ffc107"; // Yellow to indicate working/paused
+
         }
 
         // Switch back to "Me Speaking" mode while generating so we don't accidentally record the AI
-        if (isInterviewerSpeaking) {
+        if (true) {
             toggleSpeakerMode();
         }
 
@@ -804,7 +755,7 @@ generateBtn.addEventListener('click', async (e) => {
                     isInterviewerSpeaking = true; // switch back to interviewer mode automatically
                     try { recognitionInterviewer.start(); } catch(e) {}
                     sttStatusSpan.innerText = "Browser Web Speech API (Continuous - Listening)";
-                    startBtn.style.backgroundColor = "#dc3545";
+
                     modeBadge.innerText = "Interviewer Mode (Transcribing...)";
                     modeBadge.className = "mode-badge mode-interviewer";
                 }
@@ -840,48 +791,46 @@ generateBtn.addEventListener('click', async (e) => {
         });
     }
 
-    function toggleSpeakerMode() {
-        isInterviewerSpeaking = !isInterviewerSpeaking;
-
-        if (isInterviewerSpeaking) {
-            if (continuousListeningActive && recognitionInterviewer) {
-                try { recognitionInterviewer.start(); } catch(e){}
-            }
-            if (isRecordingAudio && mediaRecorder) {
-                try { mediaRecorder.start(); } catch(e){}
-                setTimeout(() => {
-                    if(mediaRecorder && mediaRecorder.state === 'recording') mediaRecorder.stop();
-                }, 4000);
-            }
-            startBtn.innerText = "[Space bar] Switch to Me Speaking";
-            startBtn.style.backgroundColor = "#dc3545"; // Red for interviewer
-            transcriptBox.style.borderColor = "#dc3545";
-            modeBadge.innerText = "Interviewer Mode (Transcribing...)";
-            modeBadge.className = "mode-badge mode-interviewer";
-            document.body.classList.remove('me-speaking');
-        } else {
-            if (recognitionInterviewer) { try { recognitionInterviewer.stop(); } catch(e){} }
-            if (isRecordingAudio && mediaRecorder) {
-                if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            }
-            startBtn.innerText = "[Space bar] Switch to Interviewer Speaking";
-            startBtn.style.backgroundColor = "#007bff"; // Blue for me
-            transcriptBox.style.borderColor = "#ccc";
-            modeBadge.innerText = "Me Speaking Mode (Transcribing only)";
-            modeBadge.className = "mode-badge mode-candidate";
-            document.body.classList.add('me-speaking');
-        }
-        sendOverlayUpdate();
-    }
 
 
     async function openOverlay() {
         if (!('documentPictureInPicture' in window)) {
-            alert("Document Picture-in-Picture is not supported in this browser. Please use Chrome 116+ or Edge.");
-            document.getElementById("inline-overlay").style.display = "flex";
-            overlayMode = "inline";
-            sendOverlayUpdate();
-            return;
+
+            alert("Document Picture-in-Picture is not supported in this browser. Opening a popup window instead.");
+            popupWin = window.open("", "AI_Copilot_Popup", "width=420,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes");
+            if (popupWin) {
+                overlayMode = "popup";
+                popupWin.document.write(`
+                    <html>
+                    <head><title>AI Copilot</title></head>
+                    <body style="margin: 0; background: #080a14; color: white; font-family: sans-serif;">
+                        <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #333;">
+                            <div><strong>AI Copilot</strong></div>
+                            <div style="font-size: 0.8em; color: #aaa;">Popup Mode</div>
+                        </div>
+                        <div id="ov-banner" style="background: #dc3545; color: white; text-align: center; padding: 5px; font-size: 0.9em;">Listening</div>
+                        <div style="padding: 10px; display: flex; flex-direction: column; height: calc(100vh - 80px);">
+                            <div id="ov-q" style="font-size: 0.9em; color: #00c9a7; min-height: 40px; margin-bottom: 10px; border-bottom: 1px dashed #333; padding-bottom: 5px;"></div>
+                            <div id="ov-text" style="font-size: 24px; flex-grow: 1; overflow-y: auto; line-height: 1.4; white-space: pre-wrap;"></div>
+                        </div>
+                    </body>
+                    </html>
+                `);
+                popupWin.document.close();
+                popupWin.addEventListener("beforeunload", () => {
+                    popupWin = null;
+                    overlayMode = "none";
+                });
+                sendOverlayUpdate();
+                return;
+            } else {
+                alert("Popup blocked. Using inline overlay.");
+                document.getElementById("inline-overlay").style.display = "flex";
+                overlayMode = "inline";
+                sendOverlayUpdate();
+                return;
+            }
+
         }
 
         try {
@@ -939,7 +888,7 @@ generateBtn.addEventListener('click', async (e) => {
             q: transcriptBox.value.trim(),
             text: aiScriptBox.innerText,
             fs: overlayFs,
-            speaker: isInterviewerSpeaking ? "interviewer" : "me",
+            speaker: "interviewer",
             scrollTop: scrollTop
         };
 
@@ -974,7 +923,9 @@ generateBtn.addEventListener('click', async (e) => {
         if (overlayMode === "pip" && pipWin) {
             try { applyToDoc(pipWin.document); } catch(e) { console.error(e); }
         }
-        if (overlayMode === "popup" && popupWin) popupWin.postMessage(payload, "*");
+        if (overlayMode === "popup" && popupWin) {
+            try { applyToDoc(popupWin.document); } catch(e) { console.error(e); }
+        }
         if (overlayMode === "inline") {
             try {
                 if (inlQ) inlQ.textContent = payload.q;
@@ -1024,12 +975,6 @@ generateBtn.addEventListener('click', async (e) => {
             sendOverlayUpdate();
         }
     });
-
-    const inlSpkInt = document.getElementById('inl-spk-int');
-    if(inlSpkInt) inlSpkInt.addEventListener('click', () => { if(!isInterviewerSpeaking) toggleSpeakerMode(); });
-    const inlSpkMe = document.getElementById('inl-spk-me');
-    if(inlSpkMe) inlSpkMe.addEventListener('click', () => { if(isInterviewerSpeaking) toggleSpeakerMode(); });
-
 
 
 
