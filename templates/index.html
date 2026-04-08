@@ -602,7 +602,21 @@
             localStorage.setItem("orKey", window.sessionKeys.or);
         } catch(e) { console.warn("localStorage not available, using sessionKeys"); }
 
+
         interviewContext = []; // Reset context
+        document.getElementById("setup-section").style.display = "none";
+        document.getElementById("interview-section").style.display = "block";
+
+        // Start webkitSpeechRecognition for mic
+        try { recognitionInterviewer.start(); } catch(e){}
+        continuousListeningActive = true;
+        sttStatusSpan.innerText = "Browser Web Speech API (Mic)";
+
+        // Start system audio capture too, if they want
+        if (typeof startSystemAudioCapture === "function") {
+            startSystemAudioCapture();
+        }
+
         setupSection.style.display = 'none';
         interviewSection.style.display = 'block';
     });
@@ -638,10 +652,7 @@
 
         }
 
-        // Switch back to "Me Speaking" mode while generating so we don't accidentally record the AI
-        if (true) {
-            toggleSpeakerMode();
-        }
+
 
         aiScriptBox.innerText = ""; // Clear for streaming
         sendOverlayUpdate(true);
@@ -752,7 +763,7 @@
                 // Re-enable continuous listening if it was active before generation
                 if (wasContinuous) {
                     continuousListeningActive = true;
-                    isInterviewerSpeaking = true; // switch back to interviewer mode automatically
+
                     try { recognitionInterviewer.start(); } catch(e) {}
                     sttStatusSpan.innerText = "Browser Web Speech API (Continuous - Listening)";
 
@@ -796,7 +807,7 @@
     async function openOverlay() {
         if (!('documentPictureInPicture' in window)) {
 
-            alert("Document Picture-in-Picture is not supported in this browser. Opening a popup window instead.");
+            console.log("Document Picture-in-Picture is not supported in this browser. Opening a popup window instead.");
             popupWin = window.open("", "AI_Copilot_Popup", "width=420,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes");
             if (popupWin) {
                 overlayMode = "popup";
@@ -824,7 +835,7 @@
                 sendOverlayUpdate();
                 return;
             } else {
-                alert("Popup blocked. Using inline overlay.");
+                console.log("Popup blocked. Using inline overlay.");
                 document.getElementById("inline-overlay").style.display = "flex";
                 overlayMode = "inline";
                 sendOverlayUpdate();
@@ -964,12 +975,7 @@
     window.addEventListener("message", (e) => {
         const d = e.data;
         if (!d) return;
-        if (d.type === "ic-speaker") {
-            if ((d.speaker === "interviewer" && !isInterviewerSpeaking) ||
-                (d.speaker === "me" && isInterviewerSpeaking)) {
-                toggleSpeakerMode();
-            }
-        }
+
         if (d.type === "ic-fs") {
             overlayFs += d.delta;
             sendOverlayUpdate();
