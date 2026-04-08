@@ -777,7 +777,7 @@
                 llmStatusSpan.style.color = "#d9534f";
             }
         } catch (err) {
-            console.error("Failed to fetch from backend", err);
+            console.error("Failed to fetch from backend", err, err.stack);
             aiScriptBox.classList.remove("loading");
             generateBtn.disabled = false;
             aiScriptBox.innerText = "Failed to communicate with AI server.";
