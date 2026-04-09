@@ -19,10 +19,10 @@ async def main():
         print("Clicking float button...")
         await page.click("#float-btn")
 
-        # Give it a moment to initialize the overlay
-        await page.wait_for_timeout(500)
+        # We simulate what a user might do if they skip setup section and go straight to PiP mode.
+        # This will test if `window.sessionKeys` logic breaks the fetch.
 
-        # Evaluate to show the hidden interview interface
+        # Evaluate to show the hidden interview interface without running the setup step
         await page.evaluate('document.getElementById("interview-section").style.display = "block"')
 
         # Enter some transcript and generate to verify it doesn't crash
@@ -32,6 +32,11 @@ async def main():
 
         # Wait a bit to let it fail if it fails
         await page.wait_for_timeout(2000)
+
+        # Output the inner text of aiScriptBox
+        ai_script = await page.evaluate('document.getElementById("ai-script").innerText')
+        print("AI Script output:")
+        print(ai_script)
 
         if errors:
             print("ERRORS CAUGHT:", errors)

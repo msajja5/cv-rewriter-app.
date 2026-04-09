@@ -398,7 +398,7 @@
 
         try {
             const customHeaders = {
-                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : document.getElementById('groq-key').value,
+                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : (document.getElementById('groq-key') ? document.getElementById('groq-key').value : ''),
             };
 
             const resp = await fetch('/transcribe', {
@@ -665,16 +665,16 @@
                 job_role: userJobRole,
                 transcript: questionText,
                 context: interviewContext,
-                response_style: userStyle,
-                target_role_family: targetRoleFamily
+                response_style: typeof userStyle !== 'undefined' ? userStyle : 'normal',
+                target_role_family: typeof targetRoleFamily !== 'undefined' ? targetRoleFamily : 'Auto Detect'
             };
 
             // Add custom API keys as a header so the backend can extract them if needed
             const customHeaders = {
                 'Content-Type': 'application/json',
-                'X-Gemini-Key': window.sessionKeys ? window.sessionKeys.gemini : document.getElementById('gemini-key').value,
-                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : document.getElementById('groq-key').value,
-                'X-Or-Key': window.sessionKeys ? window.sessionKeys.or : document.getElementById('or-key').value
+                'X-Gemini-Key': window.sessionKeys ? window.sessionKeys.gemini : (document.getElementById('gemini-key') ? document.getElementById('gemini-key').value : ''),
+                'X-Groq-Key': window.sessionKeys ? window.sessionKeys.groq : (document.getElementById('groq-key') ? document.getElementById('groq-key').value : ''),
+                'X-Or-Key': window.sessionKeys ? window.sessionKeys.or : (document.getElementById('or-key') ? document.getElementById('or-key').value : '')
             };
 
             const response = await fetch('/chat', {
@@ -779,6 +779,7 @@
             }
         } catch (err) {
             console.error("Failed to fetch from backend", err, err.stack);
+            console.log("Full error details:", JSON.stringify({message: err.message, stack: err.stack}));
             aiScriptBox.classList.remove("loading");
             generateBtn.disabled = false;
             aiScriptBox.innerText = "Failed to communicate with AI server.";
