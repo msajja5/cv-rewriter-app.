@@ -274,6 +274,7 @@
     let pipWin = null;
     let popupWin = null;
     let overlayMode = "none";
+    let overlayFs = 24;
 
     const setupForm = document.getElementById('setup-form');
     const setupSection = document.getElementById('setup-section');
@@ -925,10 +926,7 @@
                     banEl.textContent = "Me Speaking (Muted)";
                 }
             }
-            if (btnInt && btnMe) {
-                btnInt.style.border = payload.speaker === "interviewer" ? "2px solid white" : "none";
-                btnMe.style.border = payload.speaker === "me" ? "2px solid white" : "none";
-            }
+
         };
 
         if (overlayMode === "pip" && pipWin) {
@@ -945,7 +943,7 @@
                     inlText.style.fontSize = payload.fs + "px";
                     if (scrollTop && inlText.parentElement) inlText.parentElement.scrollTop = 0;
                 }
-                updateInlineSpeakerUI(payload.speaker);
+
             } catch(e) { console.error("Inline Overlay update error", e); }
         }
     }
