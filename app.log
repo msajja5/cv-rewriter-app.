@@ -1,0 +1,17 @@
+INFO:     Started server process [3239989]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:5000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:41034 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59132 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59132 - "GET /stream HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:43414 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43414 - "GET /stream HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:44264 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:49028 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:59080 - "GET / HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57698 - "GET / HTTP/1.1" 200 OK
+INFO:main:Received chat streaming request for role:
+INFO:     127.0.0.1:57698 - "POST /chat HTTP/1.1" 200 OK
+INFO:llm_service:Prompt length: 5210 chars — profile included: True
+INFO:llm_service:All LLM providers failed or missing keys. Falling back to mock logic.
