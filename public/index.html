@@ -313,10 +313,10 @@
         <select id="mic-select"><option value="">— loading devices… —</option></select>
       </div>
       <div id="hint-tab" class="device-hint">
-        📌 <strong>Tab mode:</strong> Click the button below to share a browser tab with audio. Pick the Zoom/Teams tab and tick "Share tab audio".
+        📌 <strong>Tab mode:</strong> Click "Start Listening" — a browser dialog will ask you to pick the Zoom/Teams tab. Tick "Share tab audio".
       </div>
       <div id="hint-system" class="device-hint">
-        📌 <strong>System Audio:</strong> Click below, select "Entire Screen" and enable "Share system audio". On Mac, BlackHole virtual driver is required.
+        📌 <strong>System Audio:</strong> Click "Start Listening" — select "Entire Screen" and enable "Share system audio". On Mac, BlackHole virtual driver is required.
       </div>
       <!-- Manual share button — only shown for tab/system/both modes -->
       <div class="share-btn-row" id="share-btn-row">
@@ -401,7 +401,7 @@
 let sessionCV = '', sessionJobRole = '';
 let conversationContext = [];
 let isRecording = false;
-let audioMode = 'mic';  // default: always microphone, never screen share
+let audioMode = 'mic';
 let pipVisible = false;
 let pipExpanded = false;
 let serverHasKeys = false;
@@ -418,7 +418,7 @@ let dgInterimText = '';
 let dgFinalBuffer = '';
 let dgLastSentText = '';
 
-// Tab/system shared stream — set only when user explicitly clicks share button
+// Tab/system shared stream — persists across listen on/off cycles
 let sharedDisplayStream = null;
 
 // Browser Web Speech fallback
@@ -627,7 +627,6 @@ async function startSession() {
   document.getElementById('response-style').value = document.getElementById('answer-style').value;
   conversationContext = [];
 
-  // Always reset to mic mode on session start — never auto-trigger screen share
   audioMode = 'mic';
   sharedDisplayStream = null;
 
@@ -661,7 +660,7 @@ function endSession() {
   setupSection.style.display     = 'block';
   floatBtn.classList.remove('show');
   if (pipVisible) togglePip();
-  // Release any shared display stream
+  // Release shared display stream only when ending the full session
   if (sharedDisplayStream) {
     sharedDisplayStream.getTracks().forEach(t => t.stop());
     sharedDisplayStream = null;
@@ -684,7 +683,7 @@ function switchMode(mode, btn) {
   const needsShare = (mode === 'tab' || mode === 'system' || mode === 'both');
   document.getElementById('share-btn-row').className = 'share-btn-row' + (needsShare ? ' show' : '');
 
-  // If switching away from a share mode, reset the share state
+  // If switching away from a share mode, release shared stream
   if (!needsShare && sharedDisplayStream) {
     sharedDisplayStream.getTracks().forEach(t => t.stop());
     sharedDisplayStream = null;
@@ -692,32 +691,29 @@ function switchMode(mode, btn) {
   }
 }
 
-// User explicitly clicks to share tab/screen — no auto-popup on listen
+// Request display share — called manually OR automatically when Start Listening is pressed
 async function requestDisplayShare() {
   const statusEl = document.getElementById('share-status');
   statusEl.className = 'share-status pending';
   statusEl.textContent = '⏳ Waiting for you to select a tab/screen…';
 
   try {
-    // Stop previous stream if any
     if (sharedDisplayStream) {
       sharedDisplayStream.getTracks().forEach(t => t.stop());
       sharedDisplayStream = null;
     }
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-    // Stop the video track immediately — we only need audio
     stream.getVideoTracks().forEach(t => t.stop());
 
     if (!stream.getAudioTracks().length) {
       statusEl.className = 'share-status pending';
       statusEl.textContent = '⚠️ No audio track captured. Make sure to tick "Share tab audio" in the dialog.';
       sharedDisplayStream = null;
-      return;
+      return false;
     }
 
     sharedDisplayStream = stream;
 
-    // Handle user stopping the share via the browser's built-in "Stop sharing" button
     stream.getAudioTracks()[0].addEventListener('ended', () => {
       dbg('Display share ended by user');
       sharedDisplayStream = null;
@@ -730,11 +726,13 @@ async function requestDisplayShare() {
 
     updateShareStatus(true);
     dbg('Display stream acquired: ' + stream.getAudioTracks().length + ' audio track(s)');
+    return true;
   } catch(e) {
     statusEl.className = 'share-status pending';
     statusEl.textContent = '❌ Share cancelled or denied: ' + e.message;
     sharedDisplayStream = null;
     dbg('requestDisplayShare error: ' + e.message);
+    return false;
   }
 }
 
@@ -781,14 +779,15 @@ document.addEventListener('keydown', (e) => {
 async function startListening() {
   if (isRecording) return;
 
-  // For tab/system/both modes, require the user to have already shared
-  if ((audioMode === 'tab' || audioMode === 'system') && !sharedDisplayStream) {
-    setListenStatus('⚠️ Please click "Share tab / screen audio" first, then start listening.', 'info');
-    return;
-  }
-  if (audioMode === 'both' && !sharedDisplayStream) {
-    setListenStatus('⚠️ Please click "Share tab / screen audio" first for Mic + Tab mode.', 'info');
-    return;
+  // For tab/system/both modes: if no stream yet, auto-trigger the share dialog
+  const needsShare = (audioMode === 'tab' || audioMode === 'system' || audioMode === 'both');
+  if (needsShare && (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length)) {
+    setListenStatus('⏳ Waiting for tab/screen share…', 'info');
+    const ok = await requestDisplayShare();
+    if (!ok) {
+      setListenStatus('❌ Share not granted — listening cancelled.', 'error');
+      return;
+    }
   }
 
   isRecording = true;
@@ -817,36 +816,35 @@ function stopListening() {
   interimBox.textContent = '';
   clearTimeout(dgSilenceTimer);
 
+  // Stop only the STT engine — NEVER stop or close sharedDisplayStream here
   if (useDeeepgram) {
     stopDeepgram();
   } else {
     if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
   }
+
+  // Release only the mic/active streams (not the shared display stream)
   activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
   activeStreams = [];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // AUDIO STREAM ACQUISITION
-// Never calls getDisplayMedia automatically — only uses already-shared stream
 // ─────────────────────────────────────────────────────────────────────────────
 async function getAudioStream() {
   const micId = micSelect.value;
   const micConstraints = { audio: micId ? { deviceId: { exact: micId } } : true, video: false };
 
   if (audioMode === 'mic') {
-    // Pure microphone — no screen share ever
     const s = await navigator.mediaDevices.getUserMedia(micConstraints);
     activeStreams.push(s);
     return s;
   }
 
   if (audioMode === 'tab' || audioMode === 'system') {
-    // Use the pre-shared stream only
     if (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length) {
       throw new Error('No tab/screen audio shared. Click "Share tab / screen audio" first.');
     }
-    // Clone the stream so stopping listening doesn't kill the shared stream
     const ctx = new AudioContext({ sampleRate: 16000 });
     tabAudioCtx = ctx;
     const dest = ctx.createMediaStreamDestination();
@@ -855,7 +853,6 @@ async function getAudioStream() {
   }
 
   if (audioMode === 'both') {
-    // Mic + already-shared display stream
     if (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length) {
       throw new Error('No tab/screen audio shared. Click "Share tab / screen audio" first.');
     }
@@ -870,7 +867,6 @@ async function getAudioStream() {
     return dest.stream;
   }
 
-  // Fallback — always microphone
   const s = await navigator.mediaDevices.getUserMedia(micConstraints);
   activeStreams.push(s);
   return s;
@@ -1243,9 +1239,9 @@ function showHowTo() {
     'How to connect Zoom/Teams audio:\n\n' +
     '✅ WITH DEEPGRAM (recommended):\n' +
     '1. Select "🎤+🖥️ Mic + Tab" audio mode\n' +
-    '2. Click "Share tab / screen audio" — pick your Zoom/Teams tab\n' +
-    '3. Tick "Share tab audio" in the browser dialog\n' +
-    '4. Press Space to start listening\n\n' +
+    '2. Press Space or click "Start Listening"\n' +
+    '3. A browser dialog opens — pick your Zoom/Teams tab\n' +
+    '4. Tick "Share tab audio" — done!\n\n' +
     '🟢 MICROPHONE ONLY (simplest):\n' +
     'Keep "🎤 Microphone" mode selected and just press Space.\n' +
     'No screen sharing needed — the app listens via your mic directly.'
