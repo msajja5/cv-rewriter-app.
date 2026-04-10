@@ -1,1 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel/
+
+# Python legacy (kept in repo for reference, ignored by Vercel via .vercelignore)
 __pycache__/
+*.pyc
+*.pyo
+
+# Logs & archives
+server.log
+*.log
+cv_rewriter_app.zip
+*.zip
+
+# OS
+.DS_Store
+Thumbs.db
