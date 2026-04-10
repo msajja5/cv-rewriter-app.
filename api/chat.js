@@ -1,5 +1,3 @@
-export const config = { runtime: "edge" };
-
 const STYLES = {
   live_script: "Write a natural teleprompter script Manjunath can read aloud during a live interview. 3-4 sentences. First-person, confident, conversational. NO bullet points. Start directly with the answer — no greetings.",
   concise: "Answer in 1-2 sentences only. Direct and punchy.",
@@ -124,9 +122,9 @@ export default async function handler(req) {
   }
   if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
 
-  const groqKey     = req.headers.get("x-groq-key")       || process.env.GROQ_API_KEY       || "";
-  const geminiKey   = req.headers.get("x-gemini-key")     || process.env.GEMINI_API_KEY     || "";
-  const openrouterKey = req.headers.get("x-openrouter-key") || process.env.OPENROUTER_API_KEY || "";
+  const groqKey       = process.env.GROQ_API_KEY       || "";
+  const geminiKey     = process.env.GEMINI_API_KEY     || "";
+  const openrouterKey = process.env.OPENROUTER_API_KEY || "";
 
   const encoder = new TextEncoder();
 
