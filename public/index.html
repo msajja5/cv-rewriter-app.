@@ -6,122 +6,87 @@
   <title>AI Interview Copilot — Manjunath Sajjan</title>
   <style>
     :root {
-      --bg: #f4f7f6; --surface: #ffffff; --primary: #01696f; --primary-hover: #0c4e54;
-      --danger: #dc3545; --danger-hover: #c82333;
-      --green-bg: #e9f7ef; --green-border: #28a745;
-      --hint-bg: #fffbea; --hint-border: #f0c040;
-      --text: #333; --muted: #666; --border: #ddd;
-      --shadow: 0 4px 16px rgba(0,0,0,0.09);
+      --bg:#f4f7f6;--surface:#fff;--primary:#01696f;--primary-hover:#0c4e54;
+      --danger:#dc3545;--danger-hover:#c82333;
+      --green-bg:#e9f7ef;--green-border:#28a745;
+      --hint-bg:#fffbea;--hint-border:#f0c040;
+      --text:#333;--muted:#666;--border:#ddd;
+      --shadow:0 4px 16px rgba(0,0,0,.09);
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; background: var(--surface); padding: 32px; border-radius: 12px; box-shadow: var(--shadow); }
-    h1 { text-align: center; font-size: 1.8rem; margin-bottom: 4px; }
-    .subtitle { text-align: center; color: var(--muted); margin-bottom: 28px; font-size: 0.95rem; }
-    .form-group { margin-bottom: 18px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; color: #444; font-size: 0.9rem; }
-    input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s; }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
-    .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-danger { background: var(--danger); color: white; }
-    .btn-danger:hover { background: var(--danger-hover); }
-    .btn-orange { background: #e07b00; color: white; }
-    .btn-orange:hover { background: #c06800; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:20px}
+    .container{max-width:920px;margin:0 auto;background:var(--surface);padding:32px;border-radius:12px;box-shadow:var(--shadow)}
+    h1{text-align:center;font-size:1.8rem;margin-bottom:4px}
+    .subtitle{text-align:center;color:var(--muted);margin-bottom:28px;font-size:.95rem}
+    .form-group{margin-bottom:18px}
+    label{display:block;font-weight:600;margin-bottom:6px;color:#444;font-size:.9rem}
+    input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:.95rem;font-family:inherit;transition:border-color .2s}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)}
+    .btn{display:block;width:100%;padding:12px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{background:var(--primary-hover)}
+    .btn-danger{background:var(--danger);color:#fff}
+    .btn-danger:hover{background:var(--danger-hover)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
 
-    .api-section { background: #f0f9ff; border: 1px solid #b3daf7; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
-    .api-section summary { font-weight: 600; cursor: pointer; color: var(--primary); font-size: 0.9rem; }
-    .api-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-    .api-grid .form-group { margin-bottom: 0; }
-    .api-hint { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+    .api-section{background:#f0f9ff;border:1px solid #b3daf7;border-radius:8px;padding:16px;margin-bottom:20px}
+    .api-section summary{font-weight:600;cursor:pointer;color:var(--primary);font-size:.9rem}
+    .api-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+    .api-grid .form-group{margin-bottom:0}
+    .api-hint{font-size:.78rem;color:var(--muted);margin-top:4px}
 
-    #interview-section { display: none; margin-top: 24px; border-top: 2px solid #eee; padding-top: 24px; }
+    #interview-section{display:none;margin-top:24px;border-top:2px solid #eee;padding-top:24px}
 
-    /* Audio source selector */
-    .audio-source-bar {
-      background: #f0f4ff; border: 1px solid #c5d0f7; border-radius: 8px;
-      padding: 14px 16px; margin-bottom: 18px;
-    }
-    .audio-source-bar h4 { font-size: 0.88rem; font-weight: 700; color: #333; margin-bottom: 10px; }
-    .source-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-    .source-btn {
-      padding: 7px 14px; border-radius: 20px; border: 2px solid transparent;
-      font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-      background: white; color: #555; border-color: #ccc;
-    }
-    .source-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-    .source-hint { font-size: 0.76rem; color: var(--muted); margin-top: 8px; }
+    /* ── Audio device panel ── */
+    .audio-panel{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:10px;padding:16px;margin-bottom:18px}
+    .audio-panel h4{font-size:.88rem;font-weight:700;color:#333;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+    .device-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+    .dtab{padding:6px 14px;border-radius:20px;border:2px solid #ccc;font-size:.82rem;font-weight:600;cursor:pointer;background:#fff;color:#555;transition:all .2s}
+    .dtab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .device-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .device-row label{margin:0;font-size:.82rem;white-space:nowrap;min-width:100px}
+    .device-row select{flex:1;padding:7px 10px;font-size:.82rem}
+    .device-hint{font-size:.75rem;color:var(--muted);line-height:1.5;margin-top:4px;background:#fffbe6;border:1px solid #ffe082;border-radius:5px;padding:7px 10px;display:none}
+    .device-hint.show{display:block}
 
-    .controls { display: flex; gap: 12px; margin-bottom: 8px; align-items: center; }
-    .controls .btn { flex: 1; }
+    /* ── Controls ── */
+    .controls{margin-bottom:6px}
+    @keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(220,53,69,.5)}70%{box-shadow:0 0 0 10px rgba(220,53,69,0)}100%{box-shadow:0 0 0 0 rgba(220,53,69,0)}}
+    #toggle-btn.listening{background:var(--danger);animation:pulse-ring 1.4s ease-out infinite}
+    .space-hint{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:14px}
+    .space-hint kbd{display:inline-block;background:#eee;border:1px solid #ccc;border-bottom:3px solid #bbb;border-radius:4px;padding:1px 8px;font-size:.78rem;font-family:monospace;color:#333;margin:0 2px}
 
-    /* Spacebar hint pill */
-    .space-hint {
-      text-align: center; font-size: 0.78rem; color: var(--muted);
-      margin-bottom: 14px; letter-spacing: 0.02em;
-    }
-    .space-hint kbd {
-      display: inline-block; background: #eee; border: 1px solid #ccc;
-      border-bottom: 3px solid #bbb; border-radius: 4px;
-      padding: 1px 8px; font-size: 0.78rem; font-family: monospace;
-      color: #333; margin: 0 2px;
-    }
-    /* Pulse animation on the start button when listening */
-    @keyframes pulse-border {
-      0%   { box-shadow: 0 0 0 0 rgba(220,53,69,0.5); }
-      70%  { box-shadow: 0 0 0 8px rgba(220,53,69,0); }
-      100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
-    }
-    #toggle-btn.listening {
-      background: var(--danger);
-      animation: pulse-border 1.4s ease-out infinite;
-    }
+    .listen-status{text-align:center;padding:10px;border-radius:6px;margin-bottom:14px;font-size:.85rem;font-weight:600;display:none}
+    .listen-status.active{display:block;background:#e9f7ef;color:#1a6a30}
+    .listen-status.error{display:block;background:#fdecea;color:#b71c1c}
+    .listen-status.info{display:block;background:#e8f4fd;color:#0c5460}
 
-    .listen-status {
-      text-align: center; padding: 10px; border-radius: 6px; margin-bottom: 14px;
-      font-size: 0.85rem; font-weight: 600; display: none;
-    }
-    .listen-status.active { display: block; background: #e9f7ef; color: #1a6a30; }
-    .listen-status.error  { display: block; background: #fdecea; color: #b71c1c; }
+    .script-label{font-weight:700;font-size:1rem;margin-bottom:8px;color:#333;display:flex;align-items:center;gap:8px}
+    .provider-badge{font-size:.72rem;background:#e0f2f1;color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:600}
+    .provider-badge.offline{background:#fff3cd;color:#856404}
 
-    .script-label { font-weight: 700; font-size: 1rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 8px; }
-    .provider-badge { font-size: 0.72rem; background: #e0f2f1; color: var(--primary); padding: 2px 8px; border-radius: 99px; font-weight: 600; }
-    .provider-badge.offline { background: #fff3cd; color: #856404; }
+    .script-box{background:var(--green-bg);border-left:5px solid var(--green-border);border-radius:6px;padding:20px;min-height:110px;font-size:1.15rem;line-height:1.7;margin-bottom:20px;white-space:pre-wrap}
+    .script-box.loading{color:#888;font-style:italic;font-size:1rem}
+    .script-box.hint{background:var(--hint-bg);border-left-color:var(--hint-border);font-size:.97rem;line-height:1.8}
+    .script-box.error-box{background:#fdecea;border-left-color:#f44336;font-size:.97rem}
 
-    .script-box {
-      background: var(--green-bg); border-left: 5px solid var(--green-border);
-      border-radius: 6px; padding: 20px; min-height: 110px;
-      font-size: 1.15rem; line-height: 1.7; margin-bottom: 20px; white-space: pre-wrap;
-    }
-    .script-box.loading { color: #888; font-style: italic; font-size: 1rem; }
-    .script-box.hint { background: var(--hint-bg); border-left-color: var(--hint-border); font-size: 0.97rem; line-height: 1.8; }
-    .script-box.error-box { background: #fdecea; border-left-color: #f44336; font-size: 0.97rem; }
+    .offline-bar{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#856404;margin-bottom:14px;display:none}
+    .style-row{display:flex;gap:10px;align-items:center;margin-bottom:16px}
+    .style-row label{margin:0;white-space:nowrap;font-size:.88rem}
+    .style-row select{max-width:240px}
 
-    .offline-bar { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 8px 14px; font-size: 0.82rem; color: #856404; margin-bottom: 14px; display: none; }
+    .q-box{margin-bottom:16px}
+    .q-box label{font-weight:700;font-size:.95rem;margin-bottom:6px;display:block}
+    .q-display{border:1px solid var(--border);border-radius:6px;padding:12px;min-height:54px;background:#fafafa;font-size:.98rem;color:#222;line-height:1.5;white-space:pre-wrap}
+    .q-display.placeholder{color:#aaa;font-style:italic}
 
-    .style-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
-    .style-row label { margin: 0; white-space: nowrap; font-size: 0.88rem; }
-    .style-row select { max-width: 240px; }
+    .transcript-box{height:180px;overflow-y:auto;border:1px solid var(--border);padding:12px;background:#fafafa;border-radius:6px;font-size:.88rem}
+    .transcript-line{margin-bottom:8px;line-height:1.5}
+    .lbl-interviewer{color:#d9534f;font-weight:700}
+    .lbl-candidate{color:#0275d8;font-weight:700}
+    .lbl-system{color:#888;font-style:italic}
 
-    /* Interviewer question box */
-    .q-box { margin-bottom: 16px; }
-    .q-box label { font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; display: block; }
-    .q-display {
-      border: 1px solid var(--border); border-radius: 6px; padding: 12px;
-      min-height: 54px; background: #fafafa; font-size: 0.98rem;
-      color: #222; line-height: 1.5; white-space: pre-wrap;
-    }
-    .q-display.placeholder { color: #aaa; font-style: italic; }
-
-    .transcript-box { height: 180px; overflow-y: auto; border: 1px solid var(--border); padding: 12px; background: #fafafa; border-radius: 6px; font-size: 0.88rem; }
-    .transcript-line { margin-bottom: 8px; line-height: 1.5; }
-    .lbl-interviewer { color: #d9534f; font-weight: 700; }
-    .lbl-candidate   { color: #0275d8; font-weight: 700; }
-    .lbl-system      { color: #888; font-style: italic; }
-
-    .key-warn { background:#fff8e1; border:1px solid #ffe082; border-radius:6px; padding:10px 14px; font-size:0.82rem; color:#795548; margin-bottom:16px; display:none; }
+    .key-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;font-size:.82rem;color:#795548;margin-bottom:16px;display:none}
   </style>
 </head>
 <body>
@@ -129,6 +94,7 @@
   <h1>🎙️ AI Interview Copilot</h1>
   <p class="subtitle">Real-time answer scripts — Supply Chain &amp; Data Analytics interviews</p>
 
+  <!-- ── SETUP ── -->
   <div id="setup-section">
     <details class="api-section" open>
       <summary>🔑 API Keys — required for AI answers (Groq is free &amp; fastest)</summary>
@@ -164,17 +130,33 @@
     </form>
   </div>
 
+  <!-- ── INTERVIEW ── -->
   <div id="interview-section">
 
-    <!-- Audio source selector -->
-    <div class="audio-source-bar">
+    <!-- Audio Device Panel -->
+    <div class="audio-panel">
       <h4>🎧 Audio Source — what should the app listen to?</h4>
-      <div class="source-btns">
-        <button class="source-btn active" data-source="mic" onclick="setSource('mic',this)">🎤 Microphone<br><small>Face-to-face interview</small></button>
-        <button class="source-btn" data-source="system" onclick="setSource('system',this)">🖥️ System Audio<br><small>Browser / Zoom / Teams call</small></button>
-        <button class="source-btn" data-source="both" onclick="setSource('both',this)">🎤+🖥️ Mic + System<br><small>Mixed audio</small></button>
+
+      <div class="device-tabs">
+        <button class="dtab active" onclick="switchMode('mic',this)">🎤 Microphone</button>
+        <button class="dtab" onclick="switchMode('tab',this)">🖥️ Browser Tab / Call</button>
+        <button class="dtab" onclick="switchMode('system',this)">🔊 System Audio</button>
+        <button class="dtab" onclick="switchMode('both',this)">🎤+🖥️ Mic + Tab</button>
       </div>
-      <p class="source-hint" id="source-hint">🎤 Microphone — picks up what you say and what others say directly next to your mic.</p>
+
+      <!-- Mic device picker -->
+      <div id="row-mic" class="device-row">
+        <label>Microphone:</label>
+        <select id="mic-select"><option value="">— loading devices… —</option></select>
+      </div>
+
+      <!-- System / Tab hint -->
+      <div id="hint-tab" class="device-hint">
+        📌 <strong>Browser Tab / Call mode:</strong> When you press Space, you'll be asked to <strong>share a tab or screen</strong>. Pick the Zoom/Teams/Meet tab and tick <em>"Share tab audio"</em>. The app will transcribe whatever plays in that tab.
+      </div>
+      <div id="hint-system" class="device-hint">
+        📌 <strong>System Audio mode:</strong> Select <em>"Entire Screen"</em> in the share dialog and enable <em>"Share system audio"</em> (Windows/Chrome). On Mac, system audio capture requires a virtual audio driver (e.g. BlackHole).
+      </div>
     </div>
 
     <div class="key-warn" id="key-warn">⚠️ No API key entered — AI answers won't work. <a href="#" onclick="document.getElementById('interview-section').style.display='none';document.getElementById('setup-section').style.display='block';return false;">Go back and add a Groq key</a> (free at console.groq.com).</div>
@@ -189,18 +171,16 @@
       </select>
     </div>
 
-    <!-- Single toggle button -->
     <div class="controls">
       <button id="toggle-btn" class="btn btn-primary">▶ Start Listening</button>
     </div>
-    <p class="space-hint">Press <kbd>Space</kbd> to start / stop listening from anywhere on the page</p>
+    <p class="space-hint">Press <kbd>Space</kbd> anywhere to start / stop listening</p>
 
     <div class="listen-status" id="listen-status"></div>
     <div class="offline-bar" id="offline-bar">⚠️ Internet unavailable — showing offline CV hints.</div>
 
-    <!-- Detected question display -->
     <div class="q-box">
-      <label>🗣️ Interviewer's Question (detected):</label>
+      <label>🗣️ Detected Speech:</label>
       <div class="q-display placeholder" id="q-display">Waiting for speech…</div>
     </div>
 
@@ -208,27 +188,27 @@
       AI Answer Script
       <span class="provider-badge" id="provider-badge">waiting…</span>
     </div>
-    <div class="script-box" id="ai-script">Press Space or click "Start Listening", then speak (or play audio from a call/browser). The AI answer will appear here.</div>
+    <div class="script-box" id="ai-script">Press Space or click "Start Listening". Speak or play audio — the AI answer will appear here.</div>
 
-    <h3 style="margin: 16px 0 8px; font-size:0.95rem;">Live Transcript</h3>
+    <h3 style="margin:16px 0 8px;font-size:.95rem;">Live Transcript</h3>
     <div class="transcript-box" id="transcript"></div>
   </div>
 </div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────────────────────
 let sessionCV = '', sessionJobRole = '';
 let conversationContext = [];
 let isRecording = false;
-let audioSource = 'mic';
+let audioMode = 'mic'; // mic | tab | system | both
 
-let recognition = null;
-let mediaStream = null;
+let recognition   = null;
+let activeStreams  = []; // all MediaStream objects to stop later
+let audioCtx      = null;
 
-// DOM refs
+// DOM
 const setupSection     = document.getElementById('setup-section');
 const interviewSection = document.getElementById('interview-section');
-const setupForm        = document.getElementById('setup-form');
 const toggleBtn        = document.getElementById('toggle-btn');
 const transcriptBox    = document.getElementById('transcript');
 const aiScriptBox      = document.getElementById('ai-script');
@@ -238,113 +218,192 @@ const styleSelect      = document.getElementById('response-style');
 const listenStatus     = document.getElementById('listen-status');
 const qDisplay         = document.getElementById('q-display');
 const keyWarn          = document.getElementById('key-warn');
+const micSelect        = document.getElementById('mic-select');
 
-// ── Audio source selection ────────────────────────────────────────────
-const sourceHints = {
-  mic:    '🎤 Microphone — picks up your voice and anything said near your mic (face-to-face interview).',
-  system: '🖥️ System Audio — captures audio from browser tabs, Zoom, Teams, phone calls played on speaker. You\'ll be asked to share a tab or screen.',
-  both:   '🎤+🖥️ Mixed — mic input AND system/tab audio merged. Best for online interviews.'
-};
-
-function setSource(src, btn) {
-  audioSource = src;
-  document.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('source-hint').textContent = sourceHints[src];
+// ── Enumerate microphones ────────────────────────────────────────────────────
+async function loadMicDevices() {
+  try {
+    // request permission first so labels are populated
+    const tmp = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    tmp.getTracks().forEach(t => t.stop());
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    micSelect.innerHTML = mics.map((d, i) =>
+      `<option value="${d.deviceId}">${d.label || 'Microphone ' + (i+1)}</option>`
+    ).join('');
+  } catch(e) {
+    micSelect.innerHTML = '<option value="">Default microphone</option>';
+  }
 }
 
-// ── Setup form ────────────────────────────────────────────────────────
-setupForm.addEventListener('submit', (e) => {
+// ── Mode switching ───────────────────────────────────────────────────────────
+function switchMode(mode, btn) {
+  audioMode = mode;
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // show/hide rows
+  document.getElementById('row-mic').style.display    = (mode==='mic'||mode==='both') ? 'flex' : 'none';
+  document.getElementById('hint-tab').className       = 'device-hint' + (mode==='tab'||mode==='both' ? ' show' : '');
+  document.getElementById('hint-system').className    = 'device-hint' + (mode==='system' ? ' show' : '');
+}
+
+// ── Setup form ───────────────────────────────────────────────────────────────
+document.getElementById('setup-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   sessionCV      = document.getElementById('cv').value.trim();
   sessionJobRole = document.getElementById('job-role').value.trim();
   conversationContext = [];
-  setupSection.style.display = 'none';
+  setupSection.style.display    = 'none';
   interviewSection.style.display = 'block';
   const hasKey = document.getElementById('groq-key').value.trim() ||
                  document.getElementById('gemini-key').value.trim() ||
                  document.getElementById('openrouter-key').value.trim();
   keyWarn.style.display = hasKey ? 'none' : 'block';
-  appendTranscript('System', 'Session started. Press Space or click Start Listening.');
+  await loadMicDevices();
+  appendTranscript('System', 'Session started. Press Space to begin listening.');
 });
 
-// ── Toggle button (click) ─────────────────────────────────────────────
-toggleBtn.addEventListener('click', async () => {
-  await toggleListening();
-});
+// ── Toggle button ─────────────────────────────────────────────────────────────
+toggleBtn.addEventListener('click', async () => { await toggleListening(); });
 
-// ── Spacebar toggle ───────────────────────────────────────────────────
+// ── Spacebar toggle (global, fires from anywhere) ─────────────────────────────
 document.addEventListener('keydown', async (e) => {
-  // Only fire when interview section is visible
-  // Ignore if focus is on a text input / textarea / select (so typing still works)
+  if (interviewSection.style.display === 'none') return;
   const tag = document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-  // Only on the interview screen
-  if (interviewSection.style.display === 'none') return;
-
   if (e.code === 'Space') {
-    e.preventDefault(); // prevent page scroll
+    e.preventDefault();
     await toggleListening();
   }
 });
 
 async function toggleListening() {
-  if (isRecording) {
-    stopListening();
-  } else {
-    await startListening();
-  }
+  if (isRecording) stopListening();
+  else await startListening();
 }
 
-// ── Start / Stop ──────────────────────────────────────────────────────
+// ── START ─────────────────────────────────────────────────────────────────────
 async function startListening() {
+  setStatus('info', '⏳ Requesting audio access…');
+
+  let stream; // the final combined MediaStream fed to recognition
+
+  try {
+    if (audioMode === 'mic') {
+      // ── Microphone — specific device if selected ──
+      const deviceId = micSelect.value;
+      const constraints = { audio: deviceId ? { deviceId: { exact: deviceId } } : true, video: false };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      activeStreams.push(stream);
+
+    } else if (audioMode === 'tab' || audioMode === 'system') {
+      // ── Tab / System audio via getDisplayMedia ──
+      const displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
+      });
+      // stop video track immediately — we only want audio
+      displayStream.getVideoTracks().forEach(t => t.stop());
+
+      if (displayStream.getAudioTracks().length === 0) {
+        stopAllStreams();
+        setListenError('No audio captured. Make sure to tick "Share tab audio" or "Share system audio" in the dialog.');
+        return;
+      }
+      stream = displayStream;
+      activeStreams.push(stream);
+
+    } else if (audioMode === 'both') {
+      // ── Mic + Tab/System merged ──
+      const [micStream, displayStream] = await Promise.all([
+        navigator.mediaDevices.getUserMedia({
+          audio: micSelect.value ? { deviceId: { exact: micSelect.value } } : true,
+          video: false
+        }),
+        navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
+        })
+      ]);
+      displayStream.getVideoTracks().forEach(t => t.stop());
+      activeStreams.push(micStream, displayStream);
+
+      // merge with Web Audio API
+      audioCtx = new AudioContext();
+      const dest = audioCtx.createMediaStreamDestination();
+      audioCtx.createMediaStreamSource(micStream).connect(dest);
+      if (displayStream.getAudioTracks().length > 0) {
+        audioCtx.createMediaStreamSource(displayStream).connect(dest);
+      }
+      stream = dest.stream;
+    }
+
+  } catch (err) {
+    if (err.name === 'NotAllowedError') {
+      setListenError('Permission denied. Allow microphone/screen access and try again.');
+    } else {
+      setListenError('Audio error: ' + err.message);
+    }
+    return;
+  }
+
+  // ── Start Web Speech recognition on the captured stream ──
   isRecording = true;
   toggleBtn.textContent = '⏹ Stop Listening';
   toggleBtn.classList.add('listening');
   toggleBtn.classList.remove('btn-primary');
-  listenStatus.className = 'listen-status active';
 
-  if (audioSource === 'system' || audioSource === 'both') {
-    await startSystemAudio();
-  } else {
-    startMicRecognition();
-  }
+  startRecognition(stream);
 }
 
+// ── STOP ──────────────────────────────────────────────────────────────────────
 function stopListening() {
   isRecording = false;
   toggleBtn.textContent = '▶ Start Listening';
   toggleBtn.classList.remove('listening');
   toggleBtn.classList.add('btn-primary');
   listenStatus.className = 'listen-status';
-  listenStatus.textContent = '';
 
   if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
-  if (mediaStream) { mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+  stopAllStreams();
+  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
   appendTranscript('System', 'Listening stopped.');
 }
 
-// ── Microphone via Web Speech API ─────────────────────────────────────
-function startMicRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    setListenError('Web Speech API not supported in this browser. Use Chrome.');
+function stopAllStreams() {
+  activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
+  activeStreams = [];
+}
+
+// ── Web Speech Recognition ────────────────────────────────────────────────────
+// Chrome only exposes a `stream` property on SpeechRecognition (non-standard).
+// When available, we pass our captured stream; otherwise falls back to default mic.
+function startRecognition(stream) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    setListenError('Web Speech API not available. Please use Chrome/Chromium.');
+    isRecording = false;
     return;
   }
-  recognition = new SpeechRecognition();
+
+  recognition = new SR();
   recognition.lang = 'en-US';
   recognition.continuous = true;
   recognition.interimResults = true;
 
+  // Attach stream (Chrome experimental — enables capturing non-default audio)
+  try { recognition.stream = stream; } catch(e) {}
+
   let lastFinal = '';
 
+  const modeLabel = { mic:'microphone', tab:'tab/call audio', system:'system audio', both:'mic + tab audio' }[audioMode];
   recognition.onstart = () => {
-    listenStatus.textContent = '🔴 Listening via microphone… (press Space to stop)';
+    setStatus('active', `🔴 Listening via ${modeLabel}… (press Space to stop)`);
+    appendTranscript('System', `Listening started — source: ${modeLabel}`);
   };
 
   recognition.onresult = (event) => {
-    let interim = '';
-    let final = '';
+    let interim = '', final = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const t = event.results[i][0].transcript;
       if (event.results[i].isFinal) final += t;
@@ -354,7 +413,7 @@ function startMicRecognition() {
       qDisplay.className = 'q-display';
       qDisplay.textContent = interim;
     }
-    if (final && final.trim() !== lastFinal.trim()) {
+    if (final && final.trim() !== lastFinal) {
       lastFinal = final.trim();
       qDisplay.className = 'q-display';
       qDisplay.textContent = lastFinal;
@@ -369,136 +428,33 @@ function startMicRecognition() {
     else if (e.error !== 'no-speech') setListenError('Speech error: ' + e.error);
   };
 
+  // Auto-restart if it cuts out while still in listen mode
   recognition.onend = () => {
     if (isRecording) {
-      try { recognition.start(); } catch(e){}
+      try { recognition.start(); } catch(e) {}
     }
   };
 
   recognition.start();
 }
 
-// ── System Audio via getDisplayMedia + Web Speech ─────────────────────
-async function startSystemAudio() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    setListenError('System audio capture requires Chrome. Please use Chrome.');
-    return;
-  }
-
-  listenStatus.textContent = '⏳ Requesting screen/tab share (select the tab/call you want to listen to)…';
-
-  try {
-    const displayStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: {
-        echoCancellation: false,
-        noiseSuppression: false,
-        sampleRate: 16000
-      }
-    });
-
-    const audioTracks = displayStream.getAudioTracks();
-    if (audioTracks.length === 0) {
-      setListenError('No audio track captured. Make sure to check "Share tab audio" or "Share system audio" in the dialog.');
-      displayStream.getTracks().forEach(t => t.stop());
-      isRecording = false;
-      toggleBtn.textContent = '▶ Start Listening';
-      toggleBtn.classList.remove('listening');
-      toggleBtn.classList.add('btn-primary');
-      return;
-    }
-
-    displayStream.getVideoTracks().forEach(t => t.stop());
-
-    let combinedStream;
-
-    if (audioSource === 'both') {
-      try {
-        const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-        const ctx = new AudioContext();
-        const dest = ctx.createMediaStreamDestination();
-        ctx.createMediaStreamSource(displayStream).connect(dest);
-        ctx.createMediaStreamSource(micStream).connect(dest);
-        combinedStream = dest.stream;
-        mediaStream = combinedStream;
-      } catch(e) {
-        combinedStream = displayStream;
-        mediaStream = displayStream;
-      }
-    } else {
-      combinedStream = displayStream;
-      mediaStream = displayStream;
-    }
-
-    listenStatus.textContent = '🔴 Listening to system audio… (press Space to stop)';
-
-    recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.continuous = true;
-    recognition.interimResults = true;
-
-    if (recognition.hasOwnProperty('stream') || 'stream' in recognition) {
-      recognition.stream = combinedStream;
-    }
-
-    let lastFinal = '';
-
-    recognition.onstart = () => {
-      listenStatus.textContent = '🔴 Listening to system/tab audio… (press Space to stop)';
-      appendTranscript('System', '💡 Tip: If recognition isn\'t picking up call audio, enable "Stereo Mix" on Windows or use a virtual cable (e.g. VB-Audio) to route system audio to your mic input.');
-    };
-
-    recognition.onresult = (event) => {
-      let interim = '', final = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
-        if (event.results[i].isFinal) final += t;
-        else interim += t;
-      }
-      if (interim) { qDisplay.className='q-display'; qDisplay.textContent=interim; }
-      if (final && final.trim() !== lastFinal.trim()) {
-        lastFinal = final.trim();
-        qDisplay.className='q-display'; qDisplay.textContent=lastFinal;
-        appendTranscript('Interviewer', lastFinal);
-        conversationContext.push({ role:'interviewer', text:lastFinal });
-        fetchAIAnswer(lastFinal);
-      }
-    };
-
-    recognition.onerror = (e) => {
-      if (e.error !== 'no-speech') setListenError('Speech error: ' + e.error);
-    };
-
-    recognition.onend = () => {
-      if (isRecording) { try { recognition.start(); } catch(e){} }
-    };
-
-    recognition.start();
-
-  } catch(err) {
-    if (err.name === 'NotAllowedError') {
-      setListenError('Screen share was cancelled or denied. Click Start Listening and allow screen share.');
-    } else {
-      setListenError('System audio error: ' + err.message);
-    }
-    isRecording = false;
-    toggleBtn.textContent = '▶ Start Listening';
-    toggleBtn.classList.remove('listening');
-    toggleBtn.classList.add('btn-primary');
-  }
+// ── Status helpers ────────────────────────────────────────────────────────────
+function setStatus(type, msg) {
+  listenStatus.className = 'listen-status ' + type;
+  listenStatus.textContent = msg;
 }
 
 function setListenError(msg) {
-  listenStatus.className = 'listen-status error';
-  listenStatus.textContent = '❌ ' + msg;
+  setStatus('error', '❌ ' + msg);
   isRecording = false;
+  stopAllStreams();
+  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
   toggleBtn.textContent = '▶ Start Listening';
   toggleBtn.classList.remove('listening');
   toggleBtn.classList.add('btn-primary');
 }
 
-// ── AI fetch ──────────────────────────────────────────────────────────
+// ── AI answer fetch ───────────────────────────────────────────────────────────
 async function fetchAIAnswer(question) {
   aiScriptBox.className = 'script-box loading';
   aiScriptBox.textContent = 'Generating answer…';
@@ -521,23 +477,19 @@ async function fetchAIAnswer(question) {
 
   const headers = { 'Content-Type': 'application/json' };
   if (groqKey)       headers['x-groq-key']       = groqKey;
-  if (geminiKey)     headers['x-gemini-key']     = geminiKey;
-  if (openrouterKey) headers['x-openrouter-key'] = openrouterKey;
+  if (geminiKey)     headers['x-gemini-key']      = geminiKey;
+  if (openrouterKey) headers['x-openrouter-key']  = openrouterKey;
 
   const body = {
-    cv: sessionCV,
-    job_role: sessionJobRole,
-    transcript: question,
-    context: conversationContext.slice(-6),
-    response_style: styleSelect.value,
-    target_role_family: 'Supply Chain'
+    cv: sessionCV, job_role: sessionJobRole,
+    transcript: question, context: conversationContext.slice(-6),
+    response_style: styleSelect.value, target_role_family: 'Supply Chain'
   };
 
   try {
     const res = await fetch('/api/chat', { method:'POST', headers, body: JSON.stringify(body) });
     if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
-      await consumeStream(res);
-      return;
+      await consumeStream(res); return;
     }
     if (res.ok) {
       const data = await res.json();
@@ -549,92 +501,71 @@ async function fetchAIAnswer(question) {
       }
     }
     throw new Error('API returned ' + res.status);
-  } catch (err) {
-    console.warn('API error:', err.message);
+  } catch(err) {
     aiScriptBox.className = 'script-box error-box';
-    aiScriptBox.textContent = '⚠️ Failed to reach AI server (' + err.message + ').\n\nCheck:\n1. Is your Groq key entered correctly above?\n2. Is the Vercel deployment live? (check vercel.com dashboard)\n3. Is your key valid at console.groq.com?\n\nShowing offline hint instead:\n\n' + buildOfflineHint(question);
+    aiScriptBox.textContent = '⚠️ AI server error (' + err.message + ').\n\nOffline hint:\n\n' + buildOfflineHint(question);
     providerBadge.textContent = '⚠️ Error';
     providerBadge.className = 'provider-badge offline';
   }
 }
 
-// ── Stream consumer ───────────────────────────────────────────────────
 async function consumeStream(res) {
   const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '', fullText = '', providerSet = false;
+  const dec = new TextDecoder();
+  let buf = '', full = '', providerSet = false;
   aiScriptBox.className = 'script-box';
   aiScriptBox.textContent = '';
-
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop();
+    buf += dec.decode(value, { stream: true });
+    const lines = buf.split('\n'); buf = lines.pop();
     for (const line of lines) {
       if (!line.startsWith('data: ')) continue;
       try {
-        const data = JSON.parse(line.slice(6));
-        if (data.type === 'token' && data.content) {
-          fullText += data.content;
-          aiScriptBox.textContent = fullText;
-          if (!providerSet && data.provider) {
-            providerBadge.textContent = data.provider;
-            providerSet = true;
-          }
+        const d = JSON.parse(line.slice(6));
+        if (d.type === 'token' && d.content) {
+          full += d.content;
+          aiScriptBox.textContent = full;
+          if (!providerSet && d.provider) { providerBadge.textContent = d.provider; providerSet = true; }
         }
-        if (data.type === 'done') providerBadge.textContent = data.provider || providerBadge.textContent;
-      } catch (_) {}
+        if (d.type === 'done') providerBadge.textContent = d.provider || providerBadge.textContent;
+      } catch(_) {}
     }
   }
-  if (!fullText) throw new Error('Empty stream response');
+  if (!full) throw new Error('Empty stream');
 }
 
-// ── Offline hints ─────────────────────────────────────────────────────
+// ── Offline hints ─────────────────────────────────────────────────────────────
 function buildOfflineHint(question) {
   const q = question.toLowerCase();
-  const has = (arr) => arr.some(k => q.includes(k));
-
-  if (has(['tell me about','introduce yourself','about yourself','walk me through','background']))
-    return `📌 HINT — Introduction:\n• 5+ years supply chain: Ontex (Belgium), Nike (Belgium), Solvay (France), QuEST Global (India)\n• Core: demand forecasting, supply planning, S&OP, capacity planning\n• Tools: Arkieva, SAP, Kinaxis, Power BI, Tableau\n• MSc Supply Chain — EM Normandie, France\n• Key win: +27% forecast accuracy at Ontex across 12 global sites`;
-
+  const has = arr => arr.some(k => q.includes(k));
+  if (has(['tell me about','introduce','background','walk me through']))
+    return `📌 Introduction:\n• 5+ yrs supply chain: Ontex, Nike, Solvay, QuEST Global\n• Core: demand forecasting, S&OP, capacity planning\n• Tools: Arkieva, SAP, Kinaxis, Power BI, Tableau\n• MSc Supply Chain — EM Normandie, France\n• +27% forecast accuracy at Ontex (12 global sites)`;
   if (has(['supply chain','s&op','planning','demand','supply']))
-    return `📌 HINT — Supply Chain / Planning:\n• Ontex: 12 global sites, Arkieva, 18-month rolling plans, +27% forecast accuracy\n• Nike: €2B EMEA retail, statistical demand models, -20% holding costs\n• Solvay: €150M raw material MRP, capacity planning, data integrity\n• QuEST Global: EOQ + safety stock models, SAP ERP implementation`;
-
+    return `📌 Supply Chain:\n• Ontex: 12 global sites, Arkieva, 18-month rolling plans, +27% forecast accuracy\n• Nike: €2B EMEA retail, statistical models, -20% holding costs\n• Solvay: €150M raw material MRP, capacity planning\n• QuEST: EOQ + safety stock models, SAP ERP`;
   if (has(['forecast','accuracy','statistical']))
-    return `📌 HINT — Forecasting:\n• Ontex: +27% forecast accuracy using Arkieva across 12 sites\n• Nike: statistical models for €2B EMEA retail demand\n• QuEST: EOQ + safety stock models for FMCG clients`;
-
-  if (has(['sap','erp','kinaxis','arkieva','tool','system','software']))
-    return `📌 HINT — Tools & Systems:\n• Arkieva: demand/supply planning, Ontex 12 sites\n• SAP ERP: implementations at QuEST Global\n• Kinaxis RapidResponse: functional consulting\n• Power BI + Tableau: OTIF, DIO, supplier KPI dashboards`;
-
-  if (has(['kpi','dashboard','analytics','data','metric','tableau','power bi']))
-    return `📌 HINT — KPIs & Analytics:\n• Ontex: Automated Power BI/Tableau — OTIF, DIO, supply KPIs\n• Nike: Tableau supplier KPIs + demand optimizer simulations\n• Key metrics: OTIF, DIO, forecast accuracy, cost-to-serve`;
-
-  if (has(['challenge','difficult','problem','obstacle','failure']))
-    return `📌 HINT — Challenge (STAR):\n• Situation: Post-COVID demand volatility, 12 Ontex global sites\n• Task: Rebuild S&OP process to restore planning accuracy\n• Action: 18-month rolling plan in Arkieva, aligned Sales/Finance/Ops\n• Result: +27% forecast accuracy, better OTIF and DIO`;
-
-  if (has(['achiev','proud','success','impact','result','accomplish']))
-    return `📌 HINT — Achievements:\n• +27% forecast accuracy — Ontex, 12 global sites\n• -20% holding costs — Nike €2B EMEA retail\n• Automated KPI dashboards saving manual reporting hours`;
-
-  if (has(['strength','weakness','improve','grow']))
-    return `📌 HINT — Strengths / Growth:\n• Strength: cross-functional alignment, data-driven decisions, multi-ERP experience\n• Growth area: continuing to build Python/advanced analytics skills\n• Always backed by metrics: forecast %, cost reduction %, service level`;
-
-  return `📌 HINT — General Answer Framework:\n• Open with relevant role/company context\n• Cite a specific tool or metric\n• End with the measurable outcome\n• Keep it 3-4 sentences, confident tone`;
+    return `📌 Forecasting:\n• +27% forecast accuracy — Ontex, Arkieva, 12 sites\n• €2B EMEA retail demand models — Nike\n• EOQ + safety stock — QuEST Global FMCG clients`;
+  if (has(['sap','erp','kinaxis','arkieva','tool','software']))
+    return `📌 Tools:\n• Arkieva — demand/supply planning\n• SAP ERP — implementation & planning\n• Kinaxis RapidResponse — functional consulting\n• Power BI + Tableau — OTIF, DIO, KPI dashboards`;
+  if (has(['kpi','dashboard','analytics','data','tableau','power bi']))
+    return `📌 Analytics:\n• Power BI/Tableau — OTIF, DIO, supply KPIs (Ontex)\n• Supplier KPI dashboards + demand optimizer (Nike)\n• Key metrics: OTIF, DIO, forecast accuracy, cost-to-serve`;
+  if (has(['challenge','difficult','problem','failure']))
+    return `📌 Challenge (STAR):\n• Situation: Post-COVID volatility, 12 Ontex sites\n• Task: Rebuild S&OP to restore planning accuracy\n• Action: 18-month rolling plan in Arkieva, aligned Sales/Finance/Ops\n• Result: +27% forecast accuracy, better OTIF and DIO`;
+  if (has(['achiev','proud','success','impact','result']))
+    return `📌 Achievements:\n• +27% forecast accuracy — Ontex, 12 global sites\n• -20% holding costs — Nike €2B EMEA\n• Automated KPI dashboards saving manual reporting hours`;
+  return `📌 General framework:\n• Open with role/company context\n• Cite a specific tool or metric\n• End with the measurable outcome\n• Keep it 3-4 sentences, confident tone`;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 function appendTranscript(role, text) {
   const div = document.createElement('div');
   div.className = 'transcript-line';
-  const label = role === 'Interviewer' ? 'lbl-interviewer'
-              : role === 'Candidate'   ? 'lbl-candidate'
-              : 'lbl-system';
-  div.innerHTML = `<span class="${label}">${role}:</span> ${escapeHtml(text)}`;
+  const lbl = role==='Interviewer'?'lbl-interviewer':role==='Candidate'?'lbl-candidate':'lbl-system';
+  div.innerHTML = `<span class="${lbl}">${role}:</span> ${escapeHtml(text)}`;
   transcriptBox.appendChild(div);
   transcriptBox.scrollTop = transcriptBox.scrollHeight;
 }
-
 function escapeHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
