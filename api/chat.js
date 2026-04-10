@@ -8,6 +8,21 @@ const STYLES = {
   detailed: "Use the STAR method: Situation, Task, Action, Result. 5-6 sentences. Be specific with numbers and outcomes."
 };
 
+// Phrases that are NOT interview questions — mic/audio tests, greetings, noise
+const NON_QUESTION_PATTERNS = [
+  /^(can you hear me|can you hear|hello|hi|hey|test|testing|check|mic check|one two|123|sound check|is this working|are you there|okay|ok|yes|no|yeah|nope|uh|um|hmm|alright|right|good|great)[.?!,\s]*$/i,
+  /^(can|could) you (hear|see|understand) me[.?!,\s]*$/i
+];
+
+function isNonQuestion(text) {
+  const trimmed = (text || "").trim();
+  if (trimmed.split(/\s+/).length <= 2 && trimmed.length < 20) {
+    // Very short utterances (1-2 words under 20 chars) are likely noise/test words
+    return true;
+  }
+  return NON_QUESTION_PATTERNS.some(p => p.test(trimmed));
+}
+
 function buildSystemPrompt(cv, job_role, response_style, target_role_family) {
   return `You are an expert AI Interview Copilot helping Manjunath Sajjan — a Senior Supply Chain professional — answer interview questions in real-time.
 
@@ -24,7 +39,8 @@ RULES:
 - Be specific: mention tools (Arkieva, SAP, Kinaxis, Power BI, Tableau), metrics (+27% forecast accuracy, -20% holding costs, €2B EMEA), and companies (Ontex, Nike, Solvay, QuEST Global)
 - Sound human, warm, and confident — never robotic
 - Never say "As an AI" or "I cannot"
-- Never repeat the question back`;
+- Never repeat the question back
+- If the detected speech is not a real interview question (e.g. a greeting, test phrase, or filler word), respond with exactly: SKIP`;
 }
 
 function buildMessages(systemPrompt, transcript, context) {
@@ -131,7 +147,6 @@ module.exports = async function handler(req, res) {
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
   if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
-  // Keys: Vercel env vars (server-side, secure) OR request headers (browser-entered fallback)
   const groqKey       = process.env.GROQ_API_KEY       || req.headers["x-groq-key"]       || "";
   const geminiKey     = process.env.GEMINI_API_KEY     || req.headers["x-gemini-key"]     || "";
   const openrouterKey = process.env.OPENROUTER_API_KEY || req.headers["x-openrouter-key"] || "";
@@ -144,7 +159,17 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  // If no API keys — return offline hint immediately (no stream needed)
+  // ── Pre-filter: skip non-question phrases (mic tests, greetings, noise) ──
+  if (isNonQuestion(transcript)) {
+    res.status(200).json({
+      answer: null,
+      skip: true,
+      provider: "filter"
+    });
+    return;
+  }
+
+  // If no API keys — return offline hint immediately
   if (!groqKey && !geminiKey && !openrouterKey) {
     res.status(200).json({
       answer: buildOfflineHint(transcript),
@@ -157,7 +182,6 @@ module.exports = async function handler(req, res) {
   const systemPrompt = buildSystemPrompt(cv, job_role, response_style, target_role_family);
   const messages = buildMessages(systemPrompt, transcript, context);
 
-  // Try providers in order
   let result = null;
   const errors = [];
 
@@ -175,6 +199,12 @@ module.exports = async function handler(req, res) {
   }
 
   if (result) {
+    // Check if AI returned SKIP signal
+    if (result.text.trim().toUpperCase() === "SKIP") {
+      res.status(200).json({ answer: null, skip: true, provider: result.provider });
+      return;
+    }
+
     // Stream word-by-word via SSE for real-time teleprompter effect
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
@@ -191,7 +221,6 @@ module.exports = async function handler(req, res) {
     res.write(`data: ${JSON.stringify({ type: "done", provider: result.provider })}\n\n`);
     res.end();
   } else {
-    // All cloud providers failed — return offline hint
     res.status(200).json({
       answer: buildOfflineHint(transcript),
       provider: "📋 Offline Hints (all APIs failed)",
