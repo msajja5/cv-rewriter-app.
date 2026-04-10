@@ -54,8 +54,30 @@
     .source-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
     .source-hint { font-size: 0.76rem; color: var(--muted); margin-top: 8px; }
 
-    .controls { display: flex; gap: 12px; margin-bottom: 20px; }
+    .controls { display: flex; gap: 12px; margin-bottom: 8px; align-items: center; }
     .controls .btn { flex: 1; }
+
+    /* Spacebar hint pill */
+    .space-hint {
+      text-align: center; font-size: 0.78rem; color: var(--muted);
+      margin-bottom: 14px; letter-spacing: 0.02em;
+    }
+    .space-hint kbd {
+      display: inline-block; background: #eee; border: 1px solid #ccc;
+      border-bottom: 3px solid #bbb; border-radius: 4px;
+      padding: 1px 8px; font-size: 0.78rem; font-family: monospace;
+      color: #333; margin: 0 2px;
+    }
+    /* Pulse animation on the start button when listening */
+    @keyframes pulse-border {
+      0%   { box-shadow: 0 0 0 0 rgba(220,53,69,0.5); }
+      70%  { box-shadow: 0 0 0 8px rgba(220,53,69,0); }
+      100% { box-shadow: 0 0 0 0 rgba(220,53,69,0); }
+    }
+    #toggle-btn.listening {
+      background: var(--danger);
+      animation: pulse-border 1.4s ease-out infinite;
+    }
 
     .listen-status {
       text-align: center; padding: 10px; border-radius: 6px; margin-bottom: 14px;
@@ -167,10 +189,11 @@
       </select>
     </div>
 
+    <!-- Single toggle button -->
     <div class="controls">
-      <button id="start-btn" class="btn btn-primary">▶ Start Listening</button>
-      <button id="stop-btn" class="btn btn-danger" disabled>⏹ Stop</button>
+      <button id="toggle-btn" class="btn btn-primary">▶ Start Listening</button>
     </div>
+    <p class="space-hint">Press <kbd>Space</kbd> to start / stop listening from anywhere on the page</p>
 
     <div class="listen-status" id="listen-status"></div>
     <div class="offline-bar" id="offline-bar">⚠️ Internet unavailable — showing offline CV hints.</div>
@@ -185,7 +208,7 @@
       AI Answer Script
       <span class="provider-badge" id="provider-badge">waiting…</span>
     </div>
-    <div class="script-box" id="ai-script">Click "Start Listening", then speak (or play audio from a call/browser). The AI answer will appear here.</div>
+    <div class="script-box" id="ai-script">Press Space or click "Start Listening", then speak (or play audio from a call/browser). The AI answer will appear here.</div>
 
     <h3 style="margin: 16px 0 8px; font-size:0.95rem;">Live Transcript</h3>
     <div class="transcript-box" id="transcript"></div>
@@ -199,16 +222,14 @@ let conversationContext = [];
 let isRecording = false;
 let audioSource = 'mic';
 
-// Speech recognition (Web Speech API — works for mic and for system audio piped back to mic)
 let recognition = null;
-let mediaStream = null; // for system audio
+let mediaStream = null;
 
 // DOM refs
 const setupSection     = document.getElementById('setup-section');
 const interviewSection = document.getElementById('interview-section');
 const setupForm        = document.getElementById('setup-form');
-const startBtn         = document.getElementById('start-btn');
-const stopBtn          = document.getElementById('stop-btn');
+const toggleBtn        = document.getElementById('toggle-btn');
 const transcriptBox    = document.getElementById('transcript');
 const aiScriptBox      = document.getElementById('ai-script');
 const providerBadge    = document.getElementById('provider-badge');
@@ -240,28 +261,47 @@ setupForm.addEventListener('submit', (e) => {
   conversationContext = [];
   setupSection.style.display = 'none';
   interviewSection.style.display = 'block';
-  // Warn if no key
   const hasKey = document.getElementById('groq-key').value.trim() ||
                  document.getElementById('gemini-key').value.trim() ||
                  document.getElementById('openrouter-key').value.trim();
   keyWarn.style.display = hasKey ? 'none' : 'block';
-  appendTranscript('System', 'Session started. Choose audio source and click Start Listening.');
+  appendTranscript('System', 'Session started. Press Space or click Start Listening.');
 });
+
+// ── Toggle button (click) ─────────────────────────────────────────────
+toggleBtn.addEventListener('click', async () => {
+  await toggleListening();
+});
+
+// ── Spacebar toggle ───────────────────────────────────────────────────
+document.addEventListener('keydown', async (e) => {
+  // Only fire when interview section is visible
+  // Ignore if focus is on a text input / textarea / select (so typing still works)
+  const tag = document.activeElement.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  // Only on the interview screen
+  if (interviewSection.style.display === 'none') return;
+
+  if (e.code === 'Space') {
+    e.preventDefault(); // prevent page scroll
+    await toggleListening();
+  }
+});
+
+async function toggleListening() {
+  if (isRecording) {
+    stopListening();
+  } else {
+    await startListening();
+  }
+}
 
 // ── Start / Stop ──────────────────────────────────────────────────────
-startBtn.addEventListener('click', async () => {
-  if (isRecording) return;
-  await startListening();
-});
-
-stopBtn.addEventListener('click', () => {
-  stopListening();
-});
-
 async function startListening() {
   isRecording = true;
-  startBtn.disabled = true;
-  stopBtn.disabled = false;
+  toggleBtn.textContent = '⏹ Stop Listening';
+  toggleBtn.classList.add('listening');
+  toggleBtn.classList.remove('btn-primary');
   listenStatus.className = 'listen-status active';
 
   if (audioSource === 'system' || audioSource === 'both') {
@@ -273,8 +313,9 @@ async function startListening() {
 
 function stopListening() {
   isRecording = false;
-  startBtn.disabled = false;
-  stopBtn.disabled = true;
+  toggleBtn.textContent = '▶ Start Listening';
+  toggleBtn.classList.remove('listening');
+  toggleBtn.classList.add('btn-primary');
   listenStatus.className = 'listen-status';
   listenStatus.textContent = '';
 
@@ -298,7 +339,7 @@ function startMicRecognition() {
   let lastFinal = '';
 
   recognition.onstart = () => {
-    listenStatus.textContent = '🔴 Listening via microphone…';
+    listenStatus.textContent = '🔴 Listening via microphone… (press Space to stop)';
   };
 
   recognition.onresult = (event) => {
@@ -309,7 +350,6 @@ function startMicRecognition() {
       if (event.results[i].isFinal) final += t;
       else interim += t;
     }
-    // Show interim in q-display
     if (interim) {
       qDisplay.className = 'q-display';
       qDisplay.textContent = interim;
@@ -331,7 +371,6 @@ function startMicRecognition() {
 
   recognition.onend = () => {
     if (isRecording) {
-      // Auto-restart to keep listening
       try { recognition.start(); } catch(e){}
     }
   };
@@ -340,15 +379,6 @@ function startMicRecognition() {
 }
 
 // ── System Audio via getDisplayMedia + Web Speech ─────────────────────
-// Strategy: capture tab/screen audio → pipe into AudioContext → use a
-// ScriptProcessor to feed audio to a second SpeechRecognition instance
-// that is listening to the system output.
-// NOTE: getDisplayMedia audio is NOT sent to Web Speech directly.
-// The best cross-browser approach is: merge system + mic into one stream,
-// send to Web Speech (Chrome supports this via getUserMedia deviceId).
-// Simpler fallback: just capture system audio and use Web Speech on the
-// combined stream after merging in AudioContext.
-
 async function startSystemAudio() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -359,9 +389,8 @@ async function startSystemAudio() {
   listenStatus.textContent = '⏳ Requesting screen/tab share (select the tab/call you want to listen to)…';
 
   try {
-    // 1. Get display media (tab/screen audio)
     const displayStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,       // Chrome requires video:true to allow audio selection
+      video: true,
       audio: {
         echoCancellation: false,
         noiseSuppression: false,
@@ -373,17 +402,18 @@ async function startSystemAudio() {
     if (audioTracks.length === 0) {
       setListenError('No audio track captured. Make sure to check "Share tab audio" or "Share system audio" in the dialog.');
       displayStream.getTracks().forEach(t => t.stop());
-      isRecording = false; startBtn.disabled = false; stopBtn.disabled = true;
+      isRecording = false;
+      toggleBtn.textContent = '▶ Start Listening';
+      toggleBtn.classList.remove('listening');
+      toggleBtn.classList.add('btn-primary');
       return;
     }
 
-    // Stop video track (we only need audio)
     displayStream.getVideoTracks().forEach(t => t.stop());
 
     let combinedStream;
 
     if (audioSource === 'both') {
-      // Merge mic + system audio
       try {
         const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         const ctx = new AudioContext();
@@ -393,7 +423,6 @@ async function startSystemAudio() {
         combinedStream = dest.stream;
         mediaStream = combinedStream;
       } catch(e) {
-        // Fallback: system audio only
         combinedStream = displayStream;
         mediaStream = displayStream;
       }
@@ -402,34 +431,21 @@ async function startSystemAudio() {
       mediaStream = displayStream;
     }
 
-    listenStatus.textContent = '🔴 Listening to system audio…';
-
-    // 2. Feed combined stream into Web Speech via a virtual audio input
-    // Chrome Web Speech can accept a MediaStream via the undocumented
-    // webkitSpeechRecognition when you set .grammars, BUT the standard
-    // API always uses the default mic. So we route via AudioContext to
-    // the default audio output, then use a loopback-style MediaStream.
-    //
-    // Most reliable cross-tab approach: convert to AudioWorklet/ScriptProcessor
-    // and use the Deepgram/browser STT approach. For pure Web Speech, we
-    // use the workaround of creating a new MediaStream and assigning it.
+    listenStatus.textContent = '🔴 Listening to system audio… (press Space to stop)';
 
     recognition = new SpeechRecognition();
     recognition.lang = 'en-US';
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    // Assign the combined stream (Chrome-only trick)
     if (recognition.hasOwnProperty('stream') || 'stream' in recognition) {
       recognition.stream = combinedStream;
     }
-    // If the above doesn't work (most browsers), we at least start recognition
-    // and note below for the user
 
     let lastFinal = '';
 
     recognition.onstart = () => {
-      listenStatus.textContent = '🔴 Listening to system/tab audio (Chrome may still use mic — see tip below)…';
+      listenStatus.textContent = '🔴 Listening to system/tab audio… (press Space to stop)';
       appendTranscript('System', '💡 Tip: If recognition isn\'t picking up call audio, enable "Stereo Mix" on Windows or use a virtual cable (e.g. VB-Audio) to route system audio to your mic input.');
     };
 
@@ -466,14 +482,20 @@ async function startSystemAudio() {
     } else {
       setListenError('System audio error: ' + err.message);
     }
-    isRecording = false; startBtn.disabled = false; stopBtn.disabled = true;
+    isRecording = false;
+    toggleBtn.textContent = '▶ Start Listening';
+    toggleBtn.classList.remove('listening');
+    toggleBtn.classList.add('btn-primary');
   }
 }
 
 function setListenError(msg) {
   listenStatus.className = 'listen-status error';
   listenStatus.textContent = '❌ ' + msg;
-  isRecording = false; startBtn.disabled = false; stopBtn.disabled = true;
+  isRecording = false;
+  toggleBtn.textContent = '▶ Start Listening';
+  toggleBtn.classList.remove('listening');
+  toggleBtn.classList.add('btn-primary');
 }
 
 // ── AI fetch ──────────────────────────────────────────────────────────
@@ -517,7 +539,6 @@ async function fetchAIAnswer(question) {
       await consumeStream(res);
       return;
     }
-    // Non-streaming OK response
     if (res.ok) {
       const data = await res.json();
       if (data.answer) {
