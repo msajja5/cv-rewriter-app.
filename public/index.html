@@ -77,6 +77,15 @@
     .device-hint{font-size:.75rem;color:var(--muted);line-height:1.5;margin-top:4px;background:#fffbe6;border:1px solid #ffe082;border-radius:5px;padding:7px 10px;display:none}
     .device-hint.show{display:block}
 
+    /* Tab/System share button */
+    .share-btn-row{margin-top:8px;display:none}
+    .share-btn-row.show{display:block}
+    .share-btn{width:100%;padding:9px;border:2px dashed #ce93d8;border-radius:8px;background:#fdf4ff;color:#6a1b9a;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
+    .share-btn:hover{background:#f3e5f5;border-style:solid}
+    .share-status{font-size:.78rem;margin-top:6px;padding:5px 10px;border-radius:5px;display:none}
+    .share-status.connected{display:block;background:#e9f7ef;color:#1a6a30;border:1px solid #28a745}
+    .share-status.pending{display:block;background:#fff8e1;color:#856404;border:1px solid #ffe082}
+
     .style-row{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
     .style-row label{margin:0;white-space:nowrap;font-size:.88rem;font-weight:600}
     .style-row select{max-width:260px}
@@ -159,7 +168,6 @@
     #debug-panel{display:none;background:#1a1a1a;color:#0f0;font-size:.75rem;font-family:monospace;padding:10px;border-radius:6px;margin-top:10px;max-height:200px;overflow-y:auto;white-space:pre-wrap}
     .debug-toggle{font-size:.75rem;color:var(--muted);cursor:pointer;text-align:right;margin-bottom:4px;user-select:none}
 
-    /* Deepgram interim pulse */
     @keyframes interim-pulse{0%,100%{opacity:.6}50%{opacity:1}}
     .interim-box.show{animation:interim-pulse 1.2s ease-in-out infinite}
   </style>
@@ -305,10 +313,15 @@
         <select id="mic-select"><option value="">— loading devices… —</option></select>
       </div>
       <div id="hint-tab" class="device-hint">
-        📌 <strong>Tab mode:</strong> Share the Zoom/Teams tab with "Share tab audio" ticked. Deepgram will transcribe the incoming audio stream directly.
+        📌 <strong>Tab mode:</strong> Click the button below to share a browser tab with audio. Pick the Zoom/Teams tab and tick "Share tab audio".
       </div>
       <div id="hint-system" class="device-hint">
-        📌 <strong>System Audio:</strong> Select "Entire Screen" and enable "Share system audio". On Mac, BlackHole virtual driver is required.
+        📌 <strong>System Audio:</strong> Click below, select "Entire Screen" and enable "Share system audio". On Mac, BlackHole virtual driver is required.
+      </div>
+      <!-- Manual share button — only shown for tab/system/both modes -->
+      <div class="share-btn-row" id="share-btn-row">
+        <button class="share-btn" id="share-btn" onclick="requestDisplayShare()">🖥️ Click here to share tab / screen audio</button>
+        <div class="share-status" id="share-status"></div>
       </div>
     </div>
 
@@ -388,22 +401,25 @@
 let sessionCV = '', sessionJobRole = '';
 let conversationContext = [];
 let isRecording = false;
-let audioMode = 'mic';
+let audioMode = 'mic';  // default: always microphone, never screen share
 let pipVisible = false;
 let pipExpanded = false;
 let serverHasKeys = false;
 
 // STT state
-let useDeeepgram = false;       // true when Deepgram key available
-let dgKey = '';                  // Deepgram API key (ephemeral or direct)
-let dgSocket = null;             // Deepgram WebSocket
-let dgStream = null;             // MediaStream feeding Deepgram
-let dgProcessor = null;          // ScriptProcessorNode
-let dgAudioCtx = null;           // AudioContext for Deepgram
-let dgSilenceTimer = null;       // auto-send after silence
-let dgInterimText = '';          // latest interim transcript
-let dgFinalBuffer = '';          // accumulates final words
-let dgLastSentText = '';         // prevent duplicate sends
+let useDeeepgram = false;
+let dgKey = '';
+let dgSocket = null;
+let dgStream = null;
+let dgProcessor = null;
+let dgAudioCtx = null;
+let dgSilenceTimer = null;
+let dgInterimText = '';
+let dgFinalBuffer = '';
+let dgLastSentText = '';
+
+// Tab/system shared stream — set only when user explicitly clicks share button
+let sharedDisplayStream = null;
 
 // Browser Web Speech fallback
 let recognition = null;
@@ -523,7 +539,6 @@ async function runDiag(type) {
         el.textContent = '❌ No Deepgram key available. Add DEEPGRAM_API_KEY to Vercel env vars or enter it in API Keys tab.';
         return;
       }
-      // Try opening a socket briefly
       const url = `wss://api.deepgram.com/v1/listen?model=nova-3&language=en&encoding=linear16&sample_rate=16000&punctuate=true&interim_results=true`;
       const ws = new WebSocket(url, ['token', res]);
       const t = setTimeout(() => { ws.close(); el.textContent += '\n⚠️ Connection timed out.'; }, 5000);
@@ -588,7 +603,6 @@ function updateKeyUI(data) {
   document.getElementById('key-ok-live').style.display   = hasLlm ? 'block' : 'none';
   document.getElementById('key-warn-live').style.display = hasLlm ? 'none'  : 'block';
 
-  // Deepgram banners
   document.getElementById('dg-banner-setup').style.display = hasDg ? 'block' : 'none';
   document.getElementById('dg-banner-live').style.display  = hasDg ? 'block' : 'none';
 
@@ -612,12 +626,16 @@ async function startSession() {
   if (!sessionCV)      { alert('Please paste your CV in the My CV tab.'); return; }
   document.getElementById('response-style').value = document.getElementById('answer-style').value;
   conversationContext = [];
+
+  // Always reset to mic mode on session start — never auto-trigger screen share
+  audioMode = 'mic';
+  sharedDisplayStream = null;
+
   setupSection.style.display     = 'none';
   interviewSection.style.display = 'block';
   floatBtn.classList.add('show');
   await checkServerKeys();
 
-  // Resolve Deepgram key
   const resolvedDgKey = await fetchDgKey();
   useDeeepgram = !!resolvedDgKey;
   dbg(`Deepgram available: ${useDeeepgram}, key mode: ${useDeeepgram ? 'active' : 'none'}`);
@@ -643,6 +661,11 @@ function endSession() {
   setupSection.style.display     = 'block';
   floatBtn.classList.remove('show');
   if (pipVisible) togglePip();
+  // Release any shared display stream
+  if (sharedDisplayStream) {
+    sharedDisplayStream.getTracks().forEach(t => t.stop());
+    sharedDisplayStream = null;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -652,9 +675,81 @@ function switchMode(mode, btn) {
   audioMode = mode;
   document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+
   document.getElementById('row-mic').style.display   = (mode === 'mic' || mode === 'both') ? 'flex' : 'none';
   document.getElementById('hint-tab').className    = 'device-hint' + ((mode === 'tab' || mode === 'both') ? ' show' : '');
   document.getElementById('hint-system').className = 'device-hint' + (mode === 'system' ? ' show' : '');
+
+  // Show the manual share button for tab/system/both; hide for mic
+  const needsShare = (mode === 'tab' || mode === 'system' || mode === 'both');
+  document.getElementById('share-btn-row').className = 'share-btn-row' + (needsShare ? ' show' : '');
+
+  // If switching away from a share mode, reset the share state
+  if (!needsShare && sharedDisplayStream) {
+    sharedDisplayStream.getTracks().forEach(t => t.stop());
+    sharedDisplayStream = null;
+    updateShareStatus(false);
+  }
+}
+
+// User explicitly clicks to share tab/screen — no auto-popup on listen
+async function requestDisplayShare() {
+  const statusEl = document.getElementById('share-status');
+  statusEl.className = 'share-status pending';
+  statusEl.textContent = '⏳ Waiting for you to select a tab/screen…';
+
+  try {
+    // Stop previous stream if any
+    if (sharedDisplayStream) {
+      sharedDisplayStream.getTracks().forEach(t => t.stop());
+      sharedDisplayStream = null;
+    }
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    // Stop the video track immediately — we only need audio
+    stream.getVideoTracks().forEach(t => t.stop());
+
+    if (!stream.getAudioTracks().length) {
+      statusEl.className = 'share-status pending';
+      statusEl.textContent = '⚠️ No audio track captured. Make sure to tick "Share tab audio" in the dialog.';
+      sharedDisplayStream = null;
+      return;
+    }
+
+    sharedDisplayStream = stream;
+
+    // Handle user stopping the share via the browser's built-in "Stop sharing" button
+    stream.getAudioTracks()[0].addEventListener('ended', () => {
+      dbg('Display share ended by user');
+      sharedDisplayStream = null;
+      updateShareStatus(false);
+      if (isRecording) {
+        stopListening();
+        setListenStatus('⚠️ Screen share stopped. Press Start Listening to reconnect.', 'info');
+      }
+    });
+
+    updateShareStatus(true);
+    dbg('Display stream acquired: ' + stream.getAudioTracks().length + ' audio track(s)');
+  } catch(e) {
+    statusEl.className = 'share-status pending';
+    statusEl.textContent = '❌ Share cancelled or denied: ' + e.message;
+    sharedDisplayStream = null;
+    dbg('requestDisplayShare error: ' + e.message);
+  }
+}
+
+function updateShareStatus(connected) {
+  const statusEl = document.getElementById('share-status');
+  const shareBtn = document.getElementById('share-btn');
+  if (connected) {
+    statusEl.className = 'share-status connected';
+    statusEl.textContent = '✅ Tab/screen audio connected — ready to listen.';
+    shareBtn.textContent = '🔄 Re-share tab / screen audio';
+  } else {
+    statusEl.className = 'share-status pending';
+    statusEl.textContent = '⚪ No tab/screen shared yet. Click above to share.';
+    shareBtn.textContent = '🖥️ Click here to share tab / screen audio';
+  }
 }
 
 async function loadMicDevices() {
@@ -685,6 +780,17 @@ document.addEventListener('keydown', (e) => {
 
 async function startListening() {
   if (isRecording) return;
+
+  // For tab/system/both modes, require the user to have already shared
+  if ((audioMode === 'tab' || audioMode === 'system') && !sharedDisplayStream) {
+    setListenStatus('⚠️ Please click "Share tab / screen audio" first, then start listening.', 'info');
+    return;
+  }
+  if (audioMode === 'both' && !sharedDisplayStream) {
+    setListenStatus('⚠️ Please click "Share tab / screen audio" first for Mic + Tab mode.', 'info');
+    return;
+  }
+
   isRecording = true;
   toggleBtn.textContent = '⏹ Stop Listening';
   toggleBtn.classList.add('listening');
@@ -721,49 +827,58 @@ function stopListening() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DEEPGRAM STT
+// AUDIO STREAM ACQUISITION
+// Never calls getDisplayMedia automatically — only uses already-shared stream
 // ─────────────────────────────────────────────────────────────────────────────
 async function getAudioStream() {
   const micId = micSelect.value;
   const micConstraints = { audio: micId ? { deviceId: { exact: micId } } : true, video: false };
 
   if (audioMode === 'mic') {
+    // Pure microphone — no screen share ever
     const s = await navigator.mediaDevices.getUserMedia(micConstraints);
     activeStreams.push(s);
     return s;
   }
 
   if (audioMode === 'tab' || audioMode === 'system') {
-    const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-    activeStreams.push(s);
-    // Stop video track — we only want audio
-    s.getVideoTracks().forEach(t => t.stop());
-    return s;
-  }
-
-  if (audioMode === 'both') {
-    // Merge mic + display audio
-    const [micStream, dispStream] = await Promise.all([
-      navigator.mediaDevices.getUserMedia(micConstraints),
-      navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-    ]);
-    dispStream.getVideoTracks().forEach(t => t.stop());
-    activeStreams.push(micStream, dispStream);
-
-    const ctx = new AudioContext();
+    // Use the pre-shared stream only
+    if (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length) {
+      throw new Error('No tab/screen audio shared. Click "Share tab / screen audio" first.');
+    }
+    // Clone the stream so stopping listening doesn't kill the shared stream
+    const ctx = new AudioContext({ sampleRate: 16000 });
     tabAudioCtx = ctx;
     const dest = ctx.createMediaStreamDestination();
-    ctx.createMediaStreamSource(micStream).connect(dest);
-    if (dispStream.getAudioTracks().length) ctx.createMediaStreamSource(dispStream).connect(dest);
+    ctx.createMediaStreamSource(sharedDisplayStream).connect(dest);
     return dest.stream;
   }
 
-  // Fallback
+  if (audioMode === 'both') {
+    // Mic + already-shared display stream
+    if (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length) {
+      throw new Error('No tab/screen audio shared. Click "Share tab / screen audio" first.');
+    }
+    const micStream = await navigator.mediaDevices.getUserMedia(micConstraints);
+    activeStreams.push(micStream);
+
+    const ctx = new AudioContext({ sampleRate: 16000 });
+    tabAudioCtx = ctx;
+    const dest = ctx.createMediaStreamDestination();
+    ctx.createMediaStreamSource(micStream).connect(dest);
+    ctx.createMediaStreamSource(sharedDisplayStream).connect(dest);
+    return dest.stream;
+  }
+
+  // Fallback — always microphone
   const s = await navigator.mediaDevices.getUserMedia(micConstraints);
   activeStreams.push(s);
   return s;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DEEPGRAM STT
+// ─────────────────────────────────────────────────────────────────────────────
 async function startDeepgram() {
   setListenStatus('🟣 Connecting to Deepgram…', 'dg');
   dbg('Deepgram: opening WebSocket');
@@ -772,12 +887,11 @@ async function startDeepgram() {
     dgStream = await getAudioStream();
   } catch(e) {
     dbg('getAudioStream error: ' + e.message);
-    setListenStatus('❌ Mic/audio access denied: ' + e.message, 'error');
+    setListenStatus('❌ ' + e.message, 'error');
     stopListening();
     return;
   }
 
-  // Deepgram WebSocket — Nova-3, punctuation, interim results, smart formatting
   const params = new URLSearchParams({
     model: 'nova-3',
     language: 'en',
@@ -791,7 +905,6 @@ async function startDeepgram() {
     vad_events: 'true'
   });
 
-  // Use token auth (Deepgram supports Bearer as subprotocol)
   const wsUrl = `wss://api.deepgram.com/v1/listen?${params}`;
   dbg('DG URL: ' + wsUrl);
 
@@ -801,15 +914,12 @@ async function startDeepgram() {
   dgSocket.onopen = () => {
     dbg('Deepgram WebSocket open');
     setListenStatus('🟣 Deepgram Nova-3 — Listening…', 'dg');
-    // Set up AudioContext to pipe PCM16 to Deepgram
     dgAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
     const source = dgAudioCtx.createMediaStreamSource(dgStream);
-    // ScriptProcessor (256 samples)
     dgProcessor = dgAudioCtx.createScriptProcessor(4096, 1, 1);
     dgProcessor.onaudioprocess = (e) => {
       if (!dgSocket || dgSocket.readyState !== WebSocket.OPEN) return;
       const float32 = e.inputBuffer.getChannelData(0);
-      // Convert float32 → int16 PCM
       const pcm = new Int16Array(float32.length);
       for (let i = 0; i < float32.length; i++) {
         const s = Math.max(-1, Math.min(1, float32[i]));
@@ -825,14 +935,12 @@ async function startDeepgram() {
     let data;
     try { data = JSON.parse(evt.data); } catch(e) { return; }
 
-    // VAD speech start event
     if (data.type === 'SpeechStarted') {
       dbg('DG: speech started');
       clearTimeout(dgSilenceTimer);
       return;
     }
 
-    // Utterance end — treat buffered text as final
     if (data.type === 'UtteranceEnd') {
       dbg('DG: utterance end');
       if (dgFinalBuffer.trim()) {
@@ -846,7 +954,6 @@ async function startDeepgram() {
       return;
     }
 
-    // Regular transcript
     if (data.type !== 'Results') return;
     const channel = data.channel || data.channels?.[0];
     if (!channel) return;
@@ -858,16 +965,13 @@ async function startDeepgram() {
     const speechFinal = data.speech_final;
 
     if (!isFinal) {
-      // Show interim in the interim box
       dgInterimText = text;
       interimBox.textContent = '🎙️ ' + text;
       interimBox.className = 'interim-box show';
-      // Reset silence timer
       clearTimeout(dgSilenceTimer);
       return;
     }
 
-    // Final transcript
     dgFinalBuffer += (dgFinalBuffer ? ' ' : '') + text;
     dgInterimText = '';
     interimBox.textContent = '✔ ' + dgFinalBuffer;
@@ -875,14 +979,12 @@ async function startDeepgram() {
     dbg(`DG final: "${text}" | speech_final=${speechFinal} | buffer="${dgFinalBuffer}"`);
 
     if (speechFinal) {
-      // Deepgram says utterance is complete
       const toSend = dgFinalBuffer.trim();
       dgFinalBuffer = '';
       interimBox.className = 'interim-box';
       interimBox.textContent = '';
       handleTranscript(toSend);
     } else {
-      // Start silence timer — send after 1.5s of no new final results
       clearTimeout(dgSilenceTimer);
       dgSilenceTimer = setTimeout(() => {
         const toSend = dgFinalBuffer.trim();
@@ -969,7 +1071,7 @@ function startBrowserSTT() {
   };
   recognition.onend = () => {
     dbg('Browser STT ended');
-    if (isRecording) recognition.start(); // auto-restart
+    if (isRecording) recognition.start();
   };
   recognition.start();
 }
@@ -1015,7 +1117,6 @@ async function handleTranscript(text) {
 
     const contentType = res.headers.get('content-type') || '';
 
-    // JSON response (skip, offline, error)
     if (contentType.includes('application/json')) {
       const data = await res.json();
       if (data.skip) {
@@ -1037,7 +1138,6 @@ async function handleTranscript(text) {
       return;
     }
 
-    // Streaming SSE
     if (!res.body) { aiScriptBox.textContent = 'Stream not supported.'; return; }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -1143,12 +1243,12 @@ function showHowTo() {
     'How to connect Zoom/Teams audio:\n\n' +
     '✅ WITH DEEPGRAM (recommended):\n' +
     '1. Select "🎤+🖥️ Mic + Tab" audio mode\n' +
-    '2. Press Space to start listening\n' +
-    '3. Share your Zoom/Teams tab (tick "Share tab audio")\n' +
-    '4. Deepgram receives both your mic and interviewer audio directly\n\n' +
-    '🟢 BROWSER STT fallback (Chrome/Edge only):\n' +
-    'In "Mic + Tab" mode, tab audio plays through speakers so the mic can pick it up.\n' +
-    'Use headphones for best quality — avoids echo.'
+    '2. Click "Share tab / screen audio" — pick your Zoom/Teams tab\n' +
+    '3. Tick "Share tab audio" in the browser dialog\n' +
+    '4. Press Space to start listening\n\n' +
+    '🟢 MICROPHONE ONLY (simplest):\n' +
+    'Keep "🎤 Microphone" mode selected and just press Space.\n' +
+    'No screen sharing needed — the app listens via your mic directly.'
   );
 }
 
