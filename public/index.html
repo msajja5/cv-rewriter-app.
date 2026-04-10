@@ -85,7 +85,6 @@
     .share-status.connected{display:block;background:#e9f7ef;color:#1a6a30;border:1px solid #28a745}
     .share-status.pending{display:block;background:#fff8e1;color:#856404;border:1px solid #ffe082}
 
-    /* STT mode warning banner */
     .stt-mode-warn{display:none;background:#fdecea;border:1px solid #f44336;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#b71c1c;margin-top:8px;line-height:1.5}
     .stt-mode-warn.show{display:block}
 
@@ -369,7 +368,6 @@
         <button class="share-btn" id="share-btn" onclick="requestDisplayShare()">&#x1F5A5;&#xFE0F; Click here to share tab / screen audio</button>
         <div class="share-status" id="share-status"></div>
       </div>
-      <!-- Shown when tab/system mode is selected but no Deepgram key -->
       <div class="stt-mode-warn" id="stt-mode-warn">
         &#x274C; <strong>Deepgram required for this mode.</strong> The browser&rsquo;s built-in STT can only capture your microphone &mdash; it cannot process shared tab or system audio. Please add a Deepgram API key in the API Keys tab, or switch to <strong>&#x1F3A4; Microphone</strong> or <strong>&#x1F3A4;+&#x1F5A5;&#xFE0F; Mic + Tab</strong> mode.
       </div>
@@ -456,8 +454,6 @@ let pipVisible = false;
 let pipExpanded = false;
 let serverHasKeys = false;
 
-// STT state
-// FIX: was "useDeeepgram" (triple-e typo) — now consistently "useDeepgram"
 let useDeepgram = false;
 let dgKey = '';
 let dgSocket = null;
@@ -475,7 +471,6 @@ let sharedDisplayStream = null;
 // Browser Web Speech fallback
 let recognition = null;
 
-// Misc
 let activeStreams = [];
 let debugLines = [];
 let tabAudioCtx = null;
@@ -578,7 +573,7 @@ document.addEventListener('keydown', function(e) {
 async function runDiag(type) {
   const el = document.getElementById('diag-result');
   el.style.display = 'block';
-  el.textContent = `Running: ${type}…`;
+  el.textContent = `Running: ${type}\u2026`;
   try {
     if (type === 'health') {
       const r = await fetch('/api/health');
@@ -632,6 +627,9 @@ async function runDiag(type) {
 // =============================================================================
 // KEY / UI MANAGEMENT
 // =============================================================================
+
+// FIX: fetchDgKey now correctly calls /api/transcribe which exists.
+// It passes the user-entered key via header so the server can relay it securely.
 async function fetchDgKey() {
   const localDg = document.getElementById('deepgram-key')?.value?.trim();
   try {
@@ -686,11 +684,9 @@ function updateKeyUI(data) {
     );
   }
 
-  // Re-validate the current audio mode warning
   refreshModeWarn();
 }
 
-// Show/hide the Deepgram-required warning based on current mode + key availability
 function refreshModeWarn() {
   const needsDeepgram = (audioMode === 'tab' || audioMode === 'system');
   const hasDeepgram = useDeepgram || !!(document.getElementById('deepgram-key')?.value.trim());
@@ -721,7 +717,6 @@ async function startSession() {
   await checkServerKeys();
 
   const resolvedDgKey = await fetchDgKey();
-  // FIX: use correct variable name "useDeepgram" (not "useDeeepgram")
   useDeepgram = !!resolvedDgKey;
   dbg(`Deepgram available: ${useDeepgram}, key mode: ${useDeepgram ? 'active' : 'none'}`);
 
@@ -867,7 +862,6 @@ document.addEventListener('keydown', (e) => {
 async function startListening() {
   if (isRecording) return;
 
-  // VALIDATION: Tab / System modes require Deepgram — browser STT cannot process shared streams
   const needsShare = (audioMode === 'tab' || audioMode === 'system' || audioMode === 'both');
   const tabOrSystemOnly = (audioMode === 'tab' || audioMode === 'system');
 
@@ -880,7 +874,6 @@ async function startListening() {
     return;
   }
 
-  // Auto-trigger share dialog if needed
   if (needsShare && (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length)) {
     setListenStatus('\u23F3 Waiting for tab/screen share\u2026', 'info');
     const ok = await requestDisplayShare();
@@ -896,6 +889,7 @@ async function startListening() {
   syncPipListen(true);
   dgFinalBuffer = '';
   dgInterimText = '';
+  // FIX: reset deduplication guard so repeated questions always get answered
   dgLastSentText = '';
 
   if (useDeepgram) {
@@ -915,6 +909,8 @@ function stopListening() {
   interimBox.className = 'interim-box';
   interimBox.textContent = '';
   clearTimeout(dgSilenceTimer);
+  // FIX: reset deduplication guard on stop so next session answers fresh questions
+  dgLastSentText = '';
 
   if (useDeepgram) {
     stopDeepgram();
@@ -922,7 +918,6 @@ function stopListening() {
     if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
   }
 
-  // Release mic/active streams but NOT the shared display stream
   activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
   activeStreams = [];
 }
@@ -1095,9 +1090,13 @@ async function startDeepgram() {
     setListenStatus('\u274C Deepgram error \u2014 check key', 'error');
   };
 
+  // FIX: attempt auto-reconnect if still recording when socket closes unexpectedly
   dgSocket.onclose = (e) => {
     dbg(`Deepgram socket closed: ${e.code} ${e.reason}`);
-    if (isRecording) setListenStatus('\u26A0\uFE0F Deepgram disconnected \u2014 reconnecting\u2026', 'info');
+    if (isRecording && e.code !== 1000) {
+      setListenStatus('\u26A0\uFE0F Deepgram disconnected \u2014 reconnecting in 2s\u2026', 'info');
+      setTimeout(() => { if (isRecording) startDeepgram(); }, 2000);
+    }
   };
 }
 
@@ -1125,9 +1124,6 @@ function startBrowserSTT() {
     return;
   }
 
-  // Safety guard: browser STT cannot capture tab/system audio streams
-  // This should never be reached because startListening() blocks tab/system without Deepgram,
-  // but guard here as a second line of defense.
   if (audioMode === 'tab' || audioMode === 'system') {
     setListenStatus('\u274C Browser STT cannot capture tab/system audio. Please add a Deepgram key.', 'error');
     stopListening();
