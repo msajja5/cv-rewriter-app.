@@ -600,7 +600,7 @@ async function runDiag(type) {
       }
     } else if (type === 'deepgram') {
       el.textContent = 'Testing Deepgram connection\u2026';
-      const key = await fetchDgKey();
+      const key = await resolveDgKey();
       if (!key) {
         el.textContent = '\u274C No Deepgram key available. Add DEEPGRAM_API_KEY to Vercel env vars or enter it in API Keys tab.';
         return;
@@ -628,22 +628,33 @@ async function runDiag(type) {
 // KEY / UI MANAGEMENT
 // =============================================================================
 
-// FIX: fetchDgKey now correctly calls /api/transcribe which exists.
-// It passes the user-entered key via header so the server can relay it securely.
-async function fetchDgKey() {
-  const localDg = document.getElementById('deepgram-key')?.value?.trim();
+// FIX: resolveDgKey — reads key from /api/health (server-side env) or local input.
+// No longer calls the non-existent /api/transcribe endpoint.
+async function resolveDgKey() {
+  // 1. Prefer the locally entered key (user has more control)
+  const localKey = document.getElementById('deepgram-key')?.value?.trim();
+  if (localKey) { dgKey = localKey; return localKey; }
+
+  // 2. Ask the health endpoint whether the server has DEEPGRAM_API_KEY configured.
+  //    The health endpoint exposes keys.deepgram=true/false — it does NOT expose the
+  //    actual key value. For the WebSocket we need the raw key, so the server must
+  //    expose it via /api/health when the user does not supply one.
+  //    We try to read it from data.dgKey if the server chooses to send it.
   try {
-    const headers = {};
-    if (localDg) headers['x-deepgram-key'] = localDg;
-    const res = await fetch('/api/transcribe', { headers });
+    const res = await fetch('/api/health');
     if (!res.ok) return null;
     const data = await res.json();
-    if (data.available && data.key) { dgKey = data.key; return data.key; }
-    return null;
+    if (data.dgKey) { dgKey = data.dgKey; return data.dgKey; }
+    // Server has key but won't expose it — that's fine, return a sentinel so
+    // the caller knows Deepgram is available (audio goes through server proxy).
+    if (data.keys?.deepgram) {
+      dgKey = '__server__';
+      return '__server__';
+    }
   } catch(e) {
-    dbg('fetchDgKey error: ' + e.message);
-    return null;
+    dbg('resolveDgKey health check error: ' + e.message);
   }
+  return null;
 }
 
 async function checkServerKeys() {
@@ -665,7 +676,7 @@ function updateKeyUI(data) {
     document.getElementById('openrouter-key')?.value.trim()
   );
   const hasLlm = serverHasKeys || localLlm;
-  const hasDg  = !!(data?.keys?.deepgram || document.getElementById('deepgram-key')?.value.trim());
+  const hasDg  = !!(data?.keys?.deepgram || data?.dgKey || document.getElementById('deepgram-key')?.value.trim());
 
   document.getElementById('key-ok').style.display         = hasLlm ? 'block' : 'none';
   document.getElementById('key-warn-setup').style.display  = hasLlm ? 'none'  : 'block';
@@ -716,9 +727,11 @@ async function startSession() {
   floatBtn.classList.add('show');
   await checkServerKeys();
 
-  const resolvedDgKey = await fetchDgKey();
-  useDeepgram = !!resolvedDgKey;
-  dbg(`Deepgram available: ${useDeepgram}, key mode: ${useDeepgram ? 'active' : 'none'}`);
+  const resolvedKey = await resolveDgKey();
+  // Use Deepgram only when we have a real key (not the __server__ sentinel,
+  // which means the server holds the key but won't proxy the WebSocket).
+  useDeepgram = !!(resolvedKey && resolvedKey !== '__server__');
+  dbg(`Deepgram available: ${useDeepgram}, key mode: ${resolvedKey ? (resolvedKey === '__server__' ? 'server-only' : 'direct') : 'none'}`);
 
   if (useDeepgram) {
     setSttStatus('\u1F7E3 Deepgram Nova-3 (Active)', 'status-dg');
@@ -889,7 +902,6 @@ async function startListening() {
   syncPipListen(true);
   dgFinalBuffer = '';
   dgInterimText = '';
-  // FIX: reset deduplication guard so repeated questions always get answered
   dgLastSentText = '';
 
   if (useDeepgram) {
@@ -909,7 +921,6 @@ function stopListening() {
   interimBox.className = 'interim-box';
   interimBox.textContent = '';
   clearTimeout(dgSilenceTimer);
-  // FIX: reset deduplication guard on stop so next session answers fresh questions
   dgLastSentText = '';
 
   if (useDeepgram) {
@@ -1090,7 +1101,6 @@ async function startDeepgram() {
     setListenStatus('\u274C Deepgram error \u2014 check key', 'error');
   };
 
-  // FIX: attempt auto-reconnect if still recording when socket closes unexpectedly
   dgSocket.onclose = (e) => {
     dbg(`Deepgram socket closed: ${e.code} ${e.reason}`);
     if (isRecording && e.code !== 1000) {
