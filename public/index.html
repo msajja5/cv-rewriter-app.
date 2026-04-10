@@ -15,36 +15,66 @@
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);padding:20px}
-    .container{max-width:920px;margin:0 auto;background:var(--surface);padding:32px;border-radius:12px;box-shadow:var(--shadow)}
-    h1{text-align:center;font-size:1.8rem;margin-bottom:4px}
-    .subtitle{text-align:center;color:var(--muted);margin-bottom:28px;font-size:.95rem}
-    .form-group{margin-bottom:18px}
-    label{display:block;font-weight:600;margin-bottom:6px;color:#444;font-size:.9rem}
-    input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:.95rem;font-family:inherit;transition:border-color .2s}
+    .container{max-width:960px;margin:0 auto;background:var(--surface);padding:32px;border-radius:12px;box-shadow:var(--shadow)}
+    h1{text-align:center;font-size:1.8rem;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .subtitle{text-align:center;color:var(--muted);margin-bottom:22px;font-size:.9rem}
+
+    /* Usage note */
+    .usage-note{background:#e8f4fd;border:1px solid #bee3f8;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:.85rem;color:#1a4a6b;line-height:1.6}
+    .usage-note strong{font-weight:700}
+
+    /* Status bar */
+    .status-bar{background:#f8f9fa;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+    .status-bar-left{font-size:.82rem;color:#444;line-height:1.7}
+    .status-bar-left strong{font-size:.82rem;font-weight:700}
+    .status-ready{color:#1a6a30;font-weight:600}
+    .status-stopped{color:#dc3545;font-weight:600}
+    .how-to-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+    .how-to-btn:hover{background:var(--primary);color:#fff}
+
+    /* Tabs */
+    .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+    .tab-btn{flex:1;min-width:120px;padding:9px 14px;border-radius:8px;border:2px solid var(--border);font-size:.85rem;font-weight:600;cursor:pointer;background:#fff;color:#555;transition:all .2s;text-align:center}
+    .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+
+    /* Diagnostic buttons */
+    .diag-row{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+    .diag-btn{width:100%;padding:10px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;transition:background .2s}
+    .diag-btn:hover{background:var(--primary-hover)}
+    .diag-btn.secondary{background:#6c757d}
+    .diag-btn.secondary:hover{background:#545b62}
+    .diag-result{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:6px;padding:10px 14px;font-size:.82rem;font-family:monospace;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;display:none}
+
+    .form-group{margin-bottom:16px}
+    label{display:block;font-weight:600;margin-bottom:6px;color:#444;font-size:.88rem}
+    input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:6px;font-size:.92rem;font-family:inherit;transition:border-color .2s}
     input:focus,textarea:focus,select:focus{outline:none;border-color:var(--primary)}
-    .btn{display:block;width:100%;padding:12px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
+    .btn{display:block;width:100%;padding:12px;border:none;border-radius:6px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s;margin-top:8px}
     .btn-primary{background:var(--primary);color:#fff}
     .btn-primary:hover{background:var(--primary-hover)}
     .btn-danger{background:var(--danger);color:#fff}
     .btn-danger:hover{background:var(--danger-hover)}
     .btn:disabled{opacity:.5;cursor:not-allowed}
 
-    .api-section{background:#f0f9ff;border:1px solid #b3daf7;border-radius:8px;padding:16px;margin-bottom:20px}
-    .api-section summary{font-weight:600;cursor:pointer;color:var(--primary);font-size:.9rem}
-    .api-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    .api-grid .form-group{margin-bottom:0}
-    .api-hint{font-size:.78rem;color:var(--muted);margin-top:4px}
+    .api-hint{font-size:.75rem;color:var(--muted);margin-top:4px}
+    .key-ok{background:#e9f7ef;border:1px solid #28a745;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#1a6a30;margin-bottom:12px;display:none}
+    .key-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;font-size:.82rem;color:#795548;margin-bottom:12px;display:none}
 
-    /* Usage note */
-    .usage-note{background:#e8f4fd;border:1px solid #bee3f8;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:.85rem;color:#1a4a6b;line-height:1.6}
-    .usage-note strong{font-weight:700}
+    /* Interview section */
+    #interview-section{display:none;margin-top:0}
 
-    #interview-section{display:none;margin-top:24px;border-top:2px solid #eee;padding-top:24px}
+    /* PiP Toggle */
+    .pip-row{display:flex;justify-content:flex-end;margin-bottom:14px}
+    .pip-toggle-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s}
+    .pip-toggle-btn:hover,.pip-toggle-btn.active{background:var(--primary);color:#fff}
 
-    .audio-panel{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:10px;padding:16px;margin-bottom:18px}
-    .audio-panel h4{font-size:.88rem;font-weight:700;color:#333;margin-bottom:12px;display:flex;align-items:center;gap:6px}
-    .device-tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
-    .dtab{padding:6px 14px;border-radius:20px;border:2px solid #ccc;font-size:.82rem;font-weight:600;cursor:pointer;background:#fff;color:#555;transition:all .2s}
+    /* Audio panel */
+    .audio-panel{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:10px;padding:16px;margin-bottom:16px}
+    .audio-panel h4{font-size:.88rem;font-weight:700;color:#333;margin-bottom:10px}
+    .device-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+    .dtab{padding:6px 14px;border-radius:20px;border:2px solid #ccc;font-size:.8rem;font-weight:600;cursor:pointer;background:#fff;color:#555;transition:all .2s}
     .dtab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
     .device-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
     .device-row label{margin:0;font-size:.82rem;white-space:nowrap;min-width:100px}
@@ -52,13 +82,17 @@
     .device-hint{font-size:.75rem;color:var(--muted);line-height:1.5;margin-top:4px;background:#fffbe6;border:1px solid #ffe082;border-radius:5px;padding:7px 10px;display:none}
     .device-hint.show{display:block}
 
+    .style-row{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+    .style-row label{margin:0;white-space:nowrap;font-size:.88rem;font-weight:600}
+    .style-row select{max-width:260px}
+
     .controls{margin-bottom:6px}
     @keyframes pulse-ring{0%{box-shadow:0 0 0 0 rgba(220,53,69,.5)}70%{box-shadow:0 0 0 10px rgba(220,53,69,0)}100%{box-shadow:0 0 0 0 rgba(220,53,69,0)}}
     #toggle-btn.listening{background:var(--danger);animation:pulse-ring 1.4s ease-out infinite}
-    .space-hint{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:14px}
+    .space-hint{text-align:center;font-size:.78rem;color:var(--muted);margin-bottom:12px}
     .space-hint kbd{display:inline-block;background:#eee;border:1px solid #ccc;border-bottom:3px solid #bbb;border-radius:4px;padding:1px 8px;font-size:.78rem;font-family:monospace;color:#333;margin:0 2px}
 
-    .listen-status{text-align:center;padding:10px;border-radius:6px;margin-bottom:14px;font-size:.85rem;font-weight:600;display:none}
+    .listen-status{text-align:center;padding:10px;border-radius:6px;margin-bottom:12px;font-size:.85rem;font-weight:600;display:none}
     .listen-status.active{display:block;background:#e9f7ef;color:#1a6a30}
     .listen-status.error{display:block;background:#fdecea;color:#b71c1c}
     .listen-status.info{display:block;background:#e8f4fd;color:#0c5460}
@@ -67,214 +101,196 @@
     .provider-badge{font-size:.72rem;background:#e0f2f1;color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:600}
     .provider-badge.offline{background:#fff3cd;color:#856404}
 
-    .script-box{background:var(--green-bg);border-left:5px solid var(--green-border);border-radius:6px;padding:20px;min-height:110px;font-size:1.15rem;line-height:1.7;margin-bottom:20px;white-space:pre-wrap}
+    .script-box{background:var(--green-bg);border-left:5px solid var(--green-border);border-radius:6px;padding:20px;min-height:110px;font-size:1.1rem;line-height:1.7;margin-bottom:16px;white-space:pre-wrap}
     .script-box.loading{color:#888;font-style:italic;font-size:1rem}
     .script-box.hint{background:var(--hint-bg);border-left-color:var(--hint-border);font-size:.97rem;line-height:1.8}
     .script-box.error-box{background:#fdecea;border-left-color:#f44336;font-size:.97rem}
 
-    .offline-bar{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#856404;margin-bottom:14px;display:none}
-    .style-row{display:flex;gap:10px;align-items:center;margin-bottom:16px}
-    .style-row label{margin:0;white-space:nowrap;font-size:.88rem}
-    .style-row select{max-width:240px}
+    .offline-bar{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#856404;margin-bottom:12px;display:none}
 
-    .q-box{margin-bottom:16px}
+    .q-box{margin-bottom:14px}
     .q-box label{font-weight:700;font-size:.95rem;margin-bottom:6px;display:block}
-    .q-display{border:1px solid var(--border);border-radius:6px;padding:12px;min-height:54px;background:#fafafa;font-size:.98rem;color:#222;line-height:1.5;white-space:pre-wrap}
+    .q-display{border:1px solid var(--border);border-radius:6px;padding:12px;min-height:54px;background:#fafafa;font-size:.95rem;color:#222;line-height:1.5;white-space:pre-wrap}
     .q-display.placeholder{color:#aaa;font-style:italic}
 
-    .transcript-box{height:180px;overflow-y:auto;border:1px solid var(--border);padding:12px;background:#fafafa;border-radius:6px;font-size:.88rem}
-    .transcript-line{margin-bottom:8px;line-height:1.5}
+    .transcript-box{height:160px;overflow-y:auto;border:1px solid var(--border);padding:12px;background:#fafafa;border-radius:6px;font-size:.85rem}
+    .transcript-line{margin-bottom:6px;line-height:1.5}
     .lbl-interviewer{color:#d9534f;font-weight:700}
     .lbl-candidate{color:#0275d8;font-weight:700}
     .lbl-system{color:#888;font-style:italic}
 
-    .key-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;font-size:.82rem;color:#795548;margin-bottom:16px;display:none}
-    .key-ok{background:#e9f7ef;border:1px solid #28a745;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#1a6a30;margin-bottom:16px;display:none}
-
-    /* ── PiP Toggle Button ── */
-    .pip-row{display:flex;justify-content:flex-end;margin-bottom:14px}
-    .pip-toggle-btn{
-      display:inline-flex;align-items:center;gap:6px;
-      padding:7px 16px;border-radius:20px;border:2px solid var(--primary);
-      background:#fff;color:var(--primary);font-weight:700;font-size:.82rem;
-      cursor:pointer;transition:all .2s;
-    }
-    .pip-toggle-btn:hover,.pip-toggle-btn.active{background:var(--primary);color:#fff}
-    .pip-toggle-btn .pip-icon{font-size:1rem}
-
     /* ── PiP Floating Overlay ── */
-    #pip-overlay{
-      display:none;
-      position:fixed;
-      bottom:28px;right:28px;
-      width:380px;
-      background:rgba(10,20,18,0.94);
-      backdrop-filter:blur(14px);
-      -webkit-backdrop-filter:blur(14px);
-      border:1.5px solid rgba(1,105,111,0.55);
-      border-radius:16px;
-      box-shadow:0 8px 40px rgba(0,0,0,0.55);
-      z-index:99999;
-      overflow:hidden;
-      font-family:'Segoe UI',sans-serif;
-      color:#e8f5e9;
-      user-select:none;
-      transition:box-shadow .2s;
-      min-width:260px;min-height:140px;
-    }
+    #pip-overlay{display:none;position:fixed;bottom:28px;right:28px;width:380px;background:rgba(10,20,18,0.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1.5px solid rgba(1,105,111,0.55);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.55);z-index:99999;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#e8f5e9;user-select:none;min-width:260px;min-height:140px}
     #pip-overlay.active{display:flex;flex-direction:column}
-    #pip-overlay:focus-within{box-shadow:0 8px 48px rgba(1,105,111,0.45)}
-
-    .pip-header{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:8px 14px 6px;
-      background:rgba(1,105,111,0.22);
-      cursor:grab;
-      border-bottom:1px solid rgba(1,105,111,0.2);
-      flex-shrink:0;
-    }
+    .pip-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 6px;background:rgba(1,105,111,0.22);cursor:grab;border-bottom:1px solid rgba(1,105,111,0.2);flex-shrink:0}
     .pip-header:active{cursor:grabbing}
-    .pip-title{
-      font-size:.75rem;font-weight:700;letter-spacing:.06em;
-      text-transform:uppercase;color:#80cbc4;
-      display:flex;align-items:center;gap:5px;
-    }
+    .pip-title{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#80cbc4;display:flex;align-items:center;gap:5px}
     .pip-dot{width:7px;height:7px;border-radius:50%;background:#28a745;display:inline-block}
     .pip-dot.thinking{background:#ffc107;animation:blink .7s ease-in-out infinite}
     .pip-dot.error{background:#dc3545}
     @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
     .pip-controls{display:flex;gap:6px;align-items:center}
-    .pip-ctrl-btn{
-      background:rgba(255,255,255,0.1);border:none;color:#ccc;
-      border-radius:50%;width:22px;height:22px;font-size:.75rem;
-      cursor:pointer;display:flex;align-items:center;justify-content:center;
-      transition:background .15s;
-    }
+    .pip-ctrl-btn{background:rgba(255,255,255,0.1);border:none;color:#ccc;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
     .pip-ctrl-btn:hover{background:rgba(255,255,255,0.22)}
-    .pip-resize-btn{font-size:.65rem}
-
     .pip-body{padding:10px 14px 12px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
-
-    .pip-question{
-      font-size:.75rem;color:#80cbc4;
-      border-bottom:1px solid rgba(1,105,111,0.2);
-      padding-bottom:6px;line-height:1.4;
-      display:none;
-    }
+    .pip-question{font-size:.75rem;color:#80cbc4;border-bottom:1px solid rgba(1,105,111,0.2);padding-bottom:6px;line-height:1.4;display:none}
     .pip-question.show{display:block}
     .pip-question strong{font-size:.7rem;letter-spacing:.05em;text-transform:uppercase;color:#4db6ac;display:block;margin-bottom:2px}
-
-    .pip-script{
-      font-size:1rem;line-height:1.65;color:#e8f5e9;
-      white-space:pre-wrap;word-break:break-word;
-      max-height:220px;overflow-y:auto;
-    }
-    .pip-script::-webkit-scrollbar{width:4px}
-    .pip-script::-webkit-scrollbar-track{background:transparent}
-    .pip-script::-webkit-scrollbar-thumb{background:rgba(1,105,111,0.4);border-radius:2px}
+    .pip-script{font-size:1rem;line-height:1.65;color:#e8f5e9;white-space:pre-wrap;word-break:break-word;max-height:220px;overflow-y:auto}
     .pip-script.loading{color:#80cbc4;font-style:italic;font-size:.88rem}
     .pip-script.hint{color:#ffe082;font-size:.88rem;line-height:1.7}
     .pip-script.error-msg{color:#ef9a9a;font-size:.85rem}
-
-    .pip-footer{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:6px 14px 8px;
-      border-top:1px solid rgba(1,105,111,0.15);
-      flex-shrink:0;
-    }
+    .pip-footer{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 8px;border-top:1px solid rgba(1,105,111,0.15);flex-shrink:0}
     .pip-provider{font-size:.68rem;color:#4db6ac;font-weight:600}
-    .pip-copy-btn{
-      font-size:.7rem;padding:3px 10px;border-radius:10px;
-      border:1px solid rgba(1,105,111,0.4);background:transparent;
-      color:#80cbc4;cursor:pointer;transition:all .15s;
-    }
+    .pip-copy-btn{font-size:.7rem;padding:3px 10px;border-radius:10px;border:1px solid rgba(1,105,111,0.4);background:transparent;color:#80cbc4;cursor:pointer;transition:all .15s}
     .pip-copy-btn:hover{background:rgba(1,105,111,0.3);color:#e8f5e9}
     .pip-copy-btn.copied{background:#28a745;color:#fff;border-color:#28a745}
-
-    .pip-resize-handle{
-      position:absolute;bottom:0;right:0;
-      width:16px;height:16px;cursor:se-resize;
-      background:linear-gradient(135deg,transparent 50%,rgba(1,105,111,0.4) 50%);
-      border-bottom-right-radius:16px;
-    }
-
-    .pip-listen-badge{
-      display:none;align-items:center;gap:4px;
-      font-size:.68rem;font-weight:700;color:#28a745;
-      padding:2px 8px;border-radius:10px;
-      background:rgba(40,167,69,0.12);
-      border:1px solid rgba(40,167,69,0.25);
-    }
+    .pip-resize-handle{position:absolute;bottom:0;right:0;width:16px;height:16px;cursor:se-resize;background:linear-gradient(135deg,transparent 50%,rgba(1,105,111,0.4) 50%);border-bottom-right-radius:16px}
+    .pip-listen-badge{display:none;align-items:center;gap:4px;font-size:.68rem;font-weight:700;color:#28a745;padding:2px 8px;border-radius:10px;background:rgba(40,167,69,0.12);border:1px solid rgba(40,167,69,0.25)}
     .pip-listen-badge.active{display:inline-flex}
     .pip-listen-badge.inactive{display:inline-flex;color:#888;border-color:rgba(136,136,136,.2);background:rgba(136,136,136,.06)}
     @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
     .pip-pulse{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse-dot 1s ease-in-out infinite}
 
-    /* debug info */
-    #debug-panel{display:none;background:#1a1a1a;color:#0f0;font-size:.75rem;font-family:monospace;padding:10px;border-radius:6px;margin-top:12px;max-height:120px;overflow-y:auto;white-space:pre-wrap}
-    .debug-toggle{font-size:.75rem;color:var(--muted);cursor:pointer;text-align:right;margin-bottom:4px}
+    /* Float overlay button (top-right) */
+    #float-overlay-btn{position:fixed;top:16px;right:16px;z-index:9998;display:none;background:var(--primary);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:background .2s}
+    #float-overlay-btn:hover{background:var(--primary-hover)}
+    #float-overlay-btn.show{display:block}
+
+    /* debug */
+    #debug-panel{display:none;background:#1a1a1a;color:#0f0;font-size:.75rem;font-family:monospace;padding:10px;border-radius:6px;margin-top:10px;max-height:120px;overflow-y:auto;white-space:pre-wrap}
+    .debug-toggle{font-size:.75rem;color:var(--muted);cursor:pointer;text-align:right;margin-bottom:4px;user-select:none}
   </style>
 </head>
 <body>
+
+<!-- Float Overlay Button (visible once interview starts) -->
+<button id="float-overlay-btn" onclick="togglePip()">⧉ Float Overlay</button>
+
 <div class="container">
   <h1>🎙️ AI Interview Copilot</h1>
   <p class="subtitle">Real-time answer scripts — Supply Chain &amp; Data Analytics interviews</p>
 
-  <!-- ── SETUP ── -->
-  <div id="setup-section">
-
-    <div class="usage-note">
-      <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window and place it next to your meeting window. Click "⧉ Float Overlay" to open a separate panel that stays on top of Zoom/Teams.<br><br>
-      <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.
-    </div>
-
-    <details class="api-section">
-      <summary>🔑 API Keys — optional (server already has keys configured)</summary>
-      <div class="api-grid">
-        <div class="form-group">
-          <label>Groq API Key <span style="color:#28a745">(recommended — free)</span></label>
-          <input type="password" id="groq-key" placeholder="gsk_... (leave blank — server has key)">
-          <p class="api-hint">Free at <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
-        </div>
-        <div class="form-group">
-          <label>Gemini API Key</label>
-          <input type="password" id="gemini-key" placeholder="AIza... (leave blank — server has key)">
-          <p class="api-hint">Free at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></p>
-        </div>
-        <div class="form-group">
-          <label>OpenRouter Key</label>
-          <input type="password" id="openrouter-key" placeholder="sk-or-... (leave blank — server has key)">
-          <p class="api-hint">Free tier at <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></p>
-        </div>
-      </div>
-    </details>
-
-    <form id="setup-form">
-      <div class="form-group">
-        <label for="job-role">Target Job Role</label>
-        <input type="text" id="job-role" placeholder="e.g. Supply Chain Analyst, Demand Planner" required>
-      </div>
-      <div class="form-group">
-        <label for="cv">Your CV / Resume (paste full text)</label>
-        <textarea id="cv" rows="7" placeholder="Paste your CV text here..." required></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary">Start Interview Assistant →</button>
-    </form>
+  <!-- Usage Note -->
+  <div class="usage-note">
+    <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window and place it next to your meeting window. Click "⧉ Float Overlay" to open a separate panel that stays on top of Zoom/Teams.<br><br>
+    <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.
   </div>
 
-  <!-- ── INTERVIEW ── -->
+  <!-- ── SETUP SECTION ── -->
+  <div id="setup-section">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-bar-left">
+        <strong>System Status:</strong><br>
+        Speech-to-Text Mode: <span class="status-ready" id="stt-status">Browser Web Speech API (Ready)</span><br>
+        LLM Mode: <span id="llm-status">Waiting for input…</span>
+      </div>
+      <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('details',this)">1. Interview Details</button>
+      <button class="tab-btn" onclick="switchTab('cv',this)">2. My CV</button>
+      <button class="tab-btn" onclick="switchTab('apikeys',this)">3. API Keys</button>
+    </div>
+
+    <!-- Tab: Interview Details -->
+    <div id="tab-details" class="tab-panel active">
+      <!-- Diagnostics -->
+      <div class="diag-row">
+        <button class="diag-btn" onclick="runDiag('health')">Test API Health</button>
+        <button class="diag-btn" onclick="runDiag('mic')">Test Mic</button>
+        <button class="diag-btn" onclick="runDiag('stt')">Test STT</button>
+        <button class="diag-btn" onclick="runDiag('answer')">Test Answer Generation</button>
+        <button class="diag-btn secondary" onclick="toggleDebug()">Toggle Diagnostics</button>
+      </div>
+      <div id="diag-result" class="diag-result"></div>
+
+      <div class="form-group" style="margin-top:12px">
+        <label for="job-role">Target Job Role &amp; Description</label>
+        <textarea id="job-role" rows="3" placeholder="Paste the target job role title and description here..."></textarea>
+      </div>
+      <div class="form-group">
+        <label for="role-family">Target Role Family</label>
+        <select id="role-family">
+          <option value="auto">Auto Detect</option>
+          <option value="supply_chain">Supply Chain / Planning</option>
+          <option value="data_analytics">Data &amp; Analytics</option>
+          <option value="operations">Operations / Manufacturing</option>
+          <option value="logistics">Logistics / Distribution</option>
+          <option value="procurement">Procurement / Sourcing</option>
+          <option value="finance">Finance / FP&amp;A</option>
+          <option value="general">General / Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="answer-style">Answer Length Style</label>
+        <select id="answer-style">
+          <option value="live_script">🎙️ Live Script (teleprompter)</option>
+          <option value="concise">⚡ Concise (1–2 sentences)</option>
+          <option value="normal">📝 Normal (3–4 sentences)</option>
+          <option value="detailed">📊 Detailed STAR method</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tab: My CV -->
+    <div id="tab-cv" class="tab-panel">
+      <div class="form-group">
+        <label for="cv">Your CV / Resume (paste full text)</label>
+        <textarea id="cv" rows="12" placeholder="Paste your full CV / resume text here…"></textarea>
+      </div>
+    </div>
+
+    <!-- Tab: API Keys -->
+    <div id="tab-apikeys" class="tab-panel">
+      <div class="key-ok" id="key-ok">✅ Server API keys detected — AI answers ready.</div>
+      <div class="key-warn" id="key-warn-setup">⚠️ No server API keys found. Add a key below or ensure Vercel env vars are set.</div>
+      <div class="form-group">
+        <label>Groq API Key <span style="color:#28a745">(recommended — free)</span></label>
+        <input type="password" id="groq-key" placeholder="gsk_... (leave blank — server has key)">
+        <p class="api-hint">Free at <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
+      </div>
+      <div class="form-group">
+        <label>Gemini API Key</label>
+        <input type="password" id="gemini-key" placeholder="AIza... (leave blank — server has key)">
+        <p class="api-hint">Free at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></p>
+      </div>
+      <div class="form-group">
+        <label>OpenRouter Key</label>
+        <input type="password" id="openrouter-key" placeholder="sk-or-... (leave blank — server has key)">
+        <p class="api-hint">Free tier at <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="startSession()" style="margin-top:16px">Start Interview Assistant →</button>
+  </div>
+
+  <!-- ── INTERVIEW SECTION ── -->
   <div id="interview-section">
+
+    <!-- Status bar (interview mode) -->
+    <div class="status-bar">
+      <div class="status-bar-left">
+        <strong>System Status:</strong><br>
+        Speech-to-Text Mode: <span class="status-ready">Browser Web Speech API (Ready)</span><br>
+        LLM Mode: <span id="llm-status-live">Waiting for input…</span>
+      </div>
+      <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
+    </div>
+
+    <div class="key-ok" id="key-ok-live" style="margin-bottom:12px">✅ Server API keys detected — AI answers ready.</div>
+    <div class="key-warn" id="key-warn-live" style="margin-bottom:12px;display:none">⚠️ No API key found — AI answers will use offline hints.</div>
 
     <!-- PiP Toggle -->
     <div class="pip-row">
       <button class="pip-toggle-btn" id="pip-toggle-btn" onclick="togglePip()">
-        <span class="pip-icon">⧉</span> Picture-in-Picture Overlay
+        <span>⧉</span> Picture-in-Picture Overlay
       </button>
     </div>
-
-    <!-- Server key status -->
-    <div class="key-ok" id="key-ok">✅ Server API keys detected — AI answers ready.</div>
-    <div class="key-warn" id="key-warn">⚠️ No API key found on server or locally — AI answers will use offline hints. <a href="#" onclick="document.getElementById('interview-section').style.display='none';document.getElementById('setup-section').style.display='block';return false;">Go back to add a Groq key</a>.</div>
 
     <!-- Audio Device Panel -->
     <div class="audio-panel">
@@ -290,10 +306,10 @@
         <select id="mic-select"><option value="">— loading devices… —</option></select>
       </div>
       <div id="hint-tab" class="device-hint">
-        📌 <strong>Browser Tab / Call mode:</strong> When you press Space, you'll be asked to <strong>share a tab or screen</strong>. Pick the Zoom/Teams/Meet tab and tick <em>"Share tab audio"</em>. Note: Web Speech API only processes the default mic — tab audio is captured but may not feed into speech recognition in all browsers.
+        📌 <strong>Browser Tab / Call mode:</strong> When you press Space, you'll be asked to <strong>share a tab or screen</strong>. Pick the Zoom/Teams/Meet tab and tick <em>"Share tab audio"</em>.
       </div>
       <div id="hint-system" class="device-hint">
-        📌 <strong>System Audio mode:</strong> Select <em>"Entire Screen"</em> in the share dialog and enable <em>"Share system audio"</em>. On Mac, system audio requires a virtual audio driver (e.g. BlackHole). Note: speech recognition works best with microphone input.
+        📌 <strong>System Audio mode:</strong> Select <em>"Entire Screen"</em> and enable <em>"Share system audio"</em>. On Mac, a virtual audio driver (e.g. BlackHole) is required.
       </div>
     </div>
 
@@ -329,8 +345,10 @@
     <div class="debug-toggle" onclick="toggleDebug()">🔍 Show debug log</div>
     <div id="debug-panel"></div>
 
-    <h3 style="margin:16px 0 8px;font-size:.95rem;">Live Transcript</h3>
+    <h3 style="margin:14px 0 8px;font-size:.95rem;">Live Transcript</h3>
     <div class="transcript-box" id="transcript"></div>
+
+    <button class="btn" style="background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);margin-top:16px;font-size:.85rem" onclick="endSession()">← Back to Setup</button>
   </div>
 </div>
 
@@ -345,11 +363,10 @@
       <span class="pip-listen-badge" id="pip-listen-badge">
         <span class="pip-pulse"></span> Listening
       </span>
-      <button class="pip-ctrl-btn pip-resize-btn" id="pip-size-btn" onclick="togglePipSize()" title="Resize">⤢</button>
-      <button class="pip-ctrl-btn" onclick="togglePip()" title="Close overlay" style="font-size:.9rem">✕</button>
+      <button class="pip-ctrl-btn" id="pip-size-btn" onclick="togglePipSize()" title="Resize">⤢</button>
+      <button class="pip-ctrl-btn" onclick="togglePip()" title="Close" style="font-size:.9rem">✕</button>
     </div>
   </div>
-
   <div class="pip-body">
     <div class="pip-question" id="pip-question">
       <strong>Detected Question</strong>
@@ -357,17 +374,15 @@
     </div>
     <div class="pip-script" id="pip-script">Overlay ready. Start listening to see AI answers here.</div>
   </div>
-
   <div class="pip-footer">
     <span class="pip-provider" id="pip-provider">—</span>
     <button class="pip-copy-btn" id="pip-copy-btn" onclick="pipCopy()">Copy</button>
   </div>
-
   <div class="pip-resize-handle" id="pip-resize-handle"></div>
 </div>
 
 <script>
-// ── State ─────────────────────────────────────────────────────────────────────
+// ── State ──────────────────────────────────────────────────────────────────────
 let sessionCV = '', sessionJobRole = '';
 let conversationContext = [];
 let isRecording = false;
@@ -375,10 +390,8 @@ let audioMode = 'mic';
 let pipVisible = false;
 let pipExpanded = false;
 let serverHasKeys = false;
-
 let recognition  = null;
 let activeStreams = [];
-let audioCtx     = null;
 let debugLines   = [];
 
 // DOM
@@ -389,13 +402,11 @@ const transcriptBox    = document.getElementById('transcript');
 const aiScriptBox      = document.getElementById('ai-script');
 const providerBadge    = document.getElementById('provider-badge');
 const offlineBar       = document.getElementById('offline-bar');
-const styleSelect      = document.getElementById('response-style');
 const listenStatus     = document.getElementById('listen-status');
 const qDisplay         = document.getElementById('q-display');
-const keyWarn          = document.getElementById('key-warn');
-const keyOk            = document.getElementById('key-ok');
 const micSelect        = document.getElementById('mic-select');
 const debugPanel       = document.getElementById('debug-panel');
+const floatBtn         = document.getElementById('float-overlay-btn');
 
 // PiP DOM
 const pipOverlay      = document.getElementById('pip-overlay');
@@ -408,11 +419,11 @@ const pipListenBadge  = document.getElementById('pip-listen-badge');
 const pipToggleBtn    = document.getElementById('pip-toggle-btn');
 const pipCopyBtn      = document.getElementById('pip-copy-btn');
 
-// ── Debug log ─────────────────────────────────────────────────────────────────
+// ── Debug ──────────────────────────────────────────────────────────────────────
 function dbg(msg) {
   const ts = new Date().toLocaleTimeString();
   debugLines.push(`[${ts}] ${msg}`);
-  if (debugLines.length > 60) debugLines.shift();
+  if (debugLines.length > 80) debugLines.shift();
   debugPanel.textContent = debugLines.join('\n');
   debugPanel.scrollTop = debugPanel.scrollHeight;
   console.log('[Copilot]', msg);
@@ -421,56 +432,135 @@ function toggleDebug() {
   debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
 }
 
-// ── Check server keys via /api/health ─────────────────────────────────────────
+// ── Tab switching ──────────────────────────────────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// ── Diagnostics ────────────────────────────────────────────────────────────────
+async function runDiag(type) {
+  const el = document.getElementById('diag-result');
+  el.style.display = 'block';
+  el.textContent = `Running: ${type}…`;
+  try {
+    if (type === 'health') {
+      const r = await fetch('/api/health');
+      const d = await r.json();
+      el.textContent = JSON.stringify(d, null, 2);
+      serverHasKeys = !!d.anyKeyConfigured;
+      updateKeyUI();
+    } else if (type === 'mic') {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach(t => t.stop());
+      el.textContent = '✅ Microphone permission granted and working.';
+    } else if (type === 'stt') {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { el.textContent = '❌ Web Speech API not available. Use Chrome or Edge.'; return; }
+      const r = new SR();
+      r.lang = 'en-US'; r.continuous = false; r.interimResults = false;
+      r.onstart = () => { el.textContent = '🎙️ STT started — speak a word to test…'; };
+      r.onresult = (e) => { el.textContent = '✅ STT heard: "' + e.results[0][0].transcript + '"'; r.stop(); };
+      r.onerror = (e) => { el.textContent = '❌ STT error: ' + e.error; };
+      r.onend = () => { if (!el.textContent.includes('✅')) el.textContent += '\n(ended)'; };
+      r.start();
+    } else if (type === 'answer') {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cv: 'Test CV', job_role: 'Supply Chain Analyst', transcript: 'Tell me about yourself', context: [], response_style: 'concise' })
+      });
+      const text = await r.text();
+      el.textContent = `Status: ${r.status}\n${text.slice(0, 400)}`;
+    }
+  } catch(e) {
+    el.textContent = '❌ Error: ' + e.message;
+  }
+}
+
+function showHowTo() {
+  alert('How to connect Zoom/Teams audio:\n\n1. Click "Browser Tab / Call" audio mode\n2. Press Space to start listening\n3. When the share dialog appears, select your Zoom/Teams tab\n4. Tick "Share tab audio" before clicking Share\n5. The app will now capture interview audio\n\nAlternatively: Use "Microphone" mode and speak your questions aloud into your mic.');
+}
+
+// ── Check server keys ──────────────────────────────────────────────────────────
 async function checkServerKeys() {
   try {
     const res = await fetch('/api/health');
     if (res.ok) {
       const data = await res.json();
       serverHasKeys = !!data.anyKeyConfigured;
-      dbg(`Health check: groq=${data.keys?.groq}, gemini=${data.keys?.gemini}, openrouter=${data.keys?.openrouter}`);
-      return data;
+      dbg(`Health: groq=${data.keys?.groq}, gemini=${data.keys?.gemini}, openrouter=${data.keys?.openrouter}`);
     }
-  } catch(e) {
-    dbg('Health check failed: ' + e.message);
-  }
-  return null;
+  } catch(e) { dbg('Health check failed: ' + e.message); }
 }
 
-function updateKeyWarning() {
-  const localKey = document.getElementById('groq-key').value.trim() ||
-                   document.getElementById('gemini-key').value.trim() ||
-                   document.getElementById('openrouter-key').value.trim();
+function updateKeyUI() {
+  const localKey = (document.getElementById('groq-key').value.trim() ||
+                    document.getElementById('gemini-key').value.trim() ||
+                    document.getElementById('openrouter-key').value.trim());
   const hasAny = serverHasKeys || !!localKey;
-  keyWarn.style.display = hasAny ? 'none' : 'block';
-  keyOk.style.display   = hasAny ? 'block' : 'none';
+  document.getElementById('key-ok').style.display        = hasAny ? 'block' : 'none';
+  document.getElementById('key-warn-setup').style.display = hasAny ? 'none' : 'block';
+  document.getElementById('key-ok-live').style.display   = hasAny ? 'block' : 'none';
+  document.getElementById('key-warn-live').style.display = hasAny ? 'none' : 'block';
 }
 
-// ── PiP toggle ────────────────────────────────────────────────────────────────
+// ── Session start / end ────────────────────────────────────────────────────────
+async function startSession() {
+  const jrEl  = document.getElementById('job-role');
+  const cvEl  = document.getElementById('cv');
+  sessionJobRole = jrEl.value.trim();
+  sessionCV      = cvEl.value.trim();
+  if (!sessionJobRole) { alert('Please enter a Target Job Role in the Interview Details tab.'); switchTab('details', document.querySelector('.tab-btn')); return; }
+  if (!sessionCV)      { alert('Please paste your CV in the My CV tab.'); switchTab('cv', document.querySelectorAll('.tab-btn')[1]); return; }
+  // sync answer style from setup to interview
+  const setupStyle = document.getElementById('answer-style').value;
+  document.getElementById('response-style').value = setupStyle;
+  conversationContext = [];
+  setupSection.style.display     = 'none';
+  interviewSection.style.display = 'block';
+  floatBtn.classList.add('show');
+  await checkServerKeys();
+  updateKeyUI();
+  await loadMicDevices();
+  appendTranscript('System', 'Session started. Press Space to begin listening.');
+  dbg('Session started: ' + sessionJobRole);
+  document.getElementById('llm-status-live').textContent = serverHasKeys ? 'AI ready (server keys)' : 'Offline hints only';
+}
+
+function endSession() {
+  if (isRecording) stopListening();
+  interviewSection.style.display = 'none';
+  setupSection.style.display     = 'block';
+  floatBtn.classList.remove('show');
+  if (pipVisible) togglePip();
+}
+
+// ── PiP toggle ─────────────────────────────────────────────────────────────────
 function togglePip() {
   pipVisible = !pipVisible;
   pipOverlay.classList.toggle('active', pipVisible);
   pipToggleBtn.classList.toggle('active', pipVisible);
+  floatBtn.textContent = pipVisible ? '✕ Close Overlay' : '⧉ Float Overlay';
 }
-
 function togglePipSize() {
   pipExpanded = !pipExpanded;
-  pipOverlay.style.width  = pipExpanded ? '520px' : '380px';
+  pipOverlay.style.width = pipExpanded ? '520px' : '380px';
   pipScript.style.maxHeight = pipExpanded ? '360px' : '220px';
   document.getElementById('pip-size-btn').textContent = pipExpanded ? '⤡' : '⤢';
 }
-
 function pipCopy() {
   const text = pipScript.textContent;
   if (!text || text === 'Overlay ready. Start listening to see AI answers here.') return;
   navigator.clipboard.writeText(text).then(() => {
-    pipCopyBtn.textContent = 'Copied!';
-    pipCopyBtn.classList.add('copied');
+    pipCopyBtn.textContent = 'Copied!'; pipCopyBtn.classList.add('copied');
     setTimeout(() => { pipCopyBtn.textContent = 'Copy'; pipCopyBtn.classList.remove('copied'); }, 1800);
   }).catch(() => {});
 }
 
-// ── PiP drag ──────────────────────────────────────────────────────────────────
+// ── PiP drag ───────────────────────────────────────────────────────────────────
 (function initDrag() {
   const handle = document.getElementById('pip-drag-handle');
   let dragging = false, ox = 0, oy = 0;
@@ -483,19 +573,15 @@ function pipCopy() {
   });
   document.addEventListener('mousemove', e => {
     if (!dragging) return;
-    let left = e.clientX - ox;
-    let top  = e.clientY - oy;
-    left = Math.max(0, Math.min(left, window.innerWidth  - pipOverlay.offsetWidth));
-    top  = Math.max(0, Math.min(top,  window.innerHeight - pipOverlay.offsetHeight));
-    pipOverlay.style.right  = 'auto';
-    pipOverlay.style.bottom = 'auto';
-    pipOverlay.style.left   = left + 'px';
-    pipOverlay.style.top    = top  + 'px';
+    let left = Math.max(0, Math.min(e.clientX - ox, window.innerWidth  - pipOverlay.offsetWidth));
+    let top  = Math.max(0, Math.min(e.clientY - oy, window.innerHeight - pipOverlay.offsetHeight));
+    pipOverlay.style.right = 'auto'; pipOverlay.style.bottom = 'auto';
+    pipOverlay.style.left = left + 'px'; pipOverlay.style.top = top + 'px';
   });
   document.addEventListener('mouseup', () => { dragging = false; document.body.style.userSelect = ''; });
 })();
 
-// ── PiP resize ────────────────────────────────────────────────────────────────
+// ── PiP resize ─────────────────────────────────────────────────────────────────
 (function initResize() {
   const handle = document.getElementById('pip-resize-handle');
   let resizing = false, startX = 0, startY = 0, startW = 0, startH = 0;
@@ -513,18 +599,14 @@ function pipCopy() {
   document.addEventListener('mouseup', () => { resizing = false; document.body.style.userSelect = ''; });
 })();
 
-// ── Sync PiP content ──────────────────────────────────────────────────────────
+// ── Sync PiP content ───────────────────────────────────────────────────────────
 function syncPip(state, text, provider, question) {
   pipDot.className = 'pip-dot' + (state === 'thinking' ? ' thinking' : state === 'error' ? ' error' : '');
   pipScript.className = 'pip-script' + (state === 'loading' ? ' loading' : state === 'hint' ? ' hint' : state === 'error' ? ' error-msg' : '');
   if (text !== undefined) pipScript.textContent = text;
   if (provider !== undefined) pipProvider.textContent = provider;
-  if (question !== undefined) {
-    pipQuestionText.textContent = question;
-    pipQuestion.className = 'pip-question show';
-  }
+  if (question !== undefined) { pipQuestionText.textContent = question; pipQuestion.className = 'pip-question show'; }
 }
-
 function syncPipListen(active) {
   pipListenBadge.className = 'pip-listen-badge ' + (active ? 'active' : 'inactive');
   pipListenBadge.innerHTML = active
@@ -532,10 +614,9 @@ function syncPipListen(active) {
     : '<span class="pip-pulse" style="animation:none;opacity:.5"></span> Idle';
 }
 
-// ── Enumerate microphones ─────────────────────────────────────────────────────
+// ── Enumerate microphones ──────────────────────────────────────────────────────
 async function loadMicDevices() {
   try {
-    // Need to request permission first to get labeled devices
     const tmp = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
     tmp.getTracks().forEach(t => t.stop());
     const devices = await navigator.mediaDevices.enumerateDevices();
@@ -550,92 +631,54 @@ async function loadMicDevices() {
   }
 }
 
-// ── Mode switching ────────────────────────────────────────────────────────────
+// ── Mode switching ─────────────────────────────────────────────────────────────
 function switchMode(mode, btn) {
   audioMode = mode;
   document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('row-mic').style.display    = (mode==='mic'||mode==='both') ? 'flex' : 'none';
-  document.getElementById('hint-tab').className       = 'device-hint' + (mode==='tab'||mode==='both' ? ' show' : '');
-  document.getElementById('hint-system').className    = 'device-hint' + (mode==='system' ? ' show' : '');
+  document.getElementById('row-mic').style.display   = (mode==='mic'||mode==='both') ? 'flex' : 'none';
+  document.getElementById('hint-tab').className      = 'device-hint' + (mode==='tab'||mode==='both' ? ' show' : '');
+  document.getElementById('hint-system').className   = 'device-hint' + (mode==='system' ? ' show' : '');
 }
 
-// ── Setup form ────────────────────────────────────────────────────────────────
-document.getElementById('setup-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  sessionCV      = document.getElementById('cv').value.trim();
-  sessionJobRole = document.getElementById('job-role').value.trim();
-  conversationContext = [];
-  setupSection.style.display    = 'none';
-  interviewSection.style.display = 'block';
-
-  // Check server keys
-  await checkServerKeys();
-  updateKeyWarning();
-  await loadMicDevices();
-  appendTranscript('System', 'Session started. Press Space to begin listening.');
-  dbg('Session started for: ' + sessionJobRole);
-});
-
-// ── Toggle button & Spacebar ──────────────────────────────────────────────────
+// ── Toggle button & Spacebar ───────────────────────────────────────────────────
 toggleBtn.addEventListener('click', async () => { await toggleListening(); });
-
 document.addEventListener('keydown', async (e) => {
   if (interviewSection.style.display === 'none') return;
   const tag = document.activeElement.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   if (e.code === 'Space') { e.preventDefault(); await toggleListening(); }
 });
-
 async function toggleListening() {
-  if (isRecording) stopListening();
-  else await startListening();
+  if (isRecording) stopListening(); else await startListening();
 }
 
 // ── START listening ────────────────────────────────────────────────────────────
 async function startListening() {
-  // Check Speech Recognition support first
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    setListenError('Web Speech API not available. Please use Chrome or Edge.');
-    return;
-  }
-
+  if (!SR) { setListenError('Web Speech API not available. Please use Chrome or Edge.'); return; }
   setStatus('info', '⏳ Requesting audio access…');
   dbg('startListening() — mode: ' + audioMode);
-
   try {
     if (audioMode === 'mic') {
-      // ── Microphone mode: Web Speech handles everything natively ──────────
-      // We just need permission. Speech recognition will use the default/selected mic.
       const deviceId = micSelect.value;
-      // Request permission (and optionally verify device), then let SR take over
       const permStream = await navigator.mediaDevices.getUserMedia({
-        audio: deviceId ? { deviceId: { exact: deviceId } } : true,
-        video: false
+        audio: deviceId ? { deviceId: { exact: deviceId } } : true, video: false
       });
-      // Keep stream alive for device continuity; SR will use its own path
       activeStreams.push(permStream);
       dbg('Mic stream acquired, deviceId: ' + (deviceId || 'default'));
-
     } else if (audioMode === 'tab' || audioMode === 'system') {
-      // ── Tab/System mode: capture display audio ────────────────────────────
       setStatus('info', '⏳ Requesting screen share — tick "Share tab audio"…');
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
+        video: true, audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
       });
       displayStream.getVideoTracks().forEach(t => t.stop());
       if (displayStream.getAudioTracks().length === 0) {
-        stopAllStreams();
-        setListenError('No audio captured. Tick "Share tab audio" or "Share system audio" in the dialog.');
-        return;
+        stopAllStreams(); setListenError('No audio captured. Tick "Share tab audio" in the dialog.'); return;
       }
       activeStreams.push(displayStream);
       dbg('Display audio captured, tracks: ' + displayStream.getAudioTracks().length);
-
     } else if (audioMode === 'both') {
-      // ── Mic + Tab mode ────────────────────────────────────────────────────
       setStatus('info', '⏳ Requesting mic + screen share…');
       const [micStream, displayStream] = await Promise.all([
         navigator.mediaDevices.getUserMedia({ audio: micSelect.value ? { deviceId: { exact: micSelect.value } } : true, video: false }),
@@ -646,19 +689,13 @@ async function startListening() {
       dbg('Mic + display streams acquired');
     }
   } catch (err) {
-    dbg('Audio acquisition error: ' + err.name + ' — ' + err.message);
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-      setListenError('Permission denied. Click "Allow" when the browser asks for microphone access.');
-    } else if (err.name === 'NotFoundError') {
-      setListenError('No microphone found. Plug in a mic and try again.');
-    } else if (err.name === 'AbortError' || err.name === 'NotSupportedError') {
-      setListenError('Screen share cancelled or not supported. Try Microphone mode instead.');
-    } else {
-      setListenError('Audio error: ' + err.message);
-    }
+    dbg('Audio error: ' + err.name + ' — ' + err.message);
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') setListenError('Permission denied. Click "Allow" for microphone access.');
+    else if (err.name === 'NotFoundError') setListenError('No microphone found. Plug in a mic and try again.');
+    else if (err.name === 'AbortError' || err.name === 'NotSupportedError') setListenError('Screen share cancelled. Try Microphone mode instead.');
+    else setListenError('Audio error: ' + err.message);
     return;
   }
-
   isRecording = true;
   toggleBtn.textContent = '⏹ Stop Listening';
   toggleBtn.classList.add('listening');
@@ -676,42 +713,23 @@ function stopListening() {
   toggleBtn.classList.add('btn-primary');
   listenStatus.className = 'listen-status';
   syncPipListen(false);
-  if (recognition) {
-    recognition.onend = null; // prevent restart loop
-    try { recognition.stop(); } catch(e) {}
-    recognition = null;
-  }
+  if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} recognition = null; }
   stopAllStreams();
-  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
   appendTranscript('System', 'Listening stopped.');
 }
+function stopAllStreams() { activeStreams.forEach(s => s.getTracks().forEach(t => t.stop())); activeStreams = []; }
 
-function stopAllStreams() {
-  activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
-  activeStreams = [];
-}
-
-// ── Web Speech Recognition ────────────────────────────────────────────────────
+// ── Web Speech Recognition ─────────────────────────────────────────────────────
 function startRecognition() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  // Kill any existing recognition instance cleanly
-  if (recognition) {
-    recognition.onend = null;
-    try { recognition.abort(); } catch(e) {}
-    recognition = null;
-  }
-
+  if (recognition) { recognition.onend = null; try { recognition.abort(); } catch(e) {} recognition = null; }
   recognition = new SR();
   recognition.lang = 'en-US';
   recognition.continuous = true;
   recognition.interimResults = true;
   recognition.maxAlternatives = 1;
-
   const modeLabel = { mic:'microphone', tab:'tab/call audio', system:'system audio', both:'mic + tab audio' }[audioMode];
   let lastFinalText = '';
-  let silenceTimer = null;
-  let interimAccum = '';
 
   recognition.onstart = () => {
     dbg('recognition.onstart — mode: ' + audioMode);
@@ -719,36 +737,17 @@ function startRecognition() {
     appendTranscript('System', `Listening started — source: ${modeLabel}`);
   };
 
-  recognition.onspeechstart = () => {
-    dbg('Speech detected');
-    if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
-  };
-
   recognition.onresult = (event) => {
-    let interim = '';
-    let finalChunk = '';
-
+    let interim = '', finalChunk = '';
     for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        finalChunk += transcript;
-      } else {
-        interim += transcript;
-      }
+      const t = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalChunk += t; else interim += t;
     }
-
-    // Show interim in real time
     if (interim) {
       qDisplay.className = 'q-display';
       qDisplay.textContent = interim;
-      // Update PiP question live
-      if (pipVisible) {
-        pipQuestionText.textContent = interim;
-        pipQuestion.className = 'pip-question show';
-      }
+      if (pipVisible) { pipQuestionText.textContent = interim; pipQuestion.className = 'pip-question show'; }
     }
-
-    // On final result — trigger AI
     if (finalChunk) {
       const cleaned = finalChunk.trim();
       dbg('Final speech: "' + cleaned + '"');
@@ -765,70 +764,39 @@ function startRecognition() {
 
   recognition.onerror = (e) => {
     dbg('recognition.onerror: ' + e.error);
-    if (e.error === 'not-allowed') {
-      setListenError('Microphone permission denied. Allow access in browser settings.');
-      isRecording = false;
-      return;
-    }
-    if (e.error === 'no-speech') {
-      // Not a real error — happens when there's silence; ignore and let it restart
-      dbg('no-speech — continuing');
-      return;
-    }
-    if (e.error === 'audio-capture') {
-      setListenError('No microphone detected or in use by another app.');
-      isRecording = false;
-      return;
-    }
-    if (e.error === 'network') {
-      dbg('Network error in SR (speech servers) — will retry');
-      return;
-    }
-    // For other errors, log but don't stop
+    if (e.error === 'not-allowed') { setListenError('Microphone permission denied.'); isRecording = false; return; }
+    if (e.error === 'no-speech') { dbg('no-speech — continuing'); return; }
+    if (e.error === 'audio-capture') { setListenError('No microphone detected or in use by another app.'); isRecording = false; return; }
+    if (e.error === 'network') { dbg('Network error in SR — will retry'); return; }
     dbg('SR error (non-fatal): ' + e.error);
   };
 
   recognition.onend = () => {
     dbg('recognition.onend — isRecording: ' + isRecording);
     if (isRecording) {
-      // Auto-restart to maintain continuous listening
-      setTimeout(() => {
-        if (isRecording) {
-          dbg('Restarting recognition…');
-          startRecognition();
-        }
-      }, 300);
+      setTimeout(() => { if (isRecording) { dbg('Restarting recognition…'); startRecognition(); } }, 300);
     }
   };
 
-  try {
-    recognition.start();
-    dbg('recognition.start() called');
-  } catch(e) {
-    dbg('recognition.start() threw: ' + e.message);
-    setListenError('Could not start speech recognition: ' + e.message);
-  }
+  try { recognition.start(); dbg('recognition.start() called'); }
+  catch(e) { dbg('recognition.start() threw: ' + e.message); setListenError('Could not start speech recognition: ' + e.message); }
 }
 
-// ── Status helpers ────────────────────────────────────────────────────────────
-function setStatus(type, msg) {
-  listenStatus.className = 'listen-status ' + type;
-  listenStatus.textContent = msg;
-}
+// ── Status helpers ─────────────────────────────────────────────────────────────
+function setStatus(type, msg) { listenStatus.className = 'listen-status ' + type; listenStatus.textContent = msg; }
 function setListenError(msg) {
   dbg('LISTEN ERROR: ' + msg);
   setStatus('error', '❌ ' + msg);
   isRecording = false;
   stopAllStreams();
   if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} recognition = null; }
-  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
   toggleBtn.textContent = '▶ Start Listening';
   toggleBtn.classList.remove('listening');
   toggleBtn.classList.add('btn-primary');
   syncPipListen(false);
 }
 
-// ── AI answer fetch ───────────────────────────────────────────────────────────
+// ── AI answer fetch ────────────────────────────────────────────────────────────
 async function fetchAIAnswer(question) {
   dbg('fetchAIAnswer: "' + question.slice(0, 60) + '"');
   aiScriptBox.className = 'script-box loading';
@@ -837,12 +805,12 @@ async function fetchAIAnswer(question) {
   providerBadge.className = 'provider-badge';
   offlineBar.style.display = 'none';
   syncPip('loading', 'Generating…', '…', question);
+  document.getElementById('llm-status-live').textContent = 'Generating…';
 
   const groqKey       = document.getElementById('groq-key').value.trim();
   const geminiKey     = document.getElementById('gemini-key').value.trim();
   const openrouterKey = document.getElementById('openrouter-key').value.trim();
 
-  // If no local keys AND no server keys — show offline hint immediately without hitting API
   if (!groqKey && !geminiKey && !openrouterKey && !serverHasKeys) {
     dbg('No keys anywhere — offline mode');
     const hint = buildOfflineHint(question);
@@ -852,6 +820,7 @@ async function fetchAIAnswer(question) {
     providerBadge.className = 'provider-badge offline';
     offlineBar.style.display = 'block';
     syncPip('hint', hint, '📋 Offline Hints');
+    document.getElementById('llm-status-live').textContent = 'Offline hints';
     return;
   }
 
@@ -865,18 +834,16 @@ async function fetchAIAnswer(question) {
     job_role: sessionJobRole,
     transcript: question,
     context: conversationContext.slice(-6),
-    response_style: styleSelect.value,
-    target_role_family: 'Supply Chain'
+    response_style: document.getElementById('response-style').value,
+    target_role_family: document.getElementById('role-family') ? document.getElementById('role-family').value : 'auto'
   };
 
   try {
     dbg('POST /api/chat …');
     const res = await fetch('/api/chat', { method: 'POST', headers, body: JSON.stringify(body) });
     dbg('Response: ' + res.status + ' content-type: ' + (res.headers.get('content-type') || ''));
-
     if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
-      await consumeStream(res);
-      return;
+      await consumeStream(res); return;
     }
     if (res.ok) {
       const data = await res.json();
@@ -888,6 +855,7 @@ async function fetchAIAnswer(question) {
         providerBadge.className = 'provider-badge' + (data.offline ? ' offline' : '');
         if (data.offline) offlineBar.style.display = 'block';
         syncPip(data.offline ? 'hint' : 'ready', data.answer, data.provider || 'AI');
+        document.getElementById('llm-status-live').textContent = data.provider || 'AI (ready)';
         return;
       }
     }
@@ -896,12 +864,12 @@ async function fetchAIAnswer(question) {
   } catch(err) {
     dbg('fetchAIAnswer error: ' + err.message);
     const hint = buildOfflineHint(question);
-    const errMsg = '⚠️ ' + err.message + '\n\n' + hint;
     aiScriptBox.className = 'script-box error-box';
-    aiScriptBox.textContent = errMsg;
+    aiScriptBox.textContent = '⚠️ ' + err.message + '\n\n' + hint;
     providerBadge.textContent = '⚠️ Error — offline hints shown';
     providerBadge.className = 'provider-badge offline';
-    syncPip('error', errMsg, '⚠️ Error');
+    syncPip('error', '⚠️ ' + err.message + '\n\n' + hint, '⚠️ Error');
+    document.getElementById('llm-status-live').textContent = 'Error — offline hints';
   }
 }
 
@@ -909,10 +877,8 @@ async function consumeStream(res) {
   const reader = res.body.getReader();
   const dec = new TextDecoder();
   let buf = '', full = '', providerSet = false;
-  aiScriptBox.className = 'script-box';
-  aiScriptBox.textContent = '';
-  pipScript.className = 'pip-script';
-  pipScript.textContent = '';
+  aiScriptBox.className = 'script-box'; aiScriptBox.textContent = '';
+  pipScript.className = 'pip-script'; pipScript.textContent = '';
   dbg('consumeStream: started');
   while (true) {
     const { done, value } = await reader.read();
@@ -928,15 +894,14 @@ async function consumeStream(res) {
           aiScriptBox.textContent = full;
           pipScript.textContent = full;
           if (!providerSet && d.provider) {
-            providerBadge.textContent = d.provider;
-            pipProvider.textContent = d.provider;
-            providerSet = true;
+            providerBadge.textContent = d.provider; pipProvider.textContent = d.provider; providerSet = true;
           }
         }
         if (d.type === 'done') {
           providerBadge.textContent = d.provider || providerBadge.textContent;
           pipProvider.textContent = d.provider || pipProvider.textContent;
           pipDot.className = 'pip-dot';
+          document.getElementById('llm-status-live').textContent = d.provider || 'AI (ready)';
           dbg('Stream done. provider=' + d.provider);
         }
       } catch(_) {}
@@ -976,9 +941,10 @@ function appendTranscript(role, text) {
   transcriptBox.appendChild(div);
   transcriptBox.scrollTop = transcriptBox.scrollHeight;
 }
-function escapeHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
+function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+checkServerKeys().then(updateKeyUI);
 </script>
 </body>
 </html>
