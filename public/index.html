@@ -19,11 +19,9 @@
     h1{text-align:center;font-size:1.8rem;margin-bottom:4px;display:flex;align-items:center;justify-content:center;gap:8px}
     .subtitle{text-align:center;color:var(--muted);margin-bottom:22px;font-size:.9rem}
 
-    /* Usage note */
     .usage-note{background:#e8f4fd;border:1px solid #bee3f8;border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:.85rem;color:#1a4a6b;line-height:1.6}
     .usage-note strong{font-weight:700}
 
-    /* Status bar */
     .status-bar{background:#f8f9fa;border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
     .status-bar-left{font-size:.82rem;color:#444;line-height:1.7}
     .status-bar-left strong{font-size:.82rem;font-weight:700}
@@ -32,14 +30,12 @@
     .how-to-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap}
     .how-to-btn:hover{background:var(--primary);color:#fff}
 
-    /* Tabs */
     .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
     .tab-btn{flex:1;min-width:120px;padding:9px 14px;border-radius:8px;border:2px solid var(--border);font-size:.85rem;font-weight:600;cursor:pointer;background:#fff;color:#555;transition:all .2s;text-align:center}
     .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
     .tab-panel{display:none}
     .tab-panel.active{display:block}
 
-    /* Diagnostic buttons */
     .diag-row{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
     .diag-btn{width:100%;padding:10px;border:none;border-radius:6px;font-size:.9rem;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;transition:background .2s}
     .diag-btn:hover{background:var(--primary-hover)}
@@ -62,15 +58,12 @@
     .key-ok{background:#e9f7ef;border:1px solid #28a745;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#1a6a30;margin-bottom:12px;display:none}
     .key-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;font-size:.82rem;color:#795548;margin-bottom:12px;display:none}
 
-    /* Interview section */
     #interview-section{display:none;margin-top:0}
 
-    /* PiP Toggle */
     .pip-row{display:flex;justify-content:flex-end;margin-bottom:14px}
     .pip-toggle-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s}
     .pip-toggle-btn:hover,.pip-toggle-btn.active{background:var(--primary);color:#fff}
 
-    /* Audio panel */
     .audio-panel{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:10px;padding:16px;margin-bottom:16px}
     .audio-panel h4{font-size:.88rem;font-weight:700;color:#333;margin-bottom:10px}
     .device-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
@@ -152,35 +145,34 @@
     @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
     .pip-pulse{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse-dot 1s ease-in-out infinite}
 
-    /* Float overlay button (top-right) */
     #float-overlay-btn{position:fixed;top:16px;right:16px;z-index:9998;display:none;background:var(--primary);color:#fff;border:none;border-radius:20px;padding:8px 16px;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2);transition:background .2s}
     #float-overlay-btn:hover{background:var(--primary-hover)}
     #float-overlay-btn.show{display:block}
 
-    /* debug */
     #debug-panel{display:none;background:#1a1a1a;color:#0f0;font-size:.75rem;font-family:monospace;padding:10px;border-radius:6px;margin-top:10px;max-height:120px;overflow-y:auto;white-space:pre-wrap}
     .debug-toggle{font-size:.75rem;color:var(--muted);cursor:pointer;text-align:right;margin-bottom:4px;user-select:none}
   </style>
 </head>
 <body>
 
-<!-- Float Overlay Button (visible once interview starts) -->
 <button id="float-overlay-btn" onclick="togglePip()">⧉ Float Overlay</button>
+
+<!-- Hidden audio element for routing tab/display audio through speakers so Chrome STT can hear it -->
+<audio id="tab-audio-el" autoplay playsinline style="display:none" muted></audio>
 
 <div class="container">
   <h1>🎙️ AI Interview Copilot</h1>
   <p class="subtitle">Real-time answer scripts — Supply Chain &amp; Data Analytics interviews</p>
 
-  <!-- Usage Note -->
   <div class="usage-note">
     <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window and place it next to your meeting window. Click "⧉ Float Overlay" to open a separate panel that stays on top of Zoom/Teams.<br><br>
-    <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.
+    <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.<br><br>
+    <strong>Tab audio tip:</strong> Select <strong>"Mic + Tab"</strong> mode → share the Zoom/Teams tab with <em>"Share tab audio"</em> ticked. The app will merge both streams so the interviewer's voice is heard.
   </div>
 
   <!-- ── SETUP SECTION ── -->
   <div id="setup-section">
 
-    <!-- Status bar -->
     <div class="status-bar">
       <div class="status-bar-left">
         <strong>System Status:</strong><br>
@@ -190,16 +182,13 @@
       <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
     </div>
 
-    <!-- Tabs -->
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('details',this)">1. Interview Details</button>
       <button class="tab-btn" onclick="switchTab('cv',this)">2. My CV</button>
       <button class="tab-btn" onclick="switchTab('apikeys',this)">3. API Keys</button>
     </div>
 
-    <!-- Tab: Interview Details -->
     <div id="tab-details" class="tab-panel active">
-      <!-- Diagnostics -->
       <div class="diag-row">
         <button class="diag-btn" onclick="runDiag('health')">Test API Health</button>
         <button class="diag-btn" onclick="runDiag('mic')">Test Mic</button>
@@ -237,7 +226,6 @@
       </div>
     </div>
 
-    <!-- Tab: My CV -->
     <div id="tab-cv" class="tab-panel">
       <div class="form-group">
         <label for="cv">Your CV / Resume (paste full text)</label>
@@ -245,7 +233,6 @@
       </div>
     </div>
 
-    <!-- Tab: API Keys -->
     <div id="tab-apikeys" class="tab-panel">
       <div class="key-ok" id="key-ok">✅ Server API keys detected — AI answers ready.</div>
       <div class="key-warn" id="key-warn-setup">⚠️ No server API keys found. Add a key below or ensure Vercel env vars are set.</div>
@@ -272,7 +259,6 @@
   <!-- ── INTERVIEW SECTION ── -->
   <div id="interview-section">
 
-    <!-- Status bar (interview mode) -->
     <div class="status-bar">
       <div class="status-bar-left">
         <strong>System Status:</strong><br>
@@ -285,14 +271,12 @@
     <div class="key-ok" id="key-ok-live" style="margin-bottom:12px">✅ Server API keys detected — AI answers ready.</div>
     <div class="key-warn" id="key-warn-live" style="margin-bottom:12px;display:none">⚠️ No API key found — AI answers will use offline hints.</div>
 
-    <!-- PiP Toggle -->
     <div class="pip-row">
       <button class="pip-toggle-btn" id="pip-toggle-btn" onclick="togglePip()">
         <span>⧉</span> Picture-in-Picture Overlay
       </button>
     </div>
 
-    <!-- Audio Device Panel -->
     <div class="audio-panel">
       <h4>🎧 Audio Source — what should the app listen to?</h4>
       <div class="device-tabs">
@@ -306,7 +290,7 @@
         <select id="mic-select"><option value="">— loading devices… —</option></select>
       </div>
       <div id="hint-tab" class="device-hint">
-        📌 <strong>Browser Tab / Call mode:</strong> When you press Space, you'll be asked to <strong>share a tab or screen</strong>. Pick the Zoom/Teams/Meet tab and tick <em>"Share tab audio"</em>.
+        📌 <strong>Browser Tab / Call mode:</strong> When you press Space, you'll be asked to <strong>share a tab or screen</strong>. Pick the Zoom/Teams/Meet tab and tick <em>"Share tab audio"</em>. The audio will be routed through the speaker so Chrome STT can hear it.
       </div>
       <div id="hint-system" class="device-hint">
         📌 <strong>System Audio mode:</strong> Select <em>"Entire Screen"</em> and enable <em>"Share system audio"</em>. On Mac, a virtual audio driver (e.g. BlackHole) is required.
@@ -393,6 +377,7 @@ let serverHasKeys = false;
 let recognition  = null;
 let activeStreams = [];
 let debugLines   = [];
+let audioCtx     = null;  // AudioContext for merging tab+mic streams
 
 // DOM
 const setupSection     = document.getElementById('setup-section');
@@ -407,6 +392,7 @@ const qDisplay         = document.getElementById('q-display');
 const micSelect        = document.getElementById('mic-select');
 const debugPanel       = document.getElementById('debug-panel');
 const floatBtn         = document.getElementById('float-overlay-btn');
+const tabAudioEl       = document.getElementById('tab-audio-el');
 
 // PiP DOM
 const pipOverlay      = document.getElementById('pip-overlay');
@@ -481,7 +467,19 @@ async function runDiag(type) {
 }
 
 function showHowTo() {
-  alert('How to connect Zoom/Teams audio:\n\n1. Click "Browser Tab / Call" audio mode\n2. Press Space to start listening\n3. When the share dialog appears, select your Zoom/Teams tab\n4. Tick "Share tab audio" before clicking Share\n5. The app will now capture interview audio\n\nAlternatively: Use "Microphone" mode and speak your questions aloud into your mic.');
+  alert(
+    'How to connect Zoom/Teams audio:\n\n' +
+    '✅ RECOMMENDED (most reliable):\n' +
+    '1. Select "🎤+🖥️ Mic + Tab" audio mode\n' +
+    '2. Press Space to start listening\n' +
+    '3. When the share dialog appears, select your Zoom/Teams/Meet tab\n' +
+    '4. Tick "Share tab audio" before clicking Share\n' +
+    '5. The app merges both audio streams — Chrome STT will hear both you and the interviewer\n\n' +
+    '⚠️ WHY "Tab Only" might not work:\n' +
+    'Chrome\'s Web Speech API always listens to the MICROPHONE input, not a display stream.\n' +
+    'In "Mic + Tab" mode, the tab audio plays through your speakers so your mic picks it up (loopback).\n' +
+    'For best results: use headphones so the speaker audio is clear for the mic to catch.'
+  );
 }
 
 // ── Check server keys ──────────────────────────────────────────────────────────
@@ -515,7 +513,6 @@ async function startSession() {
   sessionCV      = cvEl.value.trim();
   if (!sessionJobRole) { alert('Please enter a Target Job Role in the Interview Details tab.'); switchTab('details', document.querySelector('.tab-btn')); return; }
   if (!sessionCV)      { alert('Please paste your CV in the My CV tab.'); switchTab('cv', document.querySelectorAll('.tab-btn')[1]); return; }
-  // sync answer style from setup to interview
   const setupStyle = document.getElementById('answer-style').value;
   document.getElementById('response-style').value = setupStyle;
   conversationContext = [];
@@ -653,40 +650,90 @@ async function toggleListening() {
   if (isRecording) stopListening(); else await startListening();
 }
 
+// ── Merge display audio + mic into combined stream (for Chrome STT) ────────────
+// Chrome's Web Speech API only listens to the default microphone.
+// To capture tab/system audio, we play it through the speakers via <audio>
+// so the microphone can pick it up (loopback). In "tab only" or "system" modes
+// we also unmute the audio element and warn user to use headphones.
+async function buildMergedStream(micStream, displayStream) {
+  // Close old AudioContext
+  if (audioCtx) { try { audioCtx.close(); } catch(_) {} audioCtx = null; }
+  audioCtx = new AudioContext();
+  const dest = audioCtx.createMediaStreamDestination();
+
+  if (micStream) {
+    const micSrc = audioCtx.createMediaStreamSource(micStream);
+    micSrc.connect(dest);
+  }
+  if (displayStream && displayStream.getAudioTracks().length > 0) {
+    const dispSrc = audioCtx.createMediaStreamSource(displayStream);
+    dispSrc.connect(dest);
+    // Also play display audio through speakers so it's audible AND loopback-captured
+    tabAudioEl.srcObject = displayStream;
+    tabAudioEl.muted = false;  // unmuted so speaker output feeds mic loopback
+    try { await tabAudioEl.play(); } catch(_) {}
+    dbg('Display audio routed to speaker (loopback for STT)');
+  }
+  return dest.stream;
+}
+
 // ── START listening ────────────────────────────────────────────────────────────
 async function startListening() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { setListenError('Web Speech API not available. Please use Chrome or Edge.'); return; }
   setStatus('info', '⏳ Requesting audio access…');
   dbg('startListening() — mode: ' + audioMode);
+
+  let micStream = null;
+  let displayStream = null;
+
   try {
     if (audioMode === 'mic') {
       const deviceId = micSelect.value;
-      const permStream = await navigator.mediaDevices.getUserMedia({
+      micStream = await navigator.mediaDevices.getUserMedia({
         audio: deviceId ? { deviceId: { exact: deviceId } } : true, video: false
       });
-      activeStreams.push(permStream);
-      dbg('Mic stream acquired, deviceId: ' + (deviceId || 'default'));
+      activeStreams.push(micStream);
+      dbg('Mic stream acquired');
+
     } else if (audioMode === 'tab' || audioMode === 'system') {
       setStatus('info', '⏳ Requesting screen share — tick "Share tab audio"…');
-      const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true, audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
+      displayStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
       });
       displayStream.getVideoTracks().forEach(t => t.stop());
       if (displayStream.getAudioTracks().length === 0) {
-        stopAllStreams(); setListenError('No audio captured. Tick "Share tab audio" in the dialog.'); return;
+        stopAllStreams();
+        setListenError('No audio captured. Tick "Share tab audio" in the share dialog.');
+        return;
       }
       activeStreams.push(displayStream);
-      dbg('Display audio captured, tracks: ' + displayStream.getAudioTracks().length);
+      // Play display audio through speakers for loopback into STT mic
+      await buildMergedStream(null, displayStream);
+      dbg('Tab audio playing through speakers (STT uses mic loopback)');
+
     } else if (audioMode === 'both') {
       setStatus('info', '⏳ Requesting mic + screen share…');
-      const [micStream, displayStream] = await Promise.all([
-        navigator.mediaDevices.getUserMedia({ audio: micSelect.value ? { deviceId: { exact: micSelect.value } } : true, video: false }),
-        navigator.mediaDevices.getDisplayMedia({ video: true, audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 } })
+      [micStream, displayStream] = await Promise.all([
+        navigator.mediaDevices.getUserMedia({
+          audio: micSelect.value ? { deviceId: { exact: micSelect.value } } : true,
+          video: false
+        }),
+        navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
+        })
       ]);
       displayStream.getVideoTracks().forEach(t => t.stop());
-      activeStreams.push(micStream, displayStream);
-      dbg('Mic + display streams acquired');
+      activeStreams.push(micStream);
+      if (displayStream.getAudioTracks().length > 0) {
+        activeStreams.push(displayStream);
+        await buildMergedStream(micStream, displayStream);
+        dbg('Mic + display audio merged; display routed to speaker');
+      } else {
+        dbg('Display had no audio — mic only');
+      }
     }
   } catch (err) {
     dbg('Audio error: ' + err.name + ' — ' + err.message);
@@ -696,6 +743,7 @@ async function startListening() {
     else setListenError('Audio error: ' + err.message);
     return;
   }
+
   isRecording = true;
   toggleBtn.textContent = '⏹ Stop Listening';
   toggleBtn.classList.add('listening');
@@ -715,6 +763,8 @@ function stopListening() {
   syncPipListen(false);
   if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} recognition = null; }
   stopAllStreams();
+  tabAudioEl.srcObject = null;
+  if (audioCtx) { try { audioCtx.close(); } catch(_) {} audioCtx = null; }
   appendTranscript('System', 'Listening stopped.');
 }
 function stopAllStreams() { activeStreams.forEach(s => s.getTracks().forEach(t => t.stop())); activeStreams = []; }
@@ -789,6 +839,8 @@ function setListenError(msg) {
   setStatus('error', '❌ ' + msg);
   isRecording = false;
   stopAllStreams();
+  tabAudioEl.srcObject = null;
+  if (audioCtx) { try { audioCtx.close(); } catch(_) {} audioCtx = null; }
   if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} recognition = null; }
   toggleBtn.textContent = '▶ Start Listening';
   toggleBtn.classList.remove('listening');
@@ -842,12 +894,25 @@ async function fetchAIAnswer(question) {
     dbg('POST /api/chat …');
     const res = await fetch('/api/chat', { method: 'POST', headers, body: JSON.stringify(body) });
     dbg('Response: ' + res.status + ' content-type: ' + (res.headers.get('content-type') || ''));
+
     if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
       await consumeStream(res); return;
     }
     if (res.ok) {
       const data = await res.json();
-      dbg('JSON response: provider=' + data.provider + ' offline=' + data.offline);
+      dbg('JSON response: provider=' + data.provider + ' skip=' + data.skip + ' offline=' + data.offline);
+
+      // ── SKIP: non-question phrase detected (mic test, greeting, etc.) ──
+      if (data.skip) {
+        aiScriptBox.className = 'script-box';
+        aiScriptBox.textContent = 'Press Start Listening and wait for an interview question.';
+        providerBadge.textContent = '⏭ Skipped (not a question)';
+        providerBadge.className = 'provider-badge offline';
+        syncPip('ready', '—', '⏭ Skipped');
+        document.getElementById('llm-status-live').textContent = 'Waiting for question…';
+        return;
+      }
+
       if (data.answer) {
         aiScriptBox.className = 'script-box' + (data.offline ? ' hint' : '');
         aiScriptBox.textContent = data.answer;
