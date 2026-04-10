@@ -77,7 +77,6 @@
     .device-hint{font-size:.75rem;color:var(--muted);line-height:1.5;margin-top:4px;background:#fffbe6;border:1px solid #ffe082;border-radius:5px;padding:7px 10px;display:none}
     .device-hint.show{display:block}
 
-    /* Tab/System share button */
     .share-btn-row{margin-top:8px;display:none}
     .share-btn-row.show{display:block}
     .share-btn{width:100%;padding:9px;border:2px dashed #ce93d8;border-radius:8px;background:#fdf4ff;color:#6a1b9a;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s}
@@ -85,6 +84,10 @@
     .share-status{font-size:.78rem;margin-top:6px;padding:5px 10px;border-radius:5px;display:none}
     .share-status.connected{display:block;background:#e9f7ef;color:#1a6a30;border:1px solid #28a745}
     .share-status.pending{display:block;background:#fff8e1;color:#856404;border:1px solid #ffe082}
+
+    /* STT mode warning banner */
+    .stt-mode-warn{display:none;background:#fdecea;border:1px solid #f44336;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#b71c1c;margin-top:8px;line-height:1.5}
+    .stt-mode-warn.show{display:block}
 
     .style-row{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
     .style-row label{margin:0;white-space:nowrap;font-size:.88rem;font-weight:600}
@@ -128,7 +131,7 @@
     .lbl-candidate{color:#0275d8;font-weight:700}
     .lbl-system{color:#888;font-style:italic}
 
-    /* ── PiP Floating Overlay ── */
+    /* PiP Floating Overlay */
     #pip-overlay{display:none;position:fixed;bottom:28px;right:28px;width:380px;background:rgba(10,20,18,0.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1.5px solid rgba(1,105,111,0.55);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.55);z-index:99999;overflow:hidden;font-family:'Segoe UI',sans-serif;color:#e8f5e9;user-select:none;min-width:260px;min-height:140px}
     #pip-overlay.active{display:flex;flex-direction:column}
     .pip-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px 6px;background:rgba(1,105,111,0.22);cursor:grab;border-bottom:1px solid rgba(1,105,111,0.2);flex-shrink:0}
@@ -170,32 +173,76 @@
 
     @keyframes interim-pulse{0%,100%{opacity:.6}50%{opacity:1}}
     .interim-box.show{animation:interim-pulse 1.2s ease-in-out infinite}
+
+    /* How-To Modal */
+    #howto-modal{display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+    #howto-modal.open{display:flex}
+    .howto-card{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:28px 28px 24px;box-shadow:0 8px 40px rgba(0,0,0,.22);position:relative}
+    .howto-card h2{font-size:1.1rem;margin-bottom:16px;color:#1a3a3a;display:flex;align-items:center;gap:8px}
+    .howto-card .close-btn{position:absolute;top:14px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;line-height:1}
+    .howto-card .close-btn:hover{color:#333}
+    .howto-section{margin-bottom:16px}
+    .howto-section h3{font-size:.88rem;font-weight:700;margin-bottom:6px;color:var(--primary)}
+    .howto-section ol{padding-left:20px;font-size:.85rem;line-height:1.8;color:#333}
+    .howto-section p{font-size:.85rem;line-height:1.7;color:#444;margin-top:4px}
+    .howto-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:8px 12px;font-size:.8rem;color:#7a5000;margin-top:12px;line-height:1.6}
   </style>
 </head>
 <body>
 
-<button id="float-overlay-btn" onclick="togglePip()">⧉ Float Overlay</button>
+<button id="float-overlay-btn" onclick="togglePip()">&#x2347; Float Overlay</button>
 <audio id="tab-audio-el" autoplay playsinline style="display:none" muted></audio>
 
+<!-- How-To Modal -->
+<div id="howto-modal" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+  <div class="howto-card">
+    <button class="close-btn" onclick="closeHowTo()" aria-label="Close">&times;</button>
+    <h2 id="howto-title">&#x1F3A7; How to connect Zoom / Teams audio</h2>
+    <div class="howto-section">
+      <h3>&#x2705; Option 1 &mdash; Mic + Tab (recommended, no screen sharing needed)</h3>
+      <ol>
+        <li>Select <strong>&#x1F3A4;+&#x1F5A5;&#xFE0F; Mic + Tab</strong> audio mode</li>
+        <li>Click <strong>&ldquo;Share tab / screen audio&rdquo;</strong> or press <strong>Start Listening</strong></li>
+        <li>In the Chrome dialog, pick your <strong>Zoom / Teams tab</strong></li>
+        <li>Tick <strong>&ldquo;Share tab audio&rdquo;</strong> &mdash; done!</li>
+      </ol>
+      <p>Both your voice (mic) and the interviewer&rsquo;s voice (tab) are transcribed simultaneously.</p>
+    </div>
+    <div class="howto-section">
+      <h3>&#x1F7E2; Option 2 &mdash; Microphone only (simplest)</h3>
+      <p>Keep <strong>&#x1F3A4; Microphone</strong> mode selected and press <strong>Space</strong>. No sharing needed &mdash; just speak and the app listens via your mic directly.</p>
+    </div>
+    <div class="howto-section">
+      <h3>&#x1F7E3; Option 3 &mdash; Browser Tab / System Audio only</h3>
+      <ol>
+        <li>Select <strong>&#x1F5A5;&#xFE0F; Browser Tab / Call</strong> or <strong>&#x1F50A; System Audio</strong></li>
+        <li>A Deepgram API key is <strong>required</strong> for these modes (browser STT only captures mic)</li>
+        <li>Click <strong>Start Listening</strong> &rarr; pick the tab or screen &rarr; tick &ldquo;Share tab audio&rdquo;</li>
+      </ol>
+    </div>
+    <div class="howto-warn">&#x26A0;&#xFE0F; <strong>Tab / System modes require Deepgram.</strong> Browser&rsquo;s built-in STT (Web Speech API) can only capture your microphone &mdash; it cannot process a shared tab or system audio stream. Configure a Deepgram key in the API Keys tab to enable these modes.</div>
+  </div>
+</div>
+
 <div class="container">
-  <h1>🎙️ AI Interview Copilot</h1>
-  <p class="subtitle">Real-time answer scripts — Supply Chain &amp; Data Analytics interviews</p>
+  <h1>&#x1F399;&#xFE0F; AI Interview Copilot</h1>
+  <p class="subtitle">Real-time answer scripts &mdash; Supply Chain &amp; Data Analytics interviews</p>
 
   <div class="usage-note">
-    <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window alongside Zoom/Teams. Click "⧉ Float Overlay" for a floating panel that stays on top.<br><br>
-    <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes.<br><br>
-    <strong>Deepgram STT:</strong> When a Deepgram API key is configured, live transcription is <em>much</em> more accurate than the browser fallback — works in any browser, including Firefox.
+    <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window alongside Zoom/Teams. Click &ldquo;&#x2347; Float Overlay&rdquo; for a floating panel that stays on top.<br><br>
+    <strong>Press Space</strong> to quickly start / stop listening.<br><br>
+    <strong>Deepgram STT:</strong> When a Deepgram API key is configured, live transcription is <em>much</em> more accurate than the browser fallback &mdash; and enables Tab / System audio modes.
   </div>
 
-  <!-- ── SETUP SECTION ── -->
+  <!-- SETUP SECTION -->
   <div id="setup-section">
     <div class="status-bar">
       <div class="status-bar-left">
         <strong>System Status:</strong><br>
-        Speech-to-Text: <span id="stt-status" class="status-ready">Detecting…</span><br>
-        LLM Mode: <span id="llm-status">Waiting for input…</span>
+        Speech-to-Text: <span id="stt-status" class="status-ready">Detecting&hellip;</span><br>
+        LLM Mode: <span id="llm-status">Waiting for input&hellip;</span>
       </div>
-      <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
+      <button class="how-to-btn" onclick="showHowTo()">&#x1F3A7; How to connect Zoom/Teams audio</button>
     </div>
 
     <div class="tabs">
@@ -206,11 +253,11 @@
 
     <div id="tab-details" class="tab-panel active">
       <div class="diag-row">
-        <button class="diag-btn" onclick="runDiag('health')">🔍 Test API Health</button>
-        <button class="diag-btn" onclick="runDiag('mic')">🎤 Test Mic</button>
-        <button class="diag-btn" onclick="runDiag('stt')">🗣 Test STT</button>
-        <button class="diag-btn" onclick="runDiag('deepgram')">🟣 Test Deepgram</button>
-        <button class="diag-btn" onclick="runDiag('answer')">🤖 Test Answer Generation</button>
+        <button class="diag-btn" onclick="runDiag('health')">&#x1F50D; Test API Health</button>
+        <button class="diag-btn" onclick="runDiag('mic')">&#x1F3A4; Test Mic</button>
+        <button class="diag-btn" onclick="runDiag('stt')">&#x1F5E3; Test STT</button>
+        <button class="diag-btn" onclick="runDiag('deepgram')">&#x1F7E3; Test Deepgram</button>
+        <button class="diag-btn" onclick="runDiag('answer')">&#x1F916; Test Answer Generation</button>
         <button class="diag-btn secondary" onclick="toggleDebug()">Toggle Debug Log</button>
       </div>
       <div id="diag-result" class="diag-result"></div>
@@ -235,10 +282,10 @@
       <div class="form-group">
         <label for="answer-style">Answer Length Style</label>
         <select id="answer-style">
-          <option value="live_script">🎙️ Live Script (teleprompter)</option>
-          <option value="concise">⚡ Concise (1–2 sentences)</option>
-          <option value="normal">📝 Normal (3–4 sentences)</option>
-          <option value="detailed">📊 Detailed STAR method</option>
+          <option value="live_script">&#x1F399;&#xFE0F; Live Script (teleprompter)</option>
+          <option value="concise">&#x26A1; Concise (1&ndash;2 sentences)</option>
+          <option value="normal">&#x1F4DD; Normal (3&ndash;4 sentences)</option>
+          <option value="detailed">&#x1F4CA; Detailed STAR method</option>
         </select>
       </div>
     </div>
@@ -246,28 +293,28 @@
     <div id="tab-cv" class="tab-panel">
       <div class="form-group">
         <label for="cv">Your CV / Resume (paste full text)</label>
-        <textarea id="cv" rows="12" placeholder="Paste your full CV / resume text here…"></textarea>
+        <textarea id="cv" rows="12" placeholder="Paste your full CV / resume text here&hellip;"></textarea>
       </div>
     </div>
 
     <div id="tab-apikeys" class="tab-panel">
-      <div class="key-ok" id="key-ok">✅ Server API keys detected — AI answers ready.</div>
-      <div class="key-warn" id="key-warn-setup">⚠️ No server LLM keys found. Add a key below or set Vercel env vars.</div>
-      <div class="dg-banner" id="dg-banner-setup">🟣 Deepgram key detected — Nova-3 live STT active (browser fallback disabled).</div>
+      <div class="key-ok" id="key-ok">&#x2705; Server API keys detected &mdash; AI answers ready.</div>
+      <div class="key-warn" id="key-warn-setup">&#x26A0;&#xFE0F; No server LLM keys found. Add a key below or set Vercel env vars.</div>
+      <div class="dg-banner" id="dg-banner-setup">&#x1F7E3; Deepgram key detected &mdash; Nova-3 live STT active (browser fallback disabled).</div>
 
       <div class="form-group">
-        <label>Deepgram API Key <span style="color:#7b1fa2">(for accurate STT — recommended)</span></label>
-        <input type="password" id="deepgram-key" placeholder="deepgram_... (leave blank — server has key)">
-        <p class="api-hint">Free 200h at <a href="https://console.deepgram.com" target="_blank">console.deepgram.com</a></p>
+        <label>Deepgram API Key <span style="color:#7b1fa2">(for accurate STT &mdash; required for Tab/System modes)</span></label>
+        <input type="password" id="deepgram-key" placeholder="deepgram_... (leave blank &mdash; server has key)">
+        <p class="api-hint">Free 200h at <a href="https://console.deepgram.com" target="_blank" rel="noopener noreferrer">console.deepgram.com</a></p>
       </div>
       <div class="form-group">
-        <label>Groq API Key <span style="color:#28a745">(recommended LLM — free)</span></label>
-        <input type="password" id="groq-key" placeholder="gsk_... (leave blank — server has key)">
-        <p class="api-hint">Free at <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
+        <label>Groq API Key <span style="color:#28a745">(recommended LLM &mdash; free)</span></label>
+        <input type="password" id="groq-key" placeholder="gsk_... (leave blank &mdash; server has key)">
+        <p class="api-hint">Free at <a href="https://console.groq.com" target="_blank" rel="noopener noreferrer">console.groq.com</a></p>
       </div>
       <div class="form-group">
         <label>Gemini API Key</label>
-        <input type="password" id="gemini-key" placeholder="AIza... (leave blank — server has key)">
+        <input type="password" id="gemini-key" placeholder="AIza... (leave blank &mdash; server has key)">
       </div>
       <div class="form-group">
         <label>OpenRouter Key</label>
@@ -275,97 +322,100 @@
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="startSession()" style="margin-top:16px">Start Interview Assistant →</button>
+    <button class="btn btn-primary" onclick="startSession()" style="margin-top:16px">Start Interview Assistant &rarr;</button>
   </div>
 
-  <!-- ── INTERVIEW SECTION ── -->
+  <!-- INTERVIEW SECTION -->
   <div id="interview-section">
 
     <div class="status-bar">
       <div class="status-bar-left">
         <strong>System Status:</strong><br>
-        Speech-to-Text: <span id="stt-status-live" class="status-ready">Detecting…</span><br>
-        LLM Mode: <span id="llm-status-live">Waiting for input…</span>
+        Speech-to-Text: <span id="stt-status-live" class="status-ready">Detecting&hellip;</span><br>
+        LLM Mode: <span id="llm-status-live">Waiting for input&hellip;</span>
       </div>
-      <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
+      <button class="how-to-btn" onclick="showHowTo()">&#x1F3A7; How to connect Zoom/Teams audio</button>
     </div>
 
-    <div class="key-ok" id="key-ok-live" style="margin-bottom:8px">✅ Server LLM keys detected — AI answers ready.</div>
-    <div class="key-warn" id="key-warn-live" style="margin-bottom:8px;display:none">⚠️ No LLM key — offline hints only.</div>
-    <div class="dg-banner" id="dg-banner-live" style="margin-bottom:8px">🟣 Deepgram Nova-3 STT active — superior transcription quality.</div>
+    <div class="key-ok" id="key-ok-live" style="margin-bottom:8px">&#x2705; Server LLM keys detected &mdash; AI answers ready.</div>
+    <div class="key-warn" id="key-warn-live" style="margin-bottom:8px;display:none">&#x26A0;&#xFE0F; No LLM key &mdash; offline hints only.</div>
+    <div class="dg-banner" id="dg-banner-live" style="margin-bottom:8px">&#x1F7E3; Deepgram Nova-3 STT active &mdash; superior transcription quality.</div>
 
     <div class="pip-row">
       <button class="pip-toggle-btn" id="pip-toggle-btn" onclick="togglePip()">
-        <span>⧉</span> Picture-in-Picture Overlay
+        <span>&#x2347;</span> Picture-in-Picture Overlay
       </button>
     </div>
 
     <div class="audio-panel">
-      <h4>🎧 Audio Source</h4>
+      <h4>&#x1F3A7; Audio Source</h4>
       <div class="device-tabs">
-        <button class="dtab active" onclick="switchMode('mic',this)">🎤 Microphone</button>
-        <button class="dtab" onclick="switchMode('tab',this)">🖥️ Browser Tab / Call</button>
-        <button class="dtab" onclick="switchMode('system',this)">🔊 System Audio</button>
-        <button class="dtab" onclick="switchMode('both',this)">🎤+🖥️ Mic + Tab</button>
+        <button class="dtab active" onclick="switchMode('mic',this)">&#x1F3A4; Microphone</button>
+        <button class="dtab" onclick="switchMode('tab',this)">&#x1F5A5;&#xFE0F; Browser Tab / Call</button>
+        <button class="dtab" onclick="switchMode('system',this)">&#x1F50A; System Audio</button>
+        <button class="dtab" onclick="switchMode('both',this)">&#x1F3A4;+&#x1F5A5;&#xFE0F; Mic + Tab</button>
       </div>
       <div id="row-mic" class="device-row">
         <label>Microphone:</label>
-        <select id="mic-select"><option value="">— loading devices… —</option></select>
+        <select id="mic-select"><option value="">&mdash; loading devices&hellip; &mdash;</option></select>
       </div>
       <div id="hint-tab" class="device-hint">
-        📌 <strong>Tab mode:</strong> Click "Start Listening" — a browser dialog will ask you to pick the Zoom/Teams tab. Tick "Share tab audio".
+        &#x1F4CC; <strong>Tab mode:</strong> Click &ldquo;Start Listening&rdquo; &mdash; a browser dialog will ask you to pick the Zoom/Teams tab. Tick &ldquo;Share tab audio&rdquo;. <strong>Requires Deepgram key.</strong>
       </div>
       <div id="hint-system" class="device-hint">
-        📌 <strong>System Audio:</strong> Click "Start Listening" — select "Entire Screen" and enable "Share system audio". On Mac, BlackHole virtual driver is required.
+        &#x1F4CC; <strong>System Audio:</strong> Click &ldquo;Start Listening&rdquo; &mdash; select &ldquo;Entire Screen&rdquo; and enable &ldquo;Share system audio&rdquo;. On Mac, BlackHole virtual driver is required. <strong>Requires Deepgram key.</strong>
       </div>
-      <!-- Manual share button — only shown for tab/system/both modes -->
       <div class="share-btn-row" id="share-btn-row">
-        <button class="share-btn" id="share-btn" onclick="requestDisplayShare()">🖥️ Click here to share tab / screen audio</button>
+        <button class="share-btn" id="share-btn" onclick="requestDisplayShare()">&#x1F5A5;&#xFE0F; Click here to share tab / screen audio</button>
         <div class="share-status" id="share-status"></div>
+      </div>
+      <!-- Shown when tab/system mode is selected but no Deepgram key -->
+      <div class="stt-mode-warn" id="stt-mode-warn">
+        &#x274C; <strong>Deepgram required for this mode.</strong> The browser&rsquo;s built-in STT can only capture your microphone &mdash; it cannot process shared tab or system audio. Please add a Deepgram API key in the API Keys tab, or switch to <strong>&#x1F3A4; Microphone</strong> or <strong>&#x1F3A4;+&#x1F5A5;&#xFE0F; Mic + Tab</strong> mode.
       </div>
     </div>
 
     <div class="style-row">
       <label for="response-style">Answer style:</label>
       <select id="response-style">
-        <option value="live_script">🎙️ Live Script (teleprompter)</option>
-        <option value="concise">⚡ Concise (1-2 sentences)</option>
-        <option value="normal">📝 Normal (3-4 sentences)</option>
-        <option value="detailed">📊 Detailed STAR method</option>
+        <option value="live_script">&#x1F399;&#xFE0F; Live Script (teleprompter)</option>
+        <option value="concise">&#x26A1; Concise (1-2 sentences)</option>
+        <option value="normal">&#x1F4DD; Normal (3-4 sentences)</option>
+        <option value="detailed">&#x1F4CA; Detailed STAR method</option>
       </select>
     </div>
 
     <div class="controls">
-      <button id="toggle-btn" class="btn btn-primary">▶ Start Listening</button>
+      <button id="toggle-btn" class="btn btn-primary">&#x25B6; Start Listening</button>
     </div>
     <p class="space-hint">Press <kbd>Space</kbd> to start / stop listening</p>
 
     <div class="listen-status" id="listen-status"></div>
     <div class="interim-box" id="interim-box"></div>
-    <div class="offline-bar" id="offline-bar">⚠️ Internet unavailable — showing offline CV hints.</div>
+    <div class="offline-bar" id="offline-bar">&#x26A0;&#xFE0F; Internet unavailable &mdash; showing offline CV hints.</div>
 
     <div class="q-box">
-      <label>🗣️ Detected Speech:</label>
-      <div class="q-display placeholder" id="q-display">Waiting for speech…</div>
+      <label>&#x1F5E3;&#xFE0F; Detected Speech:</label>
+      <div class="q-display placeholder" id="q-display">Waiting for speech&hellip;</div>
     </div>
 
     <div class="script-label">
       AI Answer Script
-      <span class="provider-badge" id="provider-badge">waiting…</span>
+      <span class="provider-badge" id="provider-badge">waiting&hellip;</span>
     </div>
-    <div class="script-box" id="ai-script">Press Space or click "Start Listening". Speak — the AI answer will appear here.</div>
+    <div class="script-box" id="ai-script">Press Space or click &ldquo;Start Listening&rdquo;. Speak &mdash; the AI answer will appear here.</div>
 
-    <div class="debug-toggle" onclick="toggleDebug()">🔍 Show debug log</div>
+    <div class="debug-toggle" onclick="toggleDebug()">&#x1F50D; Show debug log</div>
     <div id="debug-panel"></div>
 
     <h3 style="margin:14px 0 8px;font-size:.95rem;">Live Transcript</h3>
     <div class="transcript-box" id="transcript"></div>
 
-    <button class="btn" style="background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);margin-top:16px;font-size:.85rem" onclick="endSession()">← Back to Setup</button>
+    <button class="btn" style="background:#f0f4ff;color:var(--primary);border:2px solid var(--primary);margin-top:16px;font-size:.85rem" onclick="endSession()">&larr; Back to Setup</button>
   </div>
 </div>
 
-<!-- ── PiP OVERLAY ── -->
+<!-- PiP OVERLAY -->
 <div id="pip-overlay" role="complementary" aria-label="AI Answer Overlay">
   <div class="pip-header" id="pip-drag-handle">
     <div class="pip-title">
@@ -376,8 +426,8 @@
       <span class="pip-listen-badge" id="pip-listen-badge">
         <span class="pip-pulse"></span> Listening
       </span>
-      <button class="pip-ctrl-btn" id="pip-size-btn" onclick="togglePipSize()" title="Resize">⤢</button>
-      <button class="pip-ctrl-btn" onclick="togglePip()" title="Close" style="font-size:.9rem">✕</button>
+      <button class="pip-ctrl-btn" id="pip-size-btn" onclick="togglePipSize()" title="Resize">&#x2922;</button>
+      <button class="pip-ctrl-btn" onclick="togglePip()" title="Close" style="font-size:.9rem">&times;</button>
     </div>
   </div>
   <div class="pip-body">
@@ -388,16 +438,16 @@
     <div class="pip-script" id="pip-script">Overlay ready. Start listening to see AI answers here.</div>
   </div>
   <div class="pip-footer">
-    <span class="pip-provider" id="pip-provider">—</span>
+    <span class="pip-provider" id="pip-provider">&mdash;</span>
     <button class="pip-copy-btn" id="pip-copy-btn" onclick="pipCopy()">Copy</button>
   </div>
   <div class="pip-resize-handle" id="pip-resize-handle"></div>
 </div>
 
 <script>
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // STATE
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 let sessionCV = '', sessionJobRole = '';
 let conversationContext = [];
 let isRecording = false;
@@ -407,7 +457,8 @@ let pipExpanded = false;
 let serverHasKeys = false;
 
 // STT state
-let useDeeepgram = false;
+// FIX: was "useDeeepgram" (triple-e typo) — now consistently "useDeepgram"
+let useDeepgram = false;
 let dgKey = '';
 let dgSocket = null;
 let dgStream = null;
@@ -429,9 +480,9 @@ let activeStreams = [];
 let debugLines = [];
 let tabAudioCtx = null;
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // DOM REFS
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 const setupSection     = document.getElementById('setup-section');
 const interviewSection = document.getElementById('interview-section');
 const toggleBtn        = document.getElementById('toggle-btn');
@@ -448,6 +499,7 @@ const tabAudioEl       = document.getElementById('tab-audio-el');
 const interimBox       = document.getElementById('interim-box');
 const sttStatusEl      = document.getElementById('stt-status');
 const sttStatusLiveEl  = document.getElementById('stt-status-live');
+const sttModeWarn      = document.getElementById('stt-mode-warn');
 
 // PiP DOM
 const pipOverlay      = document.getElementById('pip-overlay');
@@ -460,9 +512,9 @@ const pipListenBadge  = document.getElementById('pip-listen-badge');
 const pipToggleBtn    = document.getElementById('pip-toggle-btn');
 const pipCopyBtn      = document.getElementById('pip-copy-btn');
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // UTILS
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 function dbg(msg) {
   const ts = new Date().toLocaleTimeString();
   debugLines.push(`[${ts}] ${msg}`);
@@ -484,9 +536,12 @@ function appendTranscript(role, text) {
   const line = document.createElement('div');
   line.className = 'transcript-line';
   const label = role === 'Interviewer' ? 'lbl-interviewer' : role === 'Candidate' ? 'lbl-candidate' : 'lbl-system';
-  line.innerHTML = `<span class="${label}">${role}:</span> ${text}`;
+  line.innerHTML = `<span class="${label}">${role}:</span> ${escHtml(text)}`;
   transcriptBox.appendChild(line);
   transcriptBox.scrollTop = transcriptBox.scrollHeight;
+}
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function setListenStatus(msg, cls) {
   listenStatus.textContent = msg;
@@ -501,9 +556,25 @@ function setSttStatus(text, cls) {
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
+// HOW-TO MODAL
+// =============================================================================
+function showHowTo() {
+  document.getElementById('howto-modal').classList.add('open');
+}
+function closeHowTo() {
+  document.getElementById('howto-modal').classList.remove('open');
+}
+document.getElementById('howto-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeHowTo();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeHowTo();
+});
+
+// =============================================================================
 // DIAGNOSTICS
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 async function runDiag(type) {
   const el = document.getElementById('diag-result');
   el.style.display = 'block';
@@ -518,32 +589,32 @@ async function runDiag(type) {
     } else if (type === 'mic') {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       s.getTracks().forEach(t => t.stop());
-      el.textContent = '✅ Microphone permission granted.';
+      el.textContent = '\u2705 Microphone permission granted.';
     } else if (type === 'stt') {
-      if (useDeeepgram) {
-        el.textContent = '🟣 Deepgram is the active STT engine. Use "Test Deepgram" button.';
+      if (useDeepgram) {
+        el.textContent = '\u1F7E3 Deepgram is the active STT engine. Use "Test Deepgram" button.';
       } else {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) { el.textContent = '❌ Web Speech API not available. Use Chrome or Edge.'; return; }
+        if (!SR) { el.textContent = '\u274C Web Speech API not available. Use Chrome or Edge, or add a Deepgram key.'; return; }
         const r = new SR();
         r.lang = 'en-US'; r.continuous = false; r.interimResults = false;
-        r.onstart = () => { el.textContent = '🎙️ Browser STT started — speak a word…'; };
-        r.onresult = (e) => { el.textContent = '✅ Browser STT heard: "' + e.results[0][0].transcript + '"'; r.stop(); };
-        r.onerror = (e) => { el.textContent = '❌ STT error: ' + e.error; };
+        r.onstart = () => { el.textContent = '\u1F399\uFE0F Browser STT started \u2014 speak a word\u2026'; };
+        r.onresult = (e) => { el.textContent = '\u2705 Browser STT heard: "' + e.results[0][0].transcript + '"'; r.stop(); };
+        r.onerror = (e) => { el.textContent = '\u274C STT error: ' + e.error; };
         r.start();
       }
     } else if (type === 'deepgram') {
-      el.textContent = 'Testing Deepgram connection…';
-      const res = await fetchDgKey();
-      if (!res) {
-        el.textContent = '❌ No Deepgram key available. Add DEEPGRAM_API_KEY to Vercel env vars or enter it in API Keys tab.';
+      el.textContent = 'Testing Deepgram connection\u2026';
+      const key = await fetchDgKey();
+      if (!key) {
+        el.textContent = '\u274C No Deepgram key available. Add DEEPGRAM_API_KEY to Vercel env vars or enter it in API Keys tab.';
         return;
       }
       const url = `wss://api.deepgram.com/v1/listen?model=nova-3&language=en&encoding=linear16&sample_rate=16000&punctuate=true&interim_results=true`;
-      const ws = new WebSocket(url, ['token', res]);
-      const t = setTimeout(() => { ws.close(); el.textContent += '\n⚠️ Connection timed out.'; }, 5000);
-      ws.onopen = () => { clearTimeout(t); el.textContent = '✅ Deepgram WebSocket connected! Nova-3 model ready.\nKey mode: ' + (dgKey ? 'active' : 'fetched'); ws.close(); };
-      ws.onerror = () => { clearTimeout(t); el.textContent = '❌ Deepgram WebSocket error. Check key validity.'; };
+      const ws = new WebSocket(url, ['token', key]);
+      const t = setTimeout(() => { ws.close(); el.textContent += '\n\u26A0\uFE0F Connection timed out.'; }, 5000);
+      ws.onopen  = () => { clearTimeout(t); el.textContent = '\u2705 Deepgram WebSocket connected! Nova-3 model ready.'; ws.close(); };
+      ws.onerror = () => { clearTimeout(t); el.textContent = '\u274C Deepgram WebSocket error. Check key validity.'; };
       ws.onclose = (e) => { if (e.code !== 1000) el.textContent += `\nClosed: ${e.code} ${e.reason}`; };
     } else if (type === 'answer') {
       const r = await fetch('/api/chat', {
@@ -554,13 +625,13 @@ async function runDiag(type) {
       el.textContent = `Status: ${r.status}\n${text.slice(0, 400)}`;
     }
   } catch(e) {
-    el.textContent = '❌ Error: ' + e.message;
+    el.textContent = '\u274C Error: ' + e.message;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // KEY / UI MANAGEMENT
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 async function fetchDgKey() {
   const localDg = document.getElementById('deepgram-key')?.value?.trim();
   try {
@@ -596,27 +667,41 @@ function updateKeyUI(data) {
     document.getElementById('openrouter-key')?.value.trim()
   );
   const hasLlm = serverHasKeys || localLlm;
-  const hasDg  = data?.keys?.deepgram || !!document.getElementById('deepgram-key')?.value.trim();
+  const hasDg  = !!(data?.keys?.deepgram || document.getElementById('deepgram-key')?.value.trim());
 
-  document.getElementById('key-ok').style.display        = hasLlm ? 'block' : 'none';
-  document.getElementById('key-warn-setup').style.display = hasLlm ? 'none'  : 'block';
-  document.getElementById('key-ok-live').style.display   = hasLlm ? 'block' : 'none';
-  document.getElementById('key-warn-live').style.display = hasLlm ? 'none'  : 'block';
-
-  document.getElementById('dg-banner-setup').style.display = hasDg ? 'block' : 'none';
-  document.getElementById('dg-banner-live').style.display  = hasDg ? 'block' : 'none';
+  document.getElementById('key-ok').style.display         = hasLlm ? 'block' : 'none';
+  document.getElementById('key-warn-setup').style.display  = hasLlm ? 'none'  : 'block';
+  document.getElementById('key-ok-live').style.display    = hasLlm ? 'block' : 'none';
+  document.getElementById('key-warn-live').style.display  = hasLlm ? 'none'  : 'block';
+  document.getElementById('dg-banner-setup').style.display = hasDg  ? 'block' : 'none';
+  document.getElementById('dg-banner-live').style.display  = hasDg  ? 'block' : 'none';
 
   if (data?.stt === 'deepgram' || hasDg) {
-    setSttStatus('🟣 Deepgram Nova-3 (Ready)', 'status-dg');
+    setSttStatus('\u1F7E3 Deepgram Nova-3 (Ready)', 'status-dg');
   } else {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    setSttStatus(SR ? '🟢 Browser Web Speech API (Ready)' : '⚠️ Browser STT not supported — add Deepgram key', SR ? 'status-ready' : 'status-stopped');
+    setSttStatus(
+      SR ? '\u1F7E2 Browser Web Speech API (Ready)' : '\u26A0\uFE0F Browser STT not supported \u2014 add Deepgram key',
+      SR ? 'status-ready' : 'status-stopped'
+    );
+  }
+
+  // Re-validate the current audio mode warning
+  refreshModeWarn();
+}
+
+// Show/hide the Deepgram-required warning based on current mode + key availability
+function refreshModeWarn() {
+  const needsDeepgram = (audioMode === 'tab' || audioMode === 'system');
+  const hasDeepgram = useDeepgram || !!(document.getElementById('deepgram-key')?.value.trim());
+  if (sttModeWarn) {
+    sttModeWarn.className = 'stt-mode-warn' + (needsDeepgram && !hasDeepgram ? ' show' : '');
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // SESSION
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 async function startSession() {
   const jrEl = document.getElementById('job-role');
   const cvEl = document.getElementById('cv');
@@ -636,20 +721,25 @@ async function startSession() {
   await checkServerKeys();
 
   const resolvedDgKey = await fetchDgKey();
-  useDeeepgram = !!resolvedDgKey;
-  dbg(`Deepgram available: ${useDeeepgram}, key mode: ${useDeeepgram ? 'active' : 'none'}`);
+  // FIX: use correct variable name "useDeepgram" (not "useDeeepgram")
+  useDeepgram = !!resolvedDgKey;
+  dbg(`Deepgram available: ${useDeepgram}, key mode: ${useDeepgram ? 'active' : 'none'}`);
 
-  if (useDeeepgram) {
-    setSttStatus('🟣 Deepgram Nova-3 (Active)', 'status-dg');
+  if (useDeepgram) {
+    setSttStatus('\u1F7E3 Deepgram Nova-3 (Active)', 'status-dg');
     document.getElementById('dg-banner-live').style.display = 'block';
   } else {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    setSttStatus(SR ? '🟢 Browser Web Speech API' : '❌ No STT available — add Deepgram key', SR ? 'status-ready' : 'status-stopped');
+    setSttStatus(
+      SR ? '\u1F7E2 Browser Web Speech API' : '\u274C No STT available \u2014 add Deepgram key',
+      SR ? 'status-ready' : 'status-stopped'
+    );
     document.getElementById('dg-banner-live').style.display = 'none';
   }
 
   document.getElementById('llm-status-live').textContent = serverHasKeys ? 'AI ready (server keys)' : 'Offline hints only';
   await loadMicDevices();
+  refreshModeWarn();
   appendTranscript('System', 'Session started. Press Space to begin listening.');
   dbg('Session started: ' + sessionJobRole);
 }
@@ -660,42 +750,40 @@ function endSession() {
   setupSection.style.display     = 'block';
   floatBtn.classList.remove('show');
   if (pipVisible) togglePip();
-  // Release shared display stream only when ending the full session
   if (sharedDisplayStream) {
     sharedDisplayStream.getTracks().forEach(t => t.stop());
     sharedDisplayStream = null;
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // AUDIO MODE
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 function switchMode(mode, btn) {
   audioMode = mode;
   document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 
-  document.getElementById('row-mic').style.display   = (mode === 'mic' || mode === 'both') ? 'flex' : 'none';
-  document.getElementById('hint-tab').className    = 'device-hint' + ((mode === 'tab' || mode === 'both') ? ' show' : '');
-  document.getElementById('hint-system').className = 'device-hint' + (mode === 'system' ? ' show' : '');
+  document.getElementById('row-mic').style.display     = (mode === 'mic' || mode === 'both') ? 'flex' : 'none';
+  document.getElementById('hint-tab').className        = 'device-hint' + ((mode === 'tab' || mode === 'both') ? ' show' : '');
+  document.getElementById('hint-system').className     = 'device-hint' + (mode === 'system' ? ' show' : '');
 
-  // Show the manual share button for tab/system/both; hide for mic
   const needsShare = (mode === 'tab' || mode === 'system' || mode === 'both');
-  document.getElementById('share-btn-row').className = 'share-btn-row' + (needsShare ? ' show' : '');
+  document.getElementById('share-btn-row').className   = 'share-btn-row' + (needsShare ? ' show' : '');
 
-  // If switching away from a share mode, release shared stream
   if (!needsShare && sharedDisplayStream) {
     sharedDisplayStream.getTracks().forEach(t => t.stop());
     sharedDisplayStream = null;
     updateShareStatus(false);
   }
+
+  refreshModeWarn();
 }
 
-// Request display share — called manually OR automatically when Start Listening is pressed
 async function requestDisplayShare() {
   const statusEl = document.getElementById('share-status');
   statusEl.className = 'share-status pending';
-  statusEl.textContent = '⏳ Waiting for you to select a tab/screen…';
+  statusEl.textContent = '\u23F3 Waiting for you to select a tab/screen\u2026';
 
   try {
     if (sharedDisplayStream) {
@@ -707,20 +795,19 @@ async function requestDisplayShare() {
 
     if (!stream.getAudioTracks().length) {
       statusEl.className = 'share-status pending';
-      statusEl.textContent = '⚠️ No audio track captured. Make sure to tick "Share tab audio" in the dialog.';
+      statusEl.textContent = '\u26A0\uFE0F No audio track captured. Make sure to tick \u201CShare tab audio\u201D in the dialog.';
       sharedDisplayStream = null;
       return false;
     }
 
     sharedDisplayStream = stream;
-
     stream.getAudioTracks()[0].addEventListener('ended', () => {
       dbg('Display share ended by user');
       sharedDisplayStream = null;
       updateShareStatus(false);
       if (isRecording) {
         stopListening();
-        setListenStatus('⚠️ Screen share stopped. Press Start Listening to reconnect.', 'info');
+        setListenStatus('\u26A0\uFE0F Screen share stopped. Press Start Listening to reconnect.', 'info');
       }
     });
 
@@ -729,7 +816,7 @@ async function requestDisplayShare() {
     return true;
   } catch(e) {
     statusEl.className = 'share-status pending';
-    statusEl.textContent = '❌ Share cancelled or denied: ' + e.message;
+    statusEl.textContent = '\u274C Share cancelled or denied: ' + e.message;
     sharedDisplayStream = null;
     dbg('requestDisplayShare error: ' + e.message);
     return false;
@@ -741,12 +828,12 @@ function updateShareStatus(connected) {
   const shareBtn = document.getElementById('share-btn');
   if (connected) {
     statusEl.className = 'share-status connected';
-    statusEl.textContent = '✅ Tab/screen audio connected — ready to listen.';
-    shareBtn.textContent = '🔄 Re-share tab / screen audio';
+    statusEl.textContent = '\u2705 Tab/screen audio connected \u2014 ready to listen.';
+    shareBtn.textContent = '\uD83D\uDD04 Re-share tab / screen audio';
   } else {
     statusEl.className = 'share-status pending';
-    statusEl.textContent = '⚪ No tab/screen shared yet. Click above to share.';
-    shareBtn.textContent = '🖥️ Click here to share tab / screen audio';
+    statusEl.textContent = '\u26AA No tab/screen shared yet. Click above to share.';
+    shareBtn.textContent = '\uD83D\uDDA5\uFE0F Click here to share tab / screen audio';
   }
 }
 
@@ -756,7 +843,7 @@ async function loadMicDevices() {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const mics = devices.filter(d => d.kind === 'audioinput');
     micSelect.innerHTML = mics.map(d =>
-      `<option value="${d.deviceId}">${d.label || 'Microphone ' + d.deviceId.slice(0,6)}</option>`
+      `<option value="${escHtml(d.deviceId)}">${escHtml(d.label || 'Microphone ' + d.deviceId.slice(0,6))}</option>`
     ).join('');
     if (!mics.length) micSelect.innerHTML = '<option value="">No microphones found</option>';
   } catch(e) {
@@ -765,11 +852,12 @@ async function loadMicDevices() {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // TOGGLE LISTEN
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 toggleBtn.addEventListener('click', () => isRecording ? stopListening() : startListening());
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && document.getElementById('howto-modal').classList.contains('open')) return;
   if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
     e.preventDefault();
     isRecording ? stopListening() : startListening();
@@ -779,26 +867,38 @@ document.addEventListener('keydown', (e) => {
 async function startListening() {
   if (isRecording) return;
 
-  // For tab/system/both modes: if no stream yet, auto-trigger the share dialog
+  // VALIDATION: Tab / System modes require Deepgram — browser STT cannot process shared streams
   const needsShare = (audioMode === 'tab' || audioMode === 'system' || audioMode === 'both');
+  const tabOrSystemOnly = (audioMode === 'tab' || audioMode === 'system');
+
+  if (tabOrSystemOnly && !useDeepgram) {
+    setListenStatus(
+      '\u274C Tab / System audio requires a Deepgram key. Add one in API Keys tab, or switch to Microphone mode.',
+      'error'
+    );
+    refreshModeWarn();
+    return;
+  }
+
+  // Auto-trigger share dialog if needed
   if (needsShare && (!sharedDisplayStream || !sharedDisplayStream.getAudioTracks().length)) {
-    setListenStatus('⏳ Waiting for tab/screen share…', 'info');
+    setListenStatus('\u23F3 Waiting for tab/screen share\u2026', 'info');
     const ok = await requestDisplayShare();
     if (!ok) {
-      setListenStatus('❌ Share not granted — listening cancelled.', 'error');
+      setListenStatus('\u274C Share not granted \u2014 listening cancelled.', 'error');
       return;
     }
   }
 
   isRecording = true;
-  toggleBtn.textContent = '⏹ Stop Listening';
+  toggleBtn.textContent = '\u23F9 Stop Listening';
   toggleBtn.classList.add('listening');
   syncPipListen(true);
   dgFinalBuffer = '';
   dgInterimText = '';
   dgLastSentText = '';
 
-  if (useDeeepgram) {
+  if (useDeepgram) {
     await startDeepgram();
   } else {
     startBrowserSTT();
@@ -808,7 +908,7 @@ async function startListening() {
 function stopListening() {
   if (!isRecording) return;
   isRecording = false;
-  toggleBtn.textContent = '▶ Start Listening';
+  toggleBtn.textContent = '\u25B6 Start Listening';
   toggleBtn.classList.remove('listening');
   syncPipListen(false);
   setListenStatus('', '');
@@ -816,21 +916,20 @@ function stopListening() {
   interimBox.textContent = '';
   clearTimeout(dgSilenceTimer);
 
-  // Stop only the STT engine — NEVER stop or close sharedDisplayStream here
-  if (useDeeepgram) {
+  if (useDeepgram) {
     stopDeepgram();
   } else {
     if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
   }
 
-  // Release only the mic/active streams (not the shared display stream)
+  // Release mic/active streams but NOT the shared display stream
   activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
   activeStreams = [];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // AUDIO STREAM ACQUISITION
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 async function getAudioStream() {
   const micId = micSelect.value;
   const micConstraints = { audio: micId ? { deviceId: { exact: micId } } : true, video: false };
@@ -858,7 +957,6 @@ async function getAudioStream() {
     }
     const micStream = await navigator.mediaDevices.getUserMedia(micConstraints);
     activeStreams.push(micStream);
-
     const ctx = new AudioContext({ sampleRate: 16000 });
     tabAudioCtx = ctx;
     const dest = ctx.createMediaStreamDestination();
@@ -872,18 +970,18 @@ async function getAudioStream() {
   return s;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // DEEPGRAM STT
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 async function startDeepgram() {
-  setListenStatus('🟣 Connecting to Deepgram…', 'dg');
+  setListenStatus('\u1F7E3 Connecting to Deepgram\u2026', 'dg');
   dbg('Deepgram: opening WebSocket');
 
   try {
     dgStream = await getAudioStream();
   } catch(e) {
     dbg('getAudioStream error: ' + e.message);
-    setListenStatus('❌ ' + e.message, 'error');
+    setListenStatus('\u274C ' + e.message, 'error');
     stopListening();
     return;
   }
@@ -909,7 +1007,7 @@ async function startDeepgram() {
 
   dgSocket.onopen = () => {
     dbg('Deepgram WebSocket open');
-    setListenStatus('🟣 Deepgram Nova-3 — Listening…', 'dg');
+    setListenStatus('\u1F7E3 Deepgram Nova-3 \u2014 Listening\u2026', 'dg');
     dgAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
     const source = dgAudioCtx.createMediaStreamSource(dgStream);
     dgProcessor = dgAudioCtx.createScriptProcessor(4096, 1, 1);
@@ -962,7 +1060,7 @@ async function startDeepgram() {
 
     if (!isFinal) {
       dgInterimText = text;
-      interimBox.textContent = '🎙️ ' + text;
+      interimBox.textContent = '\uD83C\uDF99\uFE0F ' + text;
       interimBox.className = 'interim-box show';
       clearTimeout(dgSilenceTimer);
       return;
@@ -970,7 +1068,7 @@ async function startDeepgram() {
 
     dgFinalBuffer += (dgFinalBuffer ? ' ' : '') + text;
     dgInterimText = '';
-    interimBox.textContent = '✔ ' + dgFinalBuffer;
+    interimBox.textContent = '\u2714 ' + dgFinalBuffer;
 
     dbg(`DG final: "${text}" | speech_final=${speechFinal} | buffer="${dgFinalBuffer}"`);
 
@@ -994,19 +1092,19 @@ async function startDeepgram() {
 
   dgSocket.onerror = (e) => {
     dbg('Deepgram socket error');
-    setListenStatus('❌ Deepgram error — check key', 'error');
+    setListenStatus('\u274C Deepgram error \u2014 check key', 'error');
   };
 
   dgSocket.onclose = (e) => {
     dbg(`Deepgram socket closed: ${e.code} ${e.reason}`);
-    if (isRecording) setListenStatus('⚠️ Deepgram disconnected — reconnecting…', 'info');
+    if (isRecording) setListenStatus('\u26A0\uFE0F Deepgram disconnected \u2014 reconnecting\u2026', 'info');
   };
 }
 
 function stopDeepgram() {
   clearTimeout(dgSilenceTimer);
   if (dgProcessor) { try { dgProcessor.disconnect(); } catch(e){} dgProcessor = null; }
-  if (dgAudioCtx)  { try { dgAudioCtx.close(); } catch(e){} dgAudioCtx = null; }
+  if (dgAudioCtx)  { try { dgAudioCtx.close();       } catch(e){} dgAudioCtx  = null; }
   if (dgSocket && dgSocket.readyState === WebSocket.OPEN) {
     dgSocket.send(JSON.stringify({ type: 'CloseStream' }));
     dgSocket.close();
@@ -1016,16 +1114,26 @@ function stopDeepgram() {
   if (tabAudioCtx) { try { tabAudioCtx.close(); } catch(e){} tabAudioCtx = null; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BROWSER WEB SPEECH FALLBACK
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
+// BROWSER WEB SPEECH FALLBACK (Microphone only)
+// =============================================================================
 function startBrowserSTT() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) {
-    setListenStatus('❌ Web Speech API not available. Add a Deepgram key for cross-browser support.', 'error');
+    setListenStatus('\u274C Web Speech API not available. Add a Deepgram key for cross-browser support.', 'error');
     stopListening();
     return;
   }
+
+  // Safety guard: browser STT cannot capture tab/system audio streams
+  // This should never be reached because startListening() blocks tab/system without Deepgram,
+  // but guard here as a second line of defense.
+  if (audioMode === 'tab' || audioMode === 'system') {
+    setListenStatus('\u274C Browser STT cannot capture tab/system audio. Please add a Deepgram key.', 'error');
+    stopListening();
+    return;
+  }
+
   recognition = new SR();
   recognition.lang = 'en-US';
   recognition.continuous = true;
@@ -1036,8 +1144,8 @@ function startBrowserSTT() {
   let silenceTimer = null;
 
   recognition.onstart = () => {
-    setListenStatus('🟢 Browser STT — Listening…', 'active');
-    dbg('Browser STT started');
+    setListenStatus('\u1F7E2 Browser STT \u2014 Listening\u2026', 'active');
+    dbg('Browser STT started (mic only)');
   };
   recognition.onresult = (e) => {
     let interim = '';
@@ -1047,10 +1155,10 @@ function startBrowserSTT() {
       if (e.results[i].isFinal) final += t;
       else interim += t;
     }
-    if (interim) { interimBox.textContent = '🎙️ ' + interim; interimBox.className = 'interim-box show'; }
+    if (interim) { interimBox.textContent = '\uD83C\uDF99\uFE0F ' + interim; interimBox.className = 'interim-box show'; }
     if (final) {
       finalBuffer += ' ' + final;
-      interimBox.textContent = '✔ ' + finalBuffer.trim();
+      interimBox.textContent = '\u2714 ' + finalBuffer.trim();
       clearTimeout(silenceTimer);
       silenceTimer = setTimeout(() => {
         const text = finalBuffer.trim();
@@ -1062,8 +1170,8 @@ function startBrowserSTT() {
   };
   recognition.onerror = (e) => {
     dbg('Browser STT error: ' + e.error);
-    if (e.error === 'not-allowed') setListenStatus('❌ Mic permission denied', 'error');
-    else if (e.error !== 'no-speech') setListenStatus('❌ STT error: ' + e.error, 'error');
+    if (e.error === 'not-allowed') setListenStatus('\u274C Mic permission denied', 'error');
+    else if (e.error !== 'no-speech') setListenStatus('\u274C STT error: ' + e.error, 'error');
   };
   recognition.onend = () => {
     dbg('Browser STT ended');
@@ -1072,9 +1180,9 @@ function startBrowserSTT() {
   recognition.start();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HANDLE TRANSCRIPT → AI
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
+// HANDLE TRANSCRIPT -> AI
+// =============================================================================
 async function handleTranscript(text) {
   if (!text || text === dgLastSentText) return;
   dgLastSentText = text;
@@ -1083,22 +1191,22 @@ async function handleTranscript(text) {
   qDisplay.textContent = text;
   qDisplay.className = 'q-display';
   appendTranscript('Interviewer', text);
-  syncPip('thinking', 'Generating answer…', 'thinking…', text);
-  aiScriptBox.textContent = 'Generating answer…';
+  syncPip('thinking', 'Generating answer\u2026', 'thinking\u2026', text);
+  aiScriptBox.textContent = 'Generating answer\u2026';
   aiScriptBox.className = 'script-box loading';
-  providerBadge.textContent = 'thinking…';
+  providerBadge.textContent = 'thinking\u2026';
 
-  const localGroq = document.getElementById('groq-key')?.value.trim();
-  const localGemini = document.getElementById('gemini-key')?.value.trim();
-  const localOpenRouter = document.getElementById('openrouter-key')?.value.trim();
+  const localGroq        = document.getElementById('groq-key')?.value.trim();
+  const localGemini      = document.getElementById('gemini-key')?.value.trim();
+  const localOpenRouter  = document.getElementById('openrouter-key')?.value.trim();
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(localGroq       ? { 'x-groq-key': localGroq }             : {}),
-        ...(localGemini     ? { 'x-gemini-key': localGemini }         : {}),
+        ...(localGroq       ? { 'x-groq-key':       localGroq }       : {}),
+        ...(localGemini     ? { 'x-gemini-key':     localGemini }     : {}),
         ...(localOpenRouter ? { 'x-openrouter-key': localOpenRouter } : {}),
       },
       body: JSON.stringify({
@@ -1116,9 +1224,9 @@ async function handleTranscript(text) {
     if (contentType.includes('application/json')) {
       const data = await res.json();
       if (data.skip) {
-        aiScriptBox.textContent = 'Not a question — listening…';
+        aiScriptBox.textContent = 'Not a question \u2014 listening\u2026';
         aiScriptBox.className = 'script-box hint';
-        syncPip('idle', 'Listening…', '—');
+        syncPip('idle', 'Listening\u2026', '\u2014');
         providerBadge.textContent = 'filtered';
         return;
       }
@@ -1129,7 +1237,7 @@ async function handleTranscript(text) {
         providerBadge.className = 'provider-badge' + (data.offline ? ' offline' : '');
         syncPip('ready', data.answer, data.provider);
         conversationContext.push({ role: 'interviewer', text }, { role: 'candidate', text: data.answer });
-        appendTranscript('Candidate', data.answer.slice(0, 120) + (data.answer.length > 120 ? '…' : ''));
+        appendTranscript('Candidate', data.answer.slice(0, 120) + (data.answer.length > 120 ? '\u2026' : ''));
       }
       return;
     }
@@ -1162,7 +1270,7 @@ async function handleTranscript(text) {
             syncPip('ready', fullText, provider);
             conversationContext.push({ role: 'interviewer', text }, { role: 'candidate', text: fullText });
             if (conversationContext.length > 12) conversationContext = conversationContext.slice(-12);
-            appendTranscript('Candidate', fullText.slice(0, 120) + (fullText.length > 120 ? '…' : ''));
+            appendTranscript('Candidate', fullText.slice(0, 120) + (fullText.length > 120 ? '\u2026' : ''));
           }
         } catch(e) { /* skip malformed */ }
       }
@@ -1170,26 +1278,26 @@ async function handleTranscript(text) {
   } catch(e) {
     dbg('handleTranscript fetch error: ' + e.message);
     offlineBar.style.display = 'block';
-    aiScriptBox.textContent = 'Network error — check connection.';
+    aiScriptBox.textContent = 'Network error \u2014 check connection.';
     aiScriptBox.className = 'script-box error-box';
-    syncPip('error', 'Network error', '—');
+    syncPip('error', 'Network error', '\u2014');
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // PiP
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 function togglePip() {
   pipVisible = !pipVisible;
   pipOverlay.classList.toggle('active', pipVisible);
   pipToggleBtn.classList.toggle('active', pipVisible);
-  floatBtn.textContent = pipVisible ? '✕ Close Overlay' : '⧉ Float Overlay';
+  floatBtn.textContent = pipVisible ? '\u2715 Close Overlay' : '\u2347 Float Overlay';
 }
 function togglePipSize() {
   pipExpanded = !pipExpanded;
   pipOverlay.style.width = pipExpanded ? '520px' : '380px';
   pipScript.style.maxHeight = pipExpanded ? '360px' : '220px';
-  document.getElementById('pip-size-btn').textContent = pipExpanded ? '⤡' : '⤢';
+  document.getElementById('pip-size-btn').textContent = pipExpanded ? '\u2921' : '\u2922';
 }
 function pipCopy() {
   const text = pipScript.textContent;
@@ -1202,8 +1310,8 @@ function pipCopy() {
 function syncPip(state, text, provider, question) {
   pipDot.className = 'pip-dot' + (state === 'thinking' ? ' thinking' : state === 'error' ? ' error' : '');
   pipScript.className = 'pip-script' + (state === 'loading' ? ' loading' : state === 'hint' ? ' hint' : state === 'error' ? ' error-msg' : '');
-  if (text !== undefined) pipScript.textContent = text;
-  if (provider !== undefined) pipProvider.textContent = provider;
+  if (text !== undefined)     pipScript.textContent     = text;
+  if (provider !== undefined) pipProvider.textContent   = provider;
   if (question !== undefined) { pipQuestionText.textContent = question; pipQuestion.className = 'pip-question show'; }
 }
 function syncPipListen(active) {
@@ -1217,8 +1325,20 @@ function syncPipListen(active) {
 (function() {
   const handle = document.getElementById('pip-drag-handle');
   let dragging=false, ox=0, oy=0;
-  handle.addEventListener('mousedown', e => { if (e.target.closest('button')) return; dragging=true; ox=e.clientX-pipOverlay.getBoundingClientRect().left; oy=e.clientY-pipOverlay.getBoundingClientRect().top; document.body.style.userSelect='none'; });
-  document.addEventListener('mousemove', e => { if (!dragging) return; let l=Math.max(0,Math.min(e.clientX-ox,window.innerWidth-pipOverlay.offsetWidth)); let t=Math.max(0,Math.min(e.clientY-oy,window.innerHeight-pipOverlay.offsetHeight)); pipOverlay.style.right='auto'; pipOverlay.style.bottom='auto'; pipOverlay.style.left=l+'px'; pipOverlay.style.top=t+'px'; });
+  handle.addEventListener('mousedown', e => {
+    if (e.target.closest('button')) return;
+    dragging=true;
+    ox=e.clientX-pipOverlay.getBoundingClientRect().left;
+    oy=e.clientY-pipOverlay.getBoundingClientRect().top;
+    document.body.style.userSelect='none';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const l = Math.max(0, Math.min(e.clientX-ox, window.innerWidth-pipOverlay.offsetWidth));
+    const t = Math.max(0, Math.min(e.clientY-oy, window.innerHeight-pipOverlay.offsetHeight));
+    pipOverlay.style.right='auto'; pipOverlay.style.bottom='auto';
+    pipOverlay.style.left=l+'px'; pipOverlay.style.top=t+'px';
+  });
   document.addEventListener('mouseup', () => { dragging=false; document.body.style.userSelect=''; });
 })();
 
@@ -1226,31 +1346,23 @@ function syncPipListen(active) {
 (function() {
   const handle = document.getElementById('pip-resize-handle');
   let resizing=false, sx=0, sy=0, sw=0, sh=0;
-  handle.addEventListener('mousedown', e => { resizing=true; e.preventDefault(); sx=e.clientX; sy=e.clientY; sw=pipOverlay.offsetWidth; sh=pipOverlay.offsetHeight; document.body.style.userSelect='none'; });
-  document.addEventListener('mousemove', e => { if (!resizing) return; pipOverlay.style.width=Math.max(260,sw+(e.clientX-sx))+'px'; pipScript.style.maxHeight=Math.max(80,sh+(e.clientY-sy)-120)+'px'; });
+  handle.addEventListener('mousedown', e => {
+    resizing=true; e.preventDefault();
+    sx=e.clientX; sy=e.clientY;
+    sw=pipOverlay.offsetWidth; sh=pipOverlay.offsetHeight;
+    document.body.style.userSelect='none';
+  });
+  document.addEventListener('mousemove', e => {
+    if (!resizing) return;
+    pipOverlay.style.width = Math.max(260, sw+(e.clientX-sx))+'px';
+    pipScript.style.maxHeight = Math.max(80, sh+(e.clientY-sy)-120)+'px';
+  });
   document.addEventListener('mouseup', () => { resizing=false; document.body.style.userSelect=''; });
 })();
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HOW TO
-// ─────────────────────────────────────────────────────────────────────────────
-function showHowTo() {
-  alert(
-    'How to connect Zoom/Teams audio:\n\n' +
-    '✅ WITH DEEPGRAM (recommended):\n' +
-    '1. Select "🎤+🖥️ Mic + Tab" audio mode\n' +
-    '2. Press Space or click "Start Listening"\n' +
-    '3. A browser dialog opens — pick your Zoom/Teams tab\n' +
-    '4. Tick "Share tab audio" — done!\n\n' +
-    '🟢 MICROPHONE ONLY (simplest):\n' +
-    'Keep "🎤 Microphone" mode selected and just press Space.\n' +
-    'No screen sharing needed — the app listens via your mic directly.'
-  );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 // INIT
-// ─────────────────────────────────────────────────────────────────────────────
+// =============================================================================
 (async function init() {
   await checkServerKeys();
 })();
