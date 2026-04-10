@@ -1,13 +1,10 @@
-# Legacy Python/Flask files — app now runs on Node.js serverless
+# Exclude Python/Flask files — this is a Node.js project
 app.py
 main.py
 llm_service.py
 requirements.txt
-templates/
 server.log
 cv_rewriter_app.zip
-__pycache__/
 *.pyc
-*.pyo
+__pycache__/
 .env
-.env.local
