@@ -265,6 +265,8 @@ ANSWER FORMAT — CRITICAL RULES:
             "role_family": resolved_role_family
         }
         await asyncio.sleep(0.02)
+    # Ensure terminal event if any
+    yield {"type": "done"}
 
 def _mock_response(question: str, cv: str, job_role: str, style: str, role_family: str) -> Dict[str, str]:
     response = {}

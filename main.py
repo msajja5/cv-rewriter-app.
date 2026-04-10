@@ -55,6 +55,11 @@ async def chat_endpoint(request: ChatRequest, req: Request):
 
     async def stream_tokens_with_keys(req_body: ChatRequest, keys: dict):
         try:
+            # Send immediate ping to prevent Vercel timeout if provider fallback takes time
+            yield f"data: {json.dumps({'type': 'token', 'content': ''})}
+
+"
+
             async for chunk in generate_ai_response_with_llm_stream(
                 question=req_body.transcript,
                 cv=req_body.cv,
@@ -72,7 +77,12 @@ async def chat_endpoint(request: ChatRequest, req: Request):
 
     return StreamingResponse(
         stream_tokens_with_keys(request, custom_keys),
-        media_type="text/event-stream"
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no" # For Nginx/Vercel buffering disable
+        }
     )
 
 

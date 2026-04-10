@@ -46,3 +46,8 @@ INFO:main:Received chat streaming request for role:
 INFO:     127.0.0.1:41484 - "POST /chat HTTP/1.1" 200 OK
 INFO:llm_service:Prompt length: 5210 chars — profile included: True
 INFO:llm_service:All LLM providers failed or missing keys. Falling back to mock logic.
+INFO:     127.0.0.1:42626 - "GET / HTTP/1.1" 200 OK
+INFO:main:Received chat streaming request for role:
+INFO:     127.0.0.1:42626 - "POST /chat HTTP/1.1" 200 OK
+INFO:llm_service:Prompt length: 5210 chars — profile included: True
+INFO:llm_service:All LLM providers failed or missing keys. Falling back to mock logic.
