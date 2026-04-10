@@ -8,19 +8,58 @@ const STYLES = {
   detailed: "Use the STAR method: Situation, Task, Action, Result. 5-6 sentences. Be specific with numbers and outcomes."
 };
 
-// Phrases that are NOT interview questions — mic/audio tests, greetings, noise
+// ── Non-question filter (hardened v2) ─────────────────────────────────────────
+// Catches mic tests, greetings, filler words, acknowledgements, and short noise
+const NON_QUESTION_KEYWORDS = new Set([
+  "hello","hi","hey","test","testing","check","okay","ok","yes","no","yeah","nope",
+  "uh","um","hmm","alright","right","good","great","sure","yep","nah","bye","thanks",
+  "thank","sorry","pardon","please","wait","hold","ready","start","stop","go","next",
+  "one","two","three","123","cool","nice","got","got it","noted"
+]);
+
 const NON_QUESTION_PATTERNS = [
-  /^(can you hear me|can you hear|hello|hi|hey|test|testing|check|mic check|one two|123|sound check|is this working|are you there|okay|ok|yes|no|yeah|nope|uh|um|hmm|alright|right|good|great)[.?!,\s]*$/i,
-  /^(can|could) you (hear|see|understand) me[.?!,\s]*$/i
+  // Mic/audio tests
+  /\b(can you hear me|can you hear|is this on|mic check|sound check|audio check|is this working|testing testing|one two three|check check)\b/i,
+  // Greetings + intro noise
+  /^(hello|hi|hey|good morning|good afternoon|good evening)[.!?,\s]*$/i,
+  // Acknowledgements / backchannels
+  /^(okay|ok|yes|no|yeah|nope|sure|yep|nah|alright|right|got it|i see|understood|perfect|great|good|nice|cool|noted|absolutely|of course|definitely|exactly|correct|agreed)[.!?,\s]*$/i,
+  // Filler / social noise
+  /^(uh+|um+|hmm+|er+|ah+|oh+|ehh?)[.!?,\s]*$/i,
+  // "Can/could you hear/see/understand me"
+  /^(can|could) you (hear|see|understand|read) (me|us)[.?!,\s]*$/i,
+  // "Are you there / ready"
+  /^(are you there|are you ready|is anyone there|is this recording|can you see me)[.?!,\s]*$/i,
+  // Filler phrases that aren't questions
+  /^(one moment|just a moment|one second|hold on|bear with me|let me think|sorry about that|excuse me)[.!?,\s]*$/i,
+  /^(sorry can you repeat|can you repeat that|pardon me)[.?!,\s]*$/i,
+  // Pure numbers / single chars
+  /^[\d\s.,-]+$/,
 ];
 
 function isNonQuestion(text) {
   const trimmed = (text || "").trim();
-  if (trimmed.split(/\s+/).length <= 2 && trimmed.length < 20) {
-    // Very short utterances (1-2 words under 20 chars) are likely noise/test words
-    return true;
+  if (!trimmed) return true;
+
+  const words = trimmed.split(/\s+/);
+  const lower = trimmed.toLowerCase().replace(/[.!?,]+$/, "").trim();
+
+  // Very short utterances ≤ 3 words — check against known noise words
+  if (words.length <= 3) {
+    // All words are noise keywords → skip
+    const allNoise = words.every(w => NON_QUESTION_KEYWORDS.has(w.toLowerCase().replace(/[^a-z]/g,"")));
+    if (allNoise) return true;
+    // Under 20 chars and not a question → likely noise
+    if (trimmed.length < 20 && !trimmed.includes("?")) return true;
   }
-  return NON_QUESTION_PATTERNS.some(p => p.test(trimmed));
+
+  // Pattern match (whole string)
+  if (NON_QUESTION_PATTERNS.some(p => p.test(lower) || p.test(trimmed))) return true;
+
+  // Contains question mark but is still clearly a mic/social phrase
+  if (NON_QUESTION_PATTERNS.some(p => p.test(lower.replace(/\?/g,"")))) return true;
+
+  return false;
 }
 
 function buildSystemPrompt(cv, job_role, response_style, target_role_family) {
@@ -40,7 +79,7 @@ RULES:
 - Sound human, warm, and confident — never robotic
 - Never say "As an AI" or "I cannot"
 - Never repeat the question back
-- If the detected speech is not a real interview question (e.g. a greeting, test phrase, or filler word), respond with exactly: SKIP`;
+- If the detected speech is not a real interview question (e.g. a greeting, test phrase, filler word, or mic test), respond with exactly: SKIP`;
 }
 
 function buildMessages(systemPrompt, transcript, context) {
@@ -118,32 +157,31 @@ function buildOfflineHint(question) {
   const q = (question || "").toLowerCase();
   const has = arr => arr.some(k => q.includes(k));
   if (has(["tell me about","introduce","background","walk me through","yourself"]))
-    return "I have 7+ years in supply chain planning across Ontex, Nike, Solvay and QuEST Global — managing demand and supply planning for 12 global sites and a €2B EMEA retail portfolio. My core tools are Arkieva, SAP, Kinaxis RapidResponse, Power BI and Tableau. I hold an MSc in Supply Chain from EM Normandie. At Ontex I improved forecast accuracy by 27%, and at Nike I reduced holding costs by 20%.";
+    return "I have 7+ years in supply chain planning across Ontex, Nike, Solvay and QuEST Global — managing demand and supply planning for 12 global sites and a \u20ac2B EMEA retail portfolio. My core tools are Arkieva, SAP, Kinaxis RapidResponse, Power BI and Tableau. I hold an MSc in Supply Chain from EM Normandie. At Ontex I improved forecast accuracy by 27%, and at Nike I reduced holding costs by 20%.";
   if (has(["forecast","accuracy","demand plan"]))
-    return "At Ontex I led 18-month rolling demand plans using Arkieva across 12 global sites, improving forecast accuracy by 27%. At Nike I built statistical demand models for a €2B EMEA retail portfolio. I also developed EOQ and safety stock models at QuEST Global for FMCG clients.";
+    return "At Ontex I led 18-month rolling demand plans using Arkieva across 12 global sites, improving forecast accuracy by 27%. At Nike I built statistical demand models for a \u20ac2B EMEA retail portfolio. I also developed EOQ and safety stock models at QuEST Global for FMCG clients.";
   if (has(["supply chain","s&op","planning"]))
-    return "I managed end-to-end supply chain planning at Ontex (12 sites, Arkieva), Nike (€2B EMEA, -20% holding costs), Solvay (€150M raw material MRP) and QuEST Global (SAP ERP implementation).";
+    return "I managed end-to-end supply chain planning at Ontex (12 sites, Arkieva), Nike (\u20ac2B EMEA, -20% holding costs), Solvay (\u20ac150M raw material MRP) and QuEST Global (SAP ERP implementation).";
   if (has(["sap","erp","kinaxis","arkieva","tool","software","system"]))
     return "My planning toolset: Arkieva for demand/supply planning, SAP ERP for MRP and implementation, Kinaxis RapidResponse for functional consulting, and Power BI/Tableau for KPI dashboards tracking OTIF, DIO and cost-to-serve.";
   if (has(["challenge","difficult","problem","failure","mistake"]))
     return "At Ontex during post-COVID volatility, I rebuilt the S&OP process across 12 global sites. I introduced 18-month rolling plans in Arkieva and aligned Sales, Finance and Operations on a weekly cadence — resulting in +27% forecast accuracy and improved OTIF.";
   if (has(["achiev","proud","success","impact","result","accomplishment"]))
-    return "My top achievements: +27% forecast accuracy at Ontex across 12 global sites, -20% holding costs at Nike on a €2B EMEA portfolio, and automated Power BI dashboards that cut manual KPI reporting from 8 hours to 30 minutes per week.";
+    return "My top achievements: +27% forecast accuracy at Ontex across 12 global sites, -20% holding costs at Nike on a \u20ac2B EMEA portfolio, and automated Power BI dashboards that cut manual KPI reporting from 8 hours to 30 minutes per week.";
   if (has(["strength","good at","best at"]))
     return "My core strength is bridging data and operations — translating complex supply chain data into actionable plans that Sales, Finance and Operations all align on. I combine strong analytical skills (Power BI, Python, SQL) with cross-functional communication.";
   if (has(["weakness","improve","develop"]))
     return "I tend to go deep into data analysis before acting. I've learned to timebox my analysis phase — now I set a clear decision deadline and move to action even with imperfect data, aligning stakeholders faster.";
   if (has(["why","motivated","interest","leave","left"]))
     return "I'm passionate about supply chain because every optimisation has a direct impact on service levels, costs and people. I'm looking for a role where I can apply my planning and analytics expertise at scale across a global organisation.";
-  return "Draw on your 7+ years across Ontex, Nike, Solvay and QuEST Global. Mention specific tools (Arkieva, Kinaxis, SAP, Power BI), quantified results (+27% forecast accuracy, -20% holding costs, €2B EMEA), and your cross-functional leadership in S&OP and NPI.";
+  return "Draw on your 7+ years across Ontex, Nike, Solvay and QuEST Global. Mention specific tools (Arkieva, Kinaxis, SAP, Power BI), quantified results (+27% forecast accuracy, -20% holding costs, \u20ac2B EMEA), and your cross-functional leadership in S&OP and NPI.";
 }
 
 // ── Main handler — Node.js serverless (NOT Edge) ────────────────────────────
 module.exports = async function handler(req, res) {
-  // CORS preflight
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-groq-key, x-gemini-key, x-openrouter-key");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-groq-key, x-gemini-key, x-openrouter-key, x-deepgram-key");
   if (req.method === "OPTIONS") { res.status(200).end(); return; }
   if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
@@ -154,28 +192,16 @@ module.exports = async function handler(req, res) {
   const body = req.body || {};
   const { cv, job_role, transcript, context = [], response_style = "live_script", target_role_family = "Supply Chain" } = body;
 
-  if (!transcript) {
-    res.status(400).json({ error: "No transcript provided" });
-    return;
-  }
+  if (!transcript) { res.status(400).json({ error: "No transcript provided" }); return; }
 
-  // ── Pre-filter: skip non-question phrases (mic tests, greetings, noise) ──
+  // ── Pre-filter: skip non-question phrases ──
   if (isNonQuestion(transcript)) {
-    res.status(200).json({
-      answer: null,
-      skip: true,
-      provider: "filter"
-    });
+    res.status(200).json({ answer: null, skip: true, provider: "filter" });
     return;
   }
 
-  // If no API keys — return offline hint immediately
   if (!groqKey && !geminiKey && !openrouterKey) {
-    res.status(200).json({
-      answer: buildOfflineHint(transcript),
-      provider: "📋 Offline Hints (no API key)",
-      offline: true
-    });
+    res.status(200).json({ answer: buildOfflineHint(transcript), provider: "\uD83D\uDCCB Offline Hints (no API key)", offline: true });
     return;
   }
 
@@ -185,32 +211,19 @@ module.exports = async function handler(req, res) {
   let result = null;
   const errors = [];
 
-  if (groqKey) {
-    try { result = await tryGroq(messages, groqKey); }
-    catch (e) { errors.push(`Groq: ${e.message}`); console.error("Groq failed:", e.message); }
-  }
-  if (!result && geminiKey) {
-    try { result = await tryGemini(messages, geminiKey); }
-    catch (e) { errors.push(`Gemini: ${e.message}`); console.error("Gemini failed:", e.message); }
-  }
-  if (!result && openrouterKey) {
-    try { result = await tryOpenRouter(messages, openrouterKey); }
-    catch (e) { errors.push(`OpenRouter: ${e.message}`); console.error("OpenRouter failed:", e.message); }
-  }
+  if (groqKey) { try { result = await tryGroq(messages, groqKey); } catch (e) { errors.push(`Groq: ${e.message}`); console.error("Groq failed:", e.message); } }
+  if (!result && geminiKey) { try { result = await tryGemini(messages, geminiKey); } catch (e) { errors.push(`Gemini: ${e.message}`); console.error("Gemini failed:", e.message); } }
+  if (!result && openrouterKey) { try { result = await tryOpenRouter(messages, openrouterKey); } catch (e) { errors.push(`OpenRouter: ${e.message}`); console.error("OpenRouter failed:", e.message); } }
 
   if (result) {
-    // Check if AI returned SKIP signal
     if (result.text.trim().toUpperCase() === "SKIP") {
       res.status(200).json({ answer: null, skip: true, provider: result.provider });
       return;
     }
-
-    // Stream word-by-word via SSE for real-time teleprompter effect
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
     res.status(200);
-
     const words = result.text.split(" ");
     let first = true;
     for (const word of words) {
@@ -221,11 +234,6 @@ module.exports = async function handler(req, res) {
     res.write(`data: ${JSON.stringify({ type: "done", provider: result.provider })}\n\n`);
     res.end();
   } else {
-    res.status(200).json({
-      answer: buildOfflineHint(transcript),
-      provider: "📋 Offline Hints (all APIs failed)",
-      offline: true,
-      errors
-    });
+    res.status(200).json({ answer: buildOfflineHint(transcript), provider: "\uD83D\uDCCB Offline Hints (all APIs failed)", offline: true, errors });
   }
 };
