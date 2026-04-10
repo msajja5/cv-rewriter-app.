@@ -1,7 +1,6 @@
 {
   "name": "cv-rewriter-app",
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
     "groq-sdk": "^0.9.0"
   }
