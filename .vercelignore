@@ -1,5 +1,4 @@
-# Exclude legacy Python files from Vercel build
-# These are old Flask artifacts — the app now runs on Node.js serverless
+# Legacy Python/Flask files — app now runs on Node.js serverless
 app.py
 main.py
 llm_service.py
@@ -9,3 +8,6 @@ server.log
 cv_rewriter_app.zip
 __pycache__/
 *.pyc
+*.pyo
+.env
+.env.local
