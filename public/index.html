@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Interview Copilot — Manjunath Sajjan</title>
+  <style>
+    :root {
+      --bg: #f4f7f6;
+      --surface: #ffffff;
+      --primary: #01696f;
+      --primary-hover: #0c4e54;
+      --danger: #dc3545;
+      --danger-hover: #c82333;
+      --green-bg: #e9f7ef;
+      --green-border: #28a745;
+      --text: #333;
+      --muted: #666;
+      --border: #ddd;
+      --shadow: 0 4px 16px rgba(0,0,0,0.09);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: var(--surface); padding: 32px; border-radius: 12px; box-shadow: var(--shadow); }
+    h1 { text-align: center; font-size: 1.8rem; margin-bottom: 4px; }
+    .subtitle { text-align: center; color: var(--muted); margin-bottom: 28px; font-size: 0.95rem; }
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; color: #444; font-size: 0.9rem; }
+    input, textarea, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: var(--primary); }
+    .btn { display: block; width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* API Key section */
+    .api-section { background: #f0f9ff; border: 1px solid #b3daf7; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    .api-section summary { font-weight: 600; cursor: pointer; color: var(--primary); font-size: 0.9rem; }
+    .api-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .api-grid .form-group { margin-bottom: 0; }
+    .api-hint { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    /* Interview section */
+    #interview-section { display: none; margin-top: 24px; border-top: 2px solid #eee; padding-top: 24px; }
+    .controls { display: flex; gap: 12px; margin-bottom: 20px; }
+    .controls .btn { flex: 1; }
+
+    /* Script box */
+    .script-label { font-weight: 700; font-size: 1rem; margin-bottom: 8px; color: #333; display: flex; align-items: center; gap: 8px; }
+    .provider-badge { font-size: 0.72rem; background: #e0f2f1; color: var(--primary); padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+    .script-box {
+      background: var(--green-bg);
+      border-left: 5px solid var(--green-border);
+      border-radius: 6px;
+      padding: 20px;
+      min-height: 110px;
+      font-size: 1.15rem;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      white-space: pre-wrap;
+    }
+    .script-box.loading { color: #888; font-style: italic; font-size: 1rem; }
+    .script-box.error { border-left-color: var(--danger); background: #fff5f5; color: var(--danger); font-size: 0.95rem; }
+
+    /* Transcript */
+    .transcript-box { height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 12px; background: #fafafa; border-radius: 6px; font-size: 0.9rem; }
+    .transcript-line { margin-bottom: 8px; line-height: 1.5; }
+    .lbl-interviewer { color: #d9534f; font-weight: 700; }
+    .lbl-candidate { color: #0275d8; font-weight: 700; }
+    .lbl-system { color: #888; font-style: italic; }
+
+    /* Response style selector */
+    .style-row { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; }
+    .style-row label { margin: 0; white-space: nowrap; font-size: 0.88rem; }
+    .style-row select { max-width: 240px; }
+
+    /* Fallback indicator */
+    .fallback-bar { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 8px 14px; font-size: 0.82rem; color: #856404; margin-bottom: 14px; display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🎙️ AI Interview Copilot</h1>
+  <p class="subtitle">Real-time answer scripts for Supply Chain &amp; Data Analytics interviews</p>
+
+  <!-- SETUP SECTION -->
+  <div id="setup-section">
+    <details class="api-section">
+      <summary>🔑 API Keys (optional — leave blank to use server keys or offline mode)</summary>
+      <div class="api-grid">
+        <div class="form-group">
+          <label>Groq API Key (fastest)</label>
+          <input type="password" id="groq-key" placeholder="gsk_...">
+          <p class="api-hint">Free at console.groq.com</p>
+        </div>
+        <div class="form-group">
+          <label>Gemini API Key</label>
+          <input type="password" id="gemini-key" placeholder="AIza...">
+          <p class="api-hint">Free at aistudio.google.com</p>
+        </div>
+        <div class="form-group">
+          <label>OpenRouter Key</label>
+          <input type="password" id="openrouter-key" placeholder="sk-or-...">
+          <p class="api-hint">Free tier at openrouter.ai</p>
+        </div>
+        <div class="form-group">
+          <label>Ollama (local — offline)</label>
+          <input type="text" id="ollama-url" placeholder="http://localhost:11434" value="http://localhost:11434">
+          <p class="api-hint">Run: ollama pull llama3</p>
+        </div>
+      </div>
+    </details>
+
+    <form id="setup-form">
+      <div class="form-group">
+        <label for="job-role">Target Job Role</label>
+        <input type="text" id="job-role" placeholder="e.g. Supply Chain Analyst, Demand Planner" required>
+      </div>
+      <div class="form-group">
+        <label for="cv">Your CV / Resume (paste full text)</label>
+        <textarea id="cv" rows="7" placeholder="Paste your CV text here..." required></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary">Start Interview Assistant →</button>
+    </form>
+  </div>
+
+  <!-- INTERVIEW SECTION -->
+  <div id="interview-section">
+    <div class="style-row">
+      <label for="response-style">Answer style:</label>
+      <select id="response-style">
+        <option value="live_script">🎙️ Live Script (teleprompter)</option>
+        <option value="concise">⚡ Concise (1-2 sentences)</option>
+        <option value="normal">📝 Normal (3-4 sentences)</option>
+        <option value="detailed">📊 Detailed STAR method</option>
+      </select>
+    </div>
+
+    <div class="controls">
+      <button id="start-btn" class="btn btn-primary">🎤 Start Listening</button>
+      <button id="stop-btn" class="btn btn-danger" disabled>⏹ Stop</button>
+    </div>
+
+    <div class="fallback-bar" id="fallback-bar">⚠️ Cloud APIs unavailable — using local Ollama model</div>
+
+    <div class="script-label">
+      AI Suggested Script
+      <span class="provider-badge" id="provider-badge">waiting...</span>
+    </div>
+    <div class="script-box" id="ai-script">Waiting for interviewer's question... speak naturally and the AI will generate your answer script here.</div>
+
+    <h3 style="margin: 16px 0 8px; font-size:0.95rem;">Live Transcript</h3>
+    <div class="transcript-box" id="transcript"></div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let sessionCV = '';
+let sessionJobRole = '';
+let conversationContext = [];
+let isRecording = false;
+let recognitionInterviewer, recognitionCandidate;
+
+// ─── DOM refs ────────────────────────────────────────────────────────────────
+const setupSection    = document.getElementById('setup-section');
+const interviewSection = document.getElementById('interview-section');
+const setupForm       = document.getElementById('setup-form');
+const startBtn        = document.getElementById('start-btn');
+const stopBtn         = document.getElementById('stop-btn');
+const transcriptBox   = document.getElementById('transcript');
+const aiScriptBox     = document.getElementById('ai-script');
+const providerBadge   = document.getElementById('provider-badge');
+const fallbackBar     = document.getElementById('fallback-bar');
+const styleSelect     = document.getElementById('response-style');
+
+// ─── Setup form ──────────────────────────────────────────────────────────────
+setupForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  sessionCV      = document.getElementById('cv').value.trim();
+  sessionJobRole = document.getElementById('job-role').value.trim();
+  if (!sessionCV || !sessionJobRole) return;
+  conversationContext = [];
+  setupSection.style.display = 'none';
+  interviewSection.style.display = 'block';
+  appendTranscript('System', 'Session started. Click "Start Listening" to begin.');
+});
+
+// ─── Fetch AI answer via /api/chat (works on Vercel + locally) ──────────────
+async function fetchAIAnswer(question) {
+  aiScriptBox.className = 'script-box loading';
+  aiScriptBox.textContent = 'Analysing question...';
+  providerBadge.textContent = 'thinking...';
+
+  const groqKey       = document.getElementById('groq-key').value.trim();
+  const geminiKey     = document.getElementById('gemini-key').value.trim();
+  const openrouterKey = document.getElementById('openrouter-key').value.trim();
+
+  const headers = { 'Content-Type': 'application/json' };
+  if (groqKey)       headers['x-groq-key']       = groqKey;
+  if (geminiKey)     headers['x-gemini-key']     = geminiKey;
+  if (openrouterKey) headers['x-openrouter-key'] = openrouterKey;
+
+  const body = {
+    cv: sessionCV,
+    job_role: sessionJobRole,
+    transcript: question,
+    context: conversationContext.slice(-6),
+    response_style: styleSelect.value,
+    target_role_family: 'Supply Chain'
+  };
+
+  // 1️⃣ Try /api/chat (Vercel edge function — Groq → Gemini → OpenRouter)
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
+      await consumeStream(res);
+      return;
+    }
+  } catch (err) {
+    console.warn('/api/chat failed:', err.message);
+  }
+
+  // 2️⃣ Fallback: try local Ollama directly from browser
+  const ollamaUrl = (document.getElementById('ollama-url').value.trim() || 'http://localhost:11434');
+  try {
+    fallbackBar.style.display = 'block';
+    const res = await fetch(`${ollamaUrl}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama3',
+        messages: [
+          { role: 'system', content: buildLocalSystemPrompt() },
+          ...conversationContext.slice(-6).map(m => ({ role: m.role === 'interviewer' ? 'user' : 'assistant', content: m.text })),
+          { role: 'user', content: question }
+        ],
+        stream: false
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const text = data.message?.content || '';
+      if (text) {
+        displayAnswer(text, '🏠 Ollama (local)');
+        return;
+      }
+    }
+  } catch (err) {
+    console.warn('Ollama failed:', err.message);
+  }
+
+  // 3️⃣ Last resort: keyword mock (always works, no internet needed)
+  displayAnswer(mockAnswer(question), '📋 Offline Mock');
+}
+
+// ─── Stream consumer ─────────────────────────────────────────────────────────
+async function consumeStream(res) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let fullText = '';
+  let providerSet = false;
+
+  aiScriptBox.className = 'script-box';
+  aiScriptBox.textContent = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.type === 'token' && data.content) {
+          fullText += data.content;
+          aiScriptBox.textContent = fullText;
+          if (!providerSet && data.provider) {
+            providerBadge.textContent = data.provider;
+            providerSet = true;
+            if (data.provider.includes('Ollama') || data.provider.includes('local')) {
+              fallbackBar.style.display = 'block';
+            }
+          }
+        }
+        if (data.type === 'done') {
+          providerBadge.textContent = data.provider || providerBadge.textContent;
+        }
+      } catch (_) {}
+    }
+  }
+
+  if (!fullText) throw new Error('Empty stream');
+}
+
+// ─── Display answer (non-stream path) ────────────────────────────────────────
+function displayAnswer(text, provider) {
+  aiScriptBox.className = 'script-box';
+  aiScriptBox.textContent = text;
+  providerBadge.textContent = provider;
+}
+
+// ─── Local system prompt (for Ollama direct call) ────────────────────────────
+function buildLocalSystemPrompt() {
+  return `You are an AI Interview Copilot for Manjunath Sajjan, a Senior Supply Chain professional.
+He is applying for: "${sessionJobRole}".
+Write a 3-4 sentence teleprompter script he can read aloud. First-person, confident, direct.
+Mention tools (Arkieva, SAP, Kinaxis, Power BI, Tableau) and metrics (+27% forecast accuracy, -20% holding costs, €2B EMEA) when relevant.
+Companies: Ontex, Nike, Solvay, QuEST Global.
+His CV: ${sessionCV.slice(0, 800)}`;
+}
+
+// ─── Keyword mock (offline, no model needed) ─────────────────────────────────
+function mockAnswer(question) {
+  const q = question.toLowerCase();
+  if (q.includes('supply chain') || q.includes('planning'))
+    return 'In my role at Ontex, I led demand and supply planning across 12 global sites using Arkieva, which improved forecast accuracy by 27%. I also built Power BI dashboards tracking OTIF and DIO KPIs in real time.';
+  if (q.includes('data') || q.includes('analytics') || q.includes('dashboard'))
+    return 'At Nike, I developed Tableau dashboards for supplier KPIs and ran demand optimizer simulations that reduced holding costs by 20% across our €2B EMEA retail network.';
+  if (q.includes('experience') || q.includes('background') || q.includes('yourself'))
+    return `I have over 5 years of supply chain experience across FMCG and manufacturing at Ontex, Nike, and Solvay. My expertise is demand forecasting, capacity planning, and data-driven decision-making — directly relevant to the ${sessionJobRole} role.`;
+  if (q.includes('challenge') || q.includes('difficult') || q.includes('problem'))
+    return 'At Ontex, I faced a major demand volatility challenge across 12 global sites post-COVID. I rebuilt the S&OP process in Arkieva with an 18-month rolling plan, aligning Sales, Finance, and Operations — which lifted forecast accuracy by 27%.';
+  if (q.includes('team') || q.includes('collaborat') || q.includes('stakeholder'))
+    return 'At Ontex, I led cross-functional NPI teams across Supply Chain, Sales, and Finance to ensure supply readiness for new product launches. Clear communication and shared KPI dashboards in Power BI kept all stakeholders aligned.';
+  return `Based on my experience at Ontex and Nike, I bring strong expertise in ${sessionJobRole} through hands-on work with SAP, Arkieva, and advanced analytics tools — always focused on measurable impact.`;
+}
+
+// ─── Speech Recognition ───────────────────────────────────────────────────────
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  recognitionInterviewer = new SR();
+  recognitionInterviewer.continuous = true;
+  recognitionInterviewer.interimResults = false;
+  recognitionInterviewer.lang = 'en-US';
+  recognitionInterviewer.onresult = (event) => {
+    let text = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) text += event.results[i][0].transcript;
+    }
+    if (text.trim()) {
+      appendTranscript('Interviewer', text);
+      conversationContext.push({ role: 'interviewer', text });
+      fetchAIAnswer(text);
+    }
+  };
+  recognitionInterviewer.onend = () => { if (isRecording) { try { recognitionInterviewer.start(); } catch(_) {} } };
+
+  recognitionCandidate = new SR();
+  recognitionCandidate.continuous = true;
+  recognitionCandidate.interimResults = false;
+  recognitionCandidate.lang = 'en-US';
+  recognitionCandidate.onresult = (event) => {
+    let text = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      if (event.results[i].isFinal) text += event.results[i][0].transcript;
+    }
+    if (text.trim()) {
+      appendTranscript('Candidate', text);
+      conversationContext.push({ role: 'candidate', text });
+    }
+  };
+  recognitionCandidate.onend = () => { if (isRecording) { try { recognitionCandidate.start(); } catch(_) {} } };
+} else {
+  startBtn.disabled = true;
+  startBtn.textContent = '⚠️ Chrome/Edge required for audio';
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+startBtn.addEventListener('click', () => {
+  isRecording = true;
+  fallbackBar.style.display = 'none';
+  try { recognitionInterviewer.start(); } catch(_) {}
+  try { recognitionCandidate.start(); } catch(_) {}
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+  startBtn.textContent = '🔴 Listening...';
+  appendTranscript('System', 'Listening — interviewer mic active.');
+});
+
+stopBtn.addEventListener('click', () => {
+  isRecording = false;
+  try { recognitionInterviewer.stop(); } catch(_) {}
+  try { recognitionCandidate.stop(); } catch(_) {}
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  startBtn.textContent = '🎤 Start Listening';
+  appendTranscript('System', 'Stopped listening.');
+});
+
+// ─── Transcript helper ────────────────────────────────────────────────────────
+function appendTranscript(speaker, text) {
+  const div = document.createElement('div');
+  div.className = 'transcript-line';
+  const cls = speaker === 'Interviewer' ? 'lbl-interviewer' : speaker === 'Candidate' ? 'lbl-candidate' : 'lbl-system';
+  div.innerHTML = `<span class="${cls}">${speaker}:</span> ${text}`;
+  transcriptBox.appendChild(div);
+  transcriptBox.scrollTop = transcriptBox.scrollHeight;
+}
+</script>
+</body>
+</html>
