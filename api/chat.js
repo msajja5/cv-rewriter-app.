@@ -1,3 +1,6 @@
+// api/chat.js — Node.js Serverless Function (NOT Edge)
+// Groq → Gemini → OpenRouter waterfall with offline fallback
+
 const STYLES = {
   live_script: "Write a natural teleprompter script Manjunath can read aloud during a live interview. 3-4 sentences. First-person, confident, conversational. NO bullet points. Start directly with the answer — no greetings.",
   concise: "Answer in 1-2 sentences only. Direct and punchy.",
@@ -33,16 +36,6 @@ function buildMessages(systemPrompt, transcript, context) {
   return messages;
 }
 
-function streamText(text, provider, controller, encoder) {
-  const words = text.split(" ");
-  let first = true;
-  for (const word of words) {
-    const p = { type: "token", content: (first ? "" : " ") + word, provider };
-    controller.enqueue(encoder.encode(`data: ${JSON.stringify(p)}\n\n`));
-    first = false;
-  }
-}
-
 async function tryGroq(messages, key) {
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
@@ -52,7 +45,7 @@ async function tryGroq(messages, key) {
   if (!res.ok) {
     const err = await res.text();
     if (res.status === 429 || err.includes("rate_limit") || err.includes("quota")) throw new Error("RATE_LIMIT");
-    throw new Error(`Groq ${res.status}: ${err.slice(0,200)}`);
+    throw new Error(`Groq ${res.status}: ${err.slice(0, 200)}`);
   }
   const data = await res.json();
   return { text: data.choices[0].message.content, provider: "⚡ Groq Llama-3.3" };
@@ -79,7 +72,7 @@ async function tryGemini(messages, key) {
   if (!res.ok) {
     const err = await res.text();
     if (res.status === 429 || err.includes("quota")) throw new Error("RATE_LIMIT");
-    throw new Error(`Gemini ${res.status}: ${err.slice(0,200)}`);
+    throw new Error(`Gemini ${res.status}: ${err.slice(0, 200)}`);
   }
   const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -96,12 +89,7 @@ async function tryOpenRouter(messages, key) {
       "HTTP-Referer": "https://cv-rewriter-app.vercel.app",
       "X-Title": "CV Interview Copilot"
     },
-    body: JSON.stringify({
-      model: "meta-llama/llama-3.3-70b-instruct:free",
-      messages,
-      max_tokens: 300,
-      temperature: 0.7
-    })
+    body: JSON.stringify({ model: "meta-llama/llama-3.3-70b-instruct:free", messages, max_tokens: 300, temperature: 0.7 })
   });
   if (!res.ok) throw new Error(`OpenRouter ${res.status}`);
   const data = await res.json();
@@ -110,85 +98,105 @@ async function tryOpenRouter(messages, key) {
   return { text, provider: "🔀 OpenRouter Llama-3.3" };
 }
 
-export default async function handler(req) {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, x-groq-key, x-gemini-key, x-openrouter-key"
-      }
-    });
-  }
-  if (req.method !== "POST") return new Response("Method Not Allowed", { status: 405 });
+function buildOfflineHint(question) {
+  const q = (question || "").toLowerCase();
+  const has = arr => arr.some(k => q.includes(k));
+  if (has(["tell me about","introduce","background","walk me through","yourself"]))
+    return "I have 7+ years in supply chain planning across Ontex, Nike, Solvay and QuEST Global — managing demand and supply planning for 12 global sites and a €2B EMEA retail portfolio. My core tools are Arkieva, SAP, Kinaxis RapidResponse, Power BI and Tableau. I hold an MSc in Supply Chain from EM Normandie. At Ontex I improved forecast accuracy by 27%, and at Nike I reduced holding costs by 20%.";
+  if (has(["forecast","accuracy","demand plan"]))
+    return "At Ontex I led 18-month rolling demand plans using Arkieva across 12 global sites, improving forecast accuracy by 27%. At Nike I built statistical demand models for a €2B EMEA retail portfolio. I also developed EOQ and safety stock models at QuEST Global for FMCG clients.";
+  if (has(["supply chain","s&op","planning"]))
+    return "I managed end-to-end supply chain planning at Ontex (12 sites, Arkieva), Nike (€2B EMEA, -20% holding costs), Solvay (€150M raw material MRP) and QuEST Global (SAP ERP implementation).";
+  if (has(["sap","erp","kinaxis","arkieva","tool","software","system"]))
+    return "My planning toolset: Arkieva for demand/supply planning, SAP ERP for MRP and implementation, Kinaxis RapidResponse for functional consulting, and Power BI/Tableau for KPI dashboards tracking OTIF, DIO and cost-to-serve.";
+  if (has(["challenge","difficult","problem","failure","mistake"]))
+    return "At Ontex during post-COVID volatility, I rebuilt the S&OP process across 12 global sites. I introduced 18-month rolling plans in Arkieva and aligned Sales, Finance and Operations on a weekly cadence — resulting in +27% forecast accuracy and improved OTIF.";
+  if (has(["achiev","proud","success","impact","result","accomplishment"]))
+    return "My top achievements: +27% forecast accuracy at Ontex across 12 global sites, -20% holding costs at Nike on a €2B EMEA portfolio, and automated Power BI dashboards that cut manual KPI reporting from 8 hours to 30 minutes per week.";
+  if (has(["strength","good at","best at"]))
+    return "My core strength is bridging data and operations — translating complex supply chain data into actionable plans that Sales, Finance and Operations all align on. I combine strong analytical skills (Power BI, Python, SQL) with cross-functional communication.";
+  if (has(["weakness","improve","develop"]))
+    return "I tend to go deep into data analysis before acting. I've learned to timebox my analysis phase — now I set a clear decision deadline and move to action even with imperfect data, aligning stakeholders faster.";
+  if (has(["why","motivated","interest","leave","left"]))
+    return "I'm passionate about supply chain because every optimisation has a direct impact on service levels, costs and people. I'm looking for a role where I can apply my planning and analytics expertise at scale across a global organisation.";
+  return "Draw on your 7+ years across Ontex, Nike, Solvay and QuEST Global. Mention specific tools (Arkieva, Kinaxis, SAP, Power BI), quantified results (+27% forecast accuracy, -20% holding costs, €2B EMEA), and your cross-functional leadership in S&OP and NPI.";
+}
 
-  // Keys: prefer env vars (server-side, secure), fallback to headers (user-entered in browser)
-  const groqKey       = process.env.GROQ_API_KEY       || req.headers.get("x-groq-key")       || "";
-  const geminiKey     = process.env.GEMINI_API_KEY     || req.headers.get("x-gemini-key")     || "";
-  const openrouterKey = process.env.OPENROUTER_API_KEY || req.headers.get("x-openrouter-key") || "";
+// ── Main handler — Node.js serverless (NOT Edge) ────────────────────────────
+module.exports = async function handler(req, res) {
+  // CORS preflight
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-groq-key, x-gemini-key, x-openrouter-key");
+  if (req.method === "OPTIONS") { res.status(200).end(); return; }
+  if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
-  const encoder = new TextEncoder();
+  // Keys: Vercel env vars (server-side, secure) OR request headers (browser-entered fallback)
+  const groqKey       = process.env.GROQ_API_KEY       || req.headers["x-groq-key"]       || "";
+  const geminiKey     = process.env.GEMINI_API_KEY     || req.headers["x-gemini-key"]     || "";
+  const openrouterKey = process.env.OPENROUTER_API_KEY || req.headers["x-openrouter-key"] || "";
 
-  const sendError = (msg) => new Response(
-    new ReadableStream({ start(c) {
-      c.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "token", content: msg, provider: "Error" })}\n\n`));
-      c.close();
-    }}),
-    { headers: { "Content-Type": "text/event-stream", "Access-Control-Allow-Origin": "*" } }
-  );
-
-  if (!groqKey && !geminiKey && !openrouterKey) {
-    return sendError("⚠️ No API keys found. Set GROQ_API_KEY / GEMINI_API_KEY / OPENROUTER_API_KEY in Vercel env vars, or enter a key in the app.");
-  }
-
-  let body;
-  try { body = await req.json(); } catch { return sendError("Invalid JSON body"); }
-
+  const body = req.body || {};
   const { cv, job_role, transcript, context = [], response_style = "live_script", target_role_family = "Supply Chain" } = body;
-  if (!transcript) return sendError("No question transcript provided.");
+
+  if (!transcript) {
+    res.status(400).json({ error: "No transcript provided" });
+    return;
+  }
+
+  // If no API keys — return offline hint immediately (no stream needed)
+  if (!groqKey && !geminiKey && !openrouterKey) {
+    res.status(200).json({
+      answer: buildOfflineHint(transcript),
+      provider: "📋 Offline Hints (no API key)",
+      offline: true
+    });
+    return;
+  }
 
   const systemPrompt = buildSystemPrompt(cv, job_role, response_style, target_role_family);
   const messages = buildMessages(systemPrompt, transcript, context);
 
-  const stream = new ReadableStream({
-    async start(controller) {
-      let result = null;
-      const errors = [];
+  // Try providers in order
+  let result = null;
+  const errors = [];
 
-      if (groqKey) {
-        try { result = await tryGroq(messages, groqKey); }
-        catch (e) { errors.push(`Groq: ${e.message}`); console.error("Groq failed:", e.message); }
-      }
+  if (groqKey) {
+    try { result = await tryGroq(messages, groqKey); }
+    catch (e) { errors.push(`Groq: ${e.message}`); console.error("Groq failed:", e.message); }
+  }
+  if (!result && geminiKey) {
+    try { result = await tryGemini(messages, geminiKey); }
+    catch (e) { errors.push(`Gemini: ${e.message}`); console.error("Gemini failed:", e.message); }
+  }
+  if (!result && openrouterKey) {
+    try { result = await tryOpenRouter(messages, openrouterKey); }
+    catch (e) { errors.push(`OpenRouter: ${e.message}`); console.error("OpenRouter failed:", e.message); }
+  }
 
-      if (!result && geminiKey) {
-        try { result = await tryGemini(messages, geminiKey); }
-        catch (e) { errors.push(`Gemini: ${e.message}`); console.error("Gemini failed:", e.message); }
-      }
+  if (result) {
+    // Stream word-by-word via SSE for real-time teleprompter effect
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.status(200);
 
-      if (!result && openrouterKey) {
-        try { result = await tryOpenRouter(messages, openrouterKey); }
-        catch (e) { errors.push(`OpenRouter: ${e.message}`); console.error("OpenRouter failed:", e.message); }
-      }
-
-      if (result) {
-        const firstChunk = { type: "token", content: "", provider: result.provider, intent: "SC Interview", role_family: target_role_family };
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(firstChunk)}\n\n`));
-        streamText(result.text, result.provider, controller, encoder);
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done", provider: result.provider })}\n\n`));
-      } else {
-        const errMsg = `All providers failed: ${errors.join(" | ")}`;
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "token", content: errMsg, provider: "Error" })}\n\n`));
-      }
-
-      controller.close();
+    const words = result.text.split(" ");
+    let first = true;
+    for (const word of words) {
+      const payload = { type: "token", content: (first ? "" : " ") + word, provider: result.provider };
+      res.write(`data: ${JSON.stringify(payload)}\n\n`);
+      first = false;
     }
-  });
-
-  return new Response(stream, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      "Access-Control-Allow-Origin": "*"
-    }
-  });
-}
+    res.write(`data: ${JSON.stringify({ type: "done", provider: result.provider })}\n\n`);
+    res.end();
+  } else {
+    // All cloud providers failed — return offline hint
+    res.status(200).json({
+      answer: buildOfflineHint(transcript),
+      provider: "📋 Offline Hints (all APIs failed)",
+      offline: true,
+      errors
+    });
+  }
+};
