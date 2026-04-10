@@ -13,6 +13,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI()
+application = app
+handler = app
 
 # Vercel's serverless environment has a read-only filesystem except for /tmp.
 # Removing os.makedirs("templates", exist_ok=True) because it can throw a PermissionError
@@ -56,9 +58,7 @@ async def chat_endpoint(request: ChatRequest, req: Request):
     async def stream_tokens_with_keys(req_body: ChatRequest, keys: dict):
         try:
             # Send immediate ping to prevent Vercel timeout if provider fallback takes time
-            yield f"data: {json.dumps({'type': 'token', 'content': ''})}
-
-"
+            yield f"data: {json.dumps({'type': 'token', 'content': ''})}\n\n"
 
             async for chunk in generate_ai_response_with_llm_stream(
                 question=req_body.transcript,
