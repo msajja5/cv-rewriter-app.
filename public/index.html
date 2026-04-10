@@ -26,6 +26,7 @@
     .status-bar-left{font-size:.82rem;color:#444;line-height:1.7}
     .status-bar-left strong{font-size:.82rem;font-weight:700}
     .status-ready{color:#1a6a30;font-weight:600}
+    .status-dg{color:#7b1fa2;font-weight:600}
     .status-stopped{color:#dc3545;font-weight:600}
     .how-to-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:2px solid var(--primary);background:#fff;color:var(--primary);font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;white-space:nowrap}
     .how-to-btn:hover{background:var(--primary);color:#fff}
@@ -41,7 +42,7 @@
     .diag-btn:hover{background:var(--primary-hover)}
     .diag-btn.secondary{background:#6c757d}
     .diag-btn.secondary:hover{background:#545b62}
-    .diag-result{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:6px;padding:10px 14px;font-size:.82rem;font-family:monospace;white-space:pre-wrap;margin-top:6px;max-height:120px;overflow-y:auto;display:none}
+    .diag-result{background:#f0f4ff;border:1px solid #c5d0f7;border-radius:6px;padding:10px 14px;font-size:.82rem;font-family:monospace;white-space:pre-wrap;margin-top:6px;max-height:200px;overflow-y:auto;display:none}
 
     .form-group{margin-bottom:16px}
     label{display:block;font-weight:600;margin-bottom:6px;color:#444;font-size:.88rem}
@@ -57,6 +58,7 @@
     .api-hint{font-size:.75rem;color:var(--muted);margin-top:4px}
     .key-ok{background:#e9f7ef;border:1px solid #28a745;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#1a6a30;margin-bottom:12px;display:none}
     .key-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:10px 14px;font-size:.82rem;color:#795548;margin-bottom:12px;display:none}
+    .dg-banner{background:#f3e5f5;border:1px solid #ce93d8;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#4a148c;margin-bottom:12px;display:none}
 
     #interview-section{display:none;margin-top:0}
 
@@ -87,17 +89,22 @@
 
     .listen-status{text-align:center;padding:10px;border-radius:6px;margin-bottom:12px;font-size:.85rem;font-weight:600;display:none}
     .listen-status.active{display:block;background:#e9f7ef;color:#1a6a30}
+    .listen-status.dg{display:block;background:#f3e5f5;color:#4a148c}
     .listen-status.error{display:block;background:#fdecea;color:#b71c1c}
     .listen-status.info{display:block;background:#e8f4fd;color:#0c5460}
 
     .script-label{font-weight:700;font-size:1rem;margin-bottom:8px;color:#333;display:flex;align-items:center;gap:8px}
     .provider-badge{font-size:.72rem;background:#e0f2f1;color:var(--primary);padding:2px 8px;border-radius:99px;font-weight:600}
     .provider-badge.offline{background:#fff3cd;color:#856404}
+    .provider-badge.dg{background:#f3e5f5;color:#6a1b9a}
 
     .script-box{background:var(--green-bg);border-left:5px solid var(--green-border);border-radius:6px;padding:20px;min-height:110px;font-size:1.1rem;line-height:1.7;margin-bottom:16px;white-space:pre-wrap}
     .script-box.loading{color:#888;font-style:italic;font-size:1rem}
     .script-box.hint{background:var(--hint-bg);border-left-color:var(--hint-border);font-size:.97rem;line-height:1.8}
     .script-box.error-box{background:#fdecea;border-left-color:#f44336;font-size:.97rem}
+
+    .interim-box{background:#f9f0ff;border:1px dashed #ce93d8;border-radius:6px;padding:10px 14px;font-size:.88rem;color:#4a148c;margin-bottom:10px;min-height:36px;font-style:italic;display:none}
+    .interim-box.show{display:block}
 
     .offline-bar{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;padding:8px 14px;font-size:.82rem;color:#856404;margin-bottom:12px;display:none}
 
@@ -149,15 +156,17 @@
     #float-overlay-btn:hover{background:var(--primary-hover)}
     #float-overlay-btn.show{display:block}
 
-    #debug-panel{display:none;background:#1a1a1a;color:#0f0;font-size:.75rem;font-family:monospace;padding:10px;border-radius:6px;margin-top:10px;max-height:120px;overflow-y:auto;white-space:pre-wrap}
+    #debug-panel{display:none;background:#1a1a1a;color:#0f0;font-size:.75rem;font-family:monospace;padding:10px;border-radius:6px;margin-top:10px;max-height:200px;overflow-y:auto;white-space:pre-wrap}
     .debug-toggle{font-size:.75rem;color:var(--muted);cursor:pointer;text-align:right;margin-bottom:4px;user-select:none}
+
+    /* Deepgram interim pulse */
+    @keyframes interim-pulse{0%,100%{opacity:.6}50%{opacity:1}}
+    .interim-box.show{animation:interim-pulse 1.2s ease-in-out infinite}
   </style>
 </head>
 <body>
 
 <button id="float-overlay-btn" onclick="togglePip()">⧉ Float Overlay</button>
-
-<!-- Hidden audio element for routing tab/display audio through speakers so Chrome STT can hear it -->
 <audio id="tab-audio-el" autoplay playsinline style="display:none" muted></audio>
 
 <div class="container">
@@ -165,18 +174,17 @@
   <p class="subtitle">Real-time answer scripts — Supply Chain &amp; Data Analytics interviews</p>
 
   <div class="usage-note">
-    <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window and place it next to your meeting window. Click "⧉ Float Overlay" to open a separate panel that stays on top of Zoom/Teams.<br><br>
-    <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes without clicking.<br><br>
-    <strong>Tab audio tip:</strong> Select <strong>"Mic + Tab"</strong> mode → share the Zoom/Teams tab with <em>"Share tab audio"</em> ticked. The app will merge both streams so the interviewer's voice is heard.
+    <strong>Usage Note:</strong> For real interviews, open this app in a narrow separate browser window alongside Zoom/Teams. Click "⧉ Float Overlay" for a floating panel that stays on top.<br><br>
+    <strong>Press Space</strong> to quickly switch between Interviewer and Candidate modes.<br><br>
+    <strong>Deepgram STT:</strong> When a Deepgram API key is configured, live transcription is <em>much</em> more accurate than the browser fallback — works in any browser, including Firefox.
   </div>
 
   <!-- ── SETUP SECTION ── -->
   <div id="setup-section">
-
     <div class="status-bar">
       <div class="status-bar-left">
         <strong>System Status:</strong><br>
-        Speech-to-Text Mode: <span class="status-ready" id="stt-status">Browser Web Speech API (Ready)</span><br>
+        Speech-to-Text: <span id="stt-status" class="status-ready">Detecting…</span><br>
         LLM Mode: <span id="llm-status">Waiting for input…</span>
       </div>
       <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
@@ -190,11 +198,12 @@
 
     <div id="tab-details" class="tab-panel active">
       <div class="diag-row">
-        <button class="diag-btn" onclick="runDiag('health')">Test API Health</button>
-        <button class="diag-btn" onclick="runDiag('mic')">Test Mic</button>
-        <button class="diag-btn" onclick="runDiag('stt')">Test STT</button>
-        <button class="diag-btn" onclick="runDiag('answer')">Test Answer Generation</button>
-        <button class="diag-btn secondary" onclick="toggleDebug()">Toggle Diagnostics</button>
+        <button class="diag-btn" onclick="runDiag('health')">🔍 Test API Health</button>
+        <button class="diag-btn" onclick="runDiag('mic')">🎤 Test Mic</button>
+        <button class="diag-btn" onclick="runDiag('stt')">🗣 Test STT</button>
+        <button class="diag-btn" onclick="runDiag('deepgram')">🟣 Test Deepgram</button>
+        <button class="diag-btn" onclick="runDiag('answer')">🤖 Test Answer Generation</button>
+        <button class="diag-btn secondary" onclick="toggleDebug()">Toggle Debug Log</button>
       </div>
       <div id="diag-result" class="diag-result"></div>
 
@@ -235,21 +244,26 @@
 
     <div id="tab-apikeys" class="tab-panel">
       <div class="key-ok" id="key-ok">✅ Server API keys detected — AI answers ready.</div>
-      <div class="key-warn" id="key-warn-setup">⚠️ No server API keys found. Add a key below or ensure Vercel env vars are set.</div>
+      <div class="key-warn" id="key-warn-setup">⚠️ No server LLM keys found. Add a key below or set Vercel env vars.</div>
+      <div class="dg-banner" id="dg-banner-setup">🟣 Deepgram key detected — Nova-3 live STT active (browser fallback disabled).</div>
+
       <div class="form-group">
-        <label>Groq API Key <span style="color:#28a745">(recommended — free)</span></label>
+        <label>Deepgram API Key <span style="color:#7b1fa2">(for accurate STT — recommended)</span></label>
+        <input type="password" id="deepgram-key" placeholder="deepgram_... (leave blank — server has key)">
+        <p class="api-hint">Free 200h at <a href="https://console.deepgram.com" target="_blank">console.deepgram.com</a></p>
+      </div>
+      <div class="form-group">
+        <label>Groq API Key <span style="color:#28a745">(recommended LLM — free)</span></label>
         <input type="password" id="groq-key" placeholder="gsk_... (leave blank — server has key)">
         <p class="api-hint">Free at <a href="https://console.groq.com" target="_blank">console.groq.com</a></p>
       </div>
       <div class="form-group">
         <label>Gemini API Key</label>
         <input type="password" id="gemini-key" placeholder="AIza... (leave blank — server has key)">
-        <p class="api-hint">Free at <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></p>
       </div>
       <div class="form-group">
         <label>OpenRouter Key</label>
-        <input type="password" id="openrouter-key" placeholder="sk-or-... (leave blank — server has key)">
-        <p class="api-hint">Free tier at <a href="https://openrouter.ai" target="_blank">openrouter.ai</a></p>
+        <input type="password" id="openrouter-key" placeholder="sk-or-...">
       </div>
     </div>
 
@@ -262,14 +276,15 @@
     <div class="status-bar">
       <div class="status-bar-left">
         <strong>System Status:</strong><br>
-        Speech-to-Text Mode: <span class="status-ready">Browser Web Speech API (Ready)</span><br>
+        Speech-to-Text: <span id="stt-status-live" class="status-ready">Detecting…</span><br>
         LLM Mode: <span id="llm-status-live">Waiting for input…</span>
       </div>
       <button class="how-to-btn" onclick="showHowTo()">🎧 How to connect Zoom/Teams audio</button>
     </div>
 
-    <div class="key-ok" id="key-ok-live" style="margin-bottom:12px">✅ Server API keys detected — AI answers ready.</div>
-    <div class="key-warn" id="key-warn-live" style="margin-bottom:12px;display:none">⚠️ No API key found — AI answers will use offline hints.</div>
+    <div class="key-ok" id="key-ok-live" style="margin-bottom:8px">✅ Server LLM keys detected — AI answers ready.</div>
+    <div class="key-warn" id="key-warn-live" style="margin-bottom:8px;display:none">⚠️ No LLM key — offline hints only.</div>
+    <div class="dg-banner" id="dg-banner-live" style="margin-bottom:8px">🟣 Deepgram Nova-3 STT active — superior transcription quality.</div>
 
     <div class="pip-row">
       <button class="pip-toggle-btn" id="pip-toggle-btn" onclick="togglePip()">
@@ -278,7 +293,7 @@
     </div>
 
     <div class="audio-panel">
-      <h4>🎧 Audio Source — what should the app listen to?</h4>
+      <h4>🎧 Audio Source</h4>
       <div class="device-tabs">
         <button class="dtab active" onclick="switchMode('mic',this)">🎤 Microphone</button>
         <button class="dtab" onclick="switchMode('tab',this)">🖥️ Browser Tab / Call</button>
@@ -290,10 +305,10 @@
         <select id="mic-select"><option value="">— loading devices… —</option></select>
       </div>
       <div id="hint-tab" class="device-hint">
-        📌 <strong>Browser Tab / Call mode:</strong> When you press Space, you'll be asked to <strong>share a tab or screen</strong>. Pick the Zoom/Teams/Meet tab and tick <em>"Share tab audio"</em>. The audio will be routed through the speaker so Chrome STT can hear it.
+        📌 <strong>Tab mode:</strong> Share the Zoom/Teams tab with "Share tab audio" ticked. Deepgram will transcribe the incoming audio stream directly.
       </div>
       <div id="hint-system" class="device-hint">
-        📌 <strong>System Audio mode:</strong> Select <em>"Entire Screen"</em> and enable <em>"Share system audio"</em>. On Mac, a virtual audio driver (e.g. BlackHole) is required.
+        📌 <strong>System Audio:</strong> Select "Entire Screen" and enable "Share system audio". On Mac, BlackHole virtual driver is required.
       </div>
     </div>
 
@@ -310,9 +325,10 @@
     <div class="controls">
       <button id="toggle-btn" class="btn btn-primary">▶ Start Listening</button>
     </div>
-    <p class="space-hint">Press <kbd>Space</kbd> anywhere to start / stop listening</p>
+    <p class="space-hint">Press <kbd>Space</kbd> to start / stop listening</p>
 
     <div class="listen-status" id="listen-status"></div>
+    <div class="interim-box" id="interim-box"></div>
     <div class="offline-bar" id="offline-bar">⚠️ Internet unavailable — showing offline CV hints.</div>
 
     <div class="q-box">
@@ -366,7 +382,9 @@
 </div>
 
 <script>
-// ── State ──────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
 let sessionCV = '', sessionJobRole = '';
 let conversationContext = [];
 let isRecording = false;
@@ -374,12 +392,30 @@ let audioMode = 'mic';
 let pipVisible = false;
 let pipExpanded = false;
 let serverHasKeys = false;
-let recognition  = null;
-let activeStreams = [];
-let debugLines   = [];
-let audioCtx     = null;  // AudioContext for merging tab+mic streams
 
-// DOM
+// STT state
+let useDeeepgram = false;       // true when Deepgram key available
+let dgKey = '';                  // Deepgram API key (ephemeral or direct)
+let dgSocket = null;             // Deepgram WebSocket
+let dgStream = null;             // MediaStream feeding Deepgram
+let dgProcessor = null;          // ScriptProcessorNode
+let dgAudioCtx = null;           // AudioContext for Deepgram
+let dgSilenceTimer = null;       // auto-send after silence
+let dgInterimText = '';          // latest interim transcript
+let dgFinalBuffer = '';          // accumulates final words
+let dgLastSentText = '';         // prevent duplicate sends
+
+// Browser Web Speech fallback
+let recognition = null;
+
+// Misc
+let activeStreams = [];
+let debugLines = [];
+let tabAudioCtx = null;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOM REFS
+// ─────────────────────────────────────────────────────────────────────────────
 const setupSection     = document.getElementById('setup-section');
 const interviewSection = document.getElementById('interview-section');
 const toggleBtn        = document.getElementById('toggle-btn');
@@ -393,6 +429,9 @@ const micSelect        = document.getElementById('mic-select');
 const debugPanel       = document.getElementById('debug-panel');
 const floatBtn         = document.getElementById('float-overlay-btn');
 const tabAudioEl       = document.getElementById('tab-audio-el');
+const interimBox       = document.getElementById('interim-box');
+const sttStatusEl      = document.getElementById('stt-status');
+const sttStatusLiveEl  = document.getElementById('stt-status-live');
 
 // PiP DOM
 const pipOverlay      = document.getElementById('pip-overlay');
@@ -405,11 +444,13 @@ const pipListenBadge  = document.getElementById('pip-listen-badge');
 const pipToggleBtn    = document.getElementById('pip-toggle-btn');
 const pipCopyBtn      = document.getElementById('pip-copy-btn');
 
-// ── Debug ──────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────────────────────
 function dbg(msg) {
   const ts = new Date().toLocaleTimeString();
   debugLines.push(`[${ts}] ${msg}`);
-  if (debugLines.length > 80) debugLines.shift();
+  if (debugLines.length > 120) debugLines.shift();
   debugPanel.textContent = debugLines.join('\n');
   debugPanel.scrollTop = debugPanel.scrollHeight;
   console.log('[Copilot]', msg);
@@ -417,16 +458,36 @@ function dbg(msg) {
 function toggleDebug() {
   debugPanel.style.display = debugPanel.style.display === 'block' ? 'none' : 'block';
 }
-
-// ── Tab switching ──────────────────────────────────────────────────────────────
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('tab-' + id).classList.add('active');
 }
+function appendTranscript(role, text) {
+  const line = document.createElement('div');
+  line.className = 'transcript-line';
+  const label = role === 'Interviewer' ? 'lbl-interviewer' : role === 'Candidate' ? 'lbl-candidate' : 'lbl-system';
+  line.innerHTML = `<span class="${label}">${role}:</span> ${text}`;
+  transcriptBox.appendChild(line);
+  transcriptBox.scrollTop = transcriptBox.scrollHeight;
+}
+function setListenStatus(msg, cls) {
+  listenStatus.textContent = msg;
+  listenStatus.className = 'listen-status ' + (cls || '');
+  listenStatus.style.display = msg ? 'block' : 'none';
+}
+function setSttStatus(text, cls) {
+  [sttStatusEl, sttStatusLiveEl].forEach(el => {
+    if (!el) return;
+    el.textContent = text;
+    el.className = cls || 'status-ready';
+  });
+}
 
-// ── Diagnostics ────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// DIAGNOSTICS
+// ─────────────────────────────────────────────────────────────────────────────
 async function runDiag(type) {
   const el = document.getElementById('diag-result');
   el.style.display = 'block';
@@ -437,25 +498,41 @@ async function runDiag(type) {
       const d = await r.json();
       el.textContent = JSON.stringify(d, null, 2);
       serverHasKeys = !!d.anyKeyConfigured;
-      updateKeyUI();
+      updateKeyUI(d);
     } else if (type === 'mic') {
       const s = await navigator.mediaDevices.getUserMedia({ audio: true });
       s.getTracks().forEach(t => t.stop());
-      el.textContent = '✅ Microphone permission granted and working.';
+      el.textContent = '✅ Microphone permission granted.';
     } else if (type === 'stt') {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { el.textContent = '❌ Web Speech API not available. Use Chrome or Edge.'; return; }
-      const r = new SR();
-      r.lang = 'en-US'; r.continuous = false; r.interimResults = false;
-      r.onstart = () => { el.textContent = '🎙️ STT started — speak a word to test…'; };
-      r.onresult = (e) => { el.textContent = '✅ STT heard: "' + e.results[0][0].transcript + '"'; r.stop(); };
-      r.onerror = (e) => { el.textContent = '❌ STT error: ' + e.error; };
-      r.onend = () => { if (!el.textContent.includes('✅')) el.textContent += '\n(ended)'; };
-      r.start();
+      if (useDeeepgram) {
+        el.textContent = '🟣 Deepgram is the active STT engine. Use "Test Deepgram" button.';
+      } else {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) { el.textContent = '❌ Web Speech API not available. Use Chrome or Edge.'; return; }
+        const r = new SR();
+        r.lang = 'en-US'; r.continuous = false; r.interimResults = false;
+        r.onstart = () => { el.textContent = '🎙️ Browser STT started — speak a word…'; };
+        r.onresult = (e) => { el.textContent = '✅ Browser STT heard: "' + e.results[0][0].transcript + '"'; r.stop(); };
+        r.onerror = (e) => { el.textContent = '❌ STT error: ' + e.error; };
+        r.start();
+      }
+    } else if (type === 'deepgram') {
+      el.textContent = 'Testing Deepgram connection…';
+      const res = await fetchDgKey();
+      if (!res) {
+        el.textContent = '❌ No Deepgram key available. Add DEEPGRAM_API_KEY to Vercel env vars or enter it in API Keys tab.';
+        return;
+      }
+      // Try opening a socket briefly
+      const url = `wss://api.deepgram.com/v1/listen?model=nova-3&language=en&encoding=linear16&sample_rate=16000&punctuate=true&interim_results=true`;
+      const ws = new WebSocket(url, ['token', res]);
+      const t = setTimeout(() => { ws.close(); el.textContent += '\n⚠️ Connection timed out.'; }, 5000);
+      ws.onopen = () => { clearTimeout(t); el.textContent = '✅ Deepgram WebSocket connected! Nova-3 model ready.\nKey mode: ' + (dgKey ? 'active' : 'fetched'); ws.close(); };
+      ws.onerror = () => { clearTimeout(t); el.textContent = '❌ Deepgram WebSocket error. Check key validity.'; };
+      ws.onclose = (e) => { if (e.code !== 1000) el.textContent += `\nClosed: ${e.code} ${e.reason}`; };
     } else if (type === 'answer') {
       const r = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cv: 'Test CV', job_role: 'Supply Chain Analyst', transcript: 'Tell me about yourself', context: [], response_style: 'concise' })
       });
       const text = await r.text();
@@ -466,65 +543,98 @@ async function runDiag(type) {
   }
 }
 
-function showHowTo() {
-  alert(
-    'How to connect Zoom/Teams audio:\n\n' +
-    '✅ RECOMMENDED (most reliable):\n' +
-    '1. Select "🎤+🖥️ Mic + Tab" audio mode\n' +
-    '2. Press Space to start listening\n' +
-    '3. When the share dialog appears, select your Zoom/Teams/Meet tab\n' +
-    '4. Tick "Share tab audio" before clicking Share\n' +
-    '5. The app merges both audio streams — Chrome STT will hear both you and the interviewer\n\n' +
-    '⚠️ WHY "Tab Only" might not work:\n' +
-    'Chrome\'s Web Speech API always listens to the MICROPHONE input, not a display stream.\n' +
-    'In "Mic + Tab" mode, the tab audio plays through your speakers so your mic picks it up (loopback).\n' +
-    'For best results: use headphones so the speaker audio is clear for the mic to catch.'
-  );
+// ─────────────────────────────────────────────────────────────────────────────
+// KEY / UI MANAGEMENT
+// ─────────────────────────────────────────────────────────────────────────────
+async function fetchDgKey() {
+  const localDg = document.getElementById('deepgram-key')?.value?.trim();
+  try {
+    const headers = {};
+    if (localDg) headers['x-deepgram-key'] = localDg;
+    const res = await fetch('/api/transcribe', { headers });
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (data.available && data.key) { dgKey = data.key; return data.key; }
+    return null;
+  } catch(e) {
+    dbg('fetchDgKey error: ' + e.message);
+    return null;
+  }
 }
 
-// ── Check server keys ──────────────────────────────────────────────────────────
 async function checkServerKeys() {
   try {
     const res = await fetch('/api/health');
     if (res.ok) {
       const data = await res.json();
       serverHasKeys = !!data.anyKeyConfigured;
-      dbg(`Health: groq=${data.keys?.groq}, gemini=${data.keys?.gemini}, openrouter=${data.keys?.openrouter}`);
+      updateKeyUI(data);
+      dbg(`Health: groq=${data.keys?.groq}, gemini=${data.keys?.gemini}, deepgram=${data.keys?.deepgram}`);
     }
   } catch(e) { dbg('Health check failed: ' + e.message); }
 }
 
-function updateKeyUI() {
-  const localKey = (document.getElementById('groq-key').value.trim() ||
-                    document.getElementById('gemini-key').value.trim() ||
-                    document.getElementById('openrouter-key').value.trim());
-  const hasAny = serverHasKeys || !!localKey;
-  document.getElementById('key-ok').style.display        = hasAny ? 'block' : 'none';
-  document.getElementById('key-warn-setup').style.display = hasAny ? 'none' : 'block';
-  document.getElementById('key-ok-live').style.display   = hasAny ? 'block' : 'none';
-  document.getElementById('key-warn-live').style.display = hasAny ? 'none' : 'block';
+function updateKeyUI(data) {
+  const localLlm = !!(
+    document.getElementById('groq-key')?.value.trim() ||
+    document.getElementById('gemini-key')?.value.trim() ||
+    document.getElementById('openrouter-key')?.value.trim()
+  );
+  const hasLlm = serverHasKeys || localLlm;
+  const hasDg  = data?.keys?.deepgram || !!document.getElementById('deepgram-key')?.value.trim();
+
+  document.getElementById('key-ok').style.display        = hasLlm ? 'block' : 'none';
+  document.getElementById('key-warn-setup').style.display = hasLlm ? 'none'  : 'block';
+  document.getElementById('key-ok-live').style.display   = hasLlm ? 'block' : 'none';
+  document.getElementById('key-warn-live').style.display = hasLlm ? 'none'  : 'block';
+
+  // Deepgram banners
+  document.getElementById('dg-banner-setup').style.display = hasDg ? 'block' : 'none';
+  document.getElementById('dg-banner-live').style.display  = hasDg ? 'block' : 'none';
+
+  if (data?.stt === 'deepgram' || hasDg) {
+    setSttStatus('🟣 Deepgram Nova-3 (Ready)', 'status-dg');
+  } else {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setSttStatus(SR ? '🟢 Browser Web Speech API (Ready)' : '⚠️ Browser STT not supported — add Deepgram key', SR ? 'status-ready' : 'status-stopped');
+  }
 }
 
-// ── Session start / end ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// SESSION
+// ─────────────────────────────────────────────────────────────────────────────
 async function startSession() {
-  const jrEl  = document.getElementById('job-role');
-  const cvEl  = document.getElementById('cv');
+  const jrEl = document.getElementById('job-role');
+  const cvEl = document.getElementById('cv');
   sessionJobRole = jrEl.value.trim();
   sessionCV      = cvEl.value.trim();
-  if (!sessionJobRole) { alert('Please enter a Target Job Role in the Interview Details tab.'); switchTab('details', document.querySelector('.tab-btn')); return; }
-  if (!sessionCV)      { alert('Please paste your CV in the My CV tab.'); switchTab('cv', document.querySelectorAll('.tab-btn')[1]); return; }
-  const setupStyle = document.getElementById('answer-style').value;
-  document.getElementById('response-style').value = setupStyle;
+  if (!sessionJobRole) { alert('Please enter a Target Job Role in the Interview Details tab.'); return; }
+  if (!sessionCV)      { alert('Please paste your CV in the My CV tab.'); return; }
+  document.getElementById('response-style').value = document.getElementById('answer-style').value;
   conversationContext = [];
   setupSection.style.display     = 'none';
   interviewSection.style.display = 'block';
   floatBtn.classList.add('show');
   await checkServerKeys();
-  updateKeyUI();
+
+  // Resolve Deepgram key
+  const resolvedDgKey = await fetchDgKey();
+  useDeeepgram = !!resolvedDgKey;
+  dbg(`Deepgram available: ${useDeeepgram}, key mode: ${useDeeepgram ? 'active' : 'none'}`);
+
+  if (useDeeepgram) {
+    setSttStatus('🟣 Deepgram Nova-3 (Active)', 'status-dg');
+    document.getElementById('dg-banner-live').style.display = 'block';
+  } else {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    setSttStatus(SR ? '🟢 Browser Web Speech API' : '❌ No STT available — add Deepgram key', SR ? 'status-ready' : 'status-stopped');
+    document.getElementById('dg-banner-live').style.display = 'none';
+  }
+
+  document.getElementById('llm-status-live').textContent = serverHasKeys ? 'AI ready (server keys)' : 'Offline hints only';
   await loadMicDevices();
   appendTranscript('System', 'Session started. Press Space to begin listening.');
   dbg('Session started: ' + sessionJobRole);
-  document.getElementById('llm-status-live').textContent = serverHasKeys ? 'AI ready (server keys)' : 'Offline hints only';
 }
 
 function endSession() {
@@ -535,7 +645,444 @@ function endSession() {
   if (pipVisible) togglePip();
 }
 
-// ── PiP toggle ─────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIO MODE
+// ─────────────────────────────────────────────────────────────────────────────
+function switchMode(mode, btn) {
+  audioMode = mode;
+  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('row-mic').style.display   = (mode === 'mic' || mode === 'both') ? 'flex' : 'none';
+  document.getElementById('hint-tab').className    = 'device-hint' + ((mode === 'tab' || mode === 'both') ? ' show' : '');
+  document.getElementById('hint-system').className = 'device-hint' + (mode === 'system' ? ' show' : '');
+}
+
+async function loadMicDevices() {
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true });
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const mics = devices.filter(d => d.kind === 'audioinput');
+    micSelect.innerHTML = mics.map(d =>
+      `<option value="${d.deviceId}">${d.label || 'Microphone ' + d.deviceId.slice(0,6)}</option>`
+    ).join('');
+    if (!mics.length) micSelect.innerHTML = '<option value="">No microphones found</option>';
+  } catch(e) {
+    micSelect.innerHTML = '<option value="">Mic permission denied</option>';
+    dbg('loadMicDevices error: ' + e.message);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TOGGLE LISTEN
+// ─────────────────────────────────────────────────────────────────────────────
+toggleBtn.addEventListener('click', () => isRecording ? stopListening() : startListening());
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
+    e.preventDefault();
+    isRecording ? stopListening() : startListening();
+  }
+});
+
+async function startListening() {
+  if (isRecording) return;
+  isRecording = true;
+  toggleBtn.textContent = '⏹ Stop Listening';
+  toggleBtn.classList.add('listening');
+  syncPipListen(true);
+  dgFinalBuffer = '';
+  dgInterimText = '';
+  dgLastSentText = '';
+
+  if (useDeeepgram) {
+    await startDeepgram();
+  } else {
+    startBrowserSTT();
+  }
+}
+
+function stopListening() {
+  if (!isRecording) return;
+  isRecording = false;
+  toggleBtn.textContent = '▶ Start Listening';
+  toggleBtn.classList.remove('listening');
+  syncPipListen(false);
+  setListenStatus('', '');
+  interimBox.className = 'interim-box';
+  interimBox.textContent = '';
+  clearTimeout(dgSilenceTimer);
+
+  if (useDeeepgram) {
+    stopDeepgram();
+  } else {
+    if (recognition) { try { recognition.stop(); } catch(e){} recognition = null; }
+  }
+  activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
+  activeStreams = [];
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DEEPGRAM STT
+// ─────────────────────────────────────────────────────────────────────────────
+async function getAudioStream() {
+  const micId = micSelect.value;
+  const micConstraints = { audio: micId ? { deviceId: { exact: micId } } : true, video: false };
+
+  if (audioMode === 'mic') {
+    const s = await navigator.mediaDevices.getUserMedia(micConstraints);
+    activeStreams.push(s);
+    return s;
+  }
+
+  if (audioMode === 'tab' || audioMode === 'system') {
+    const s = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+    activeStreams.push(s);
+    // Stop video track — we only want audio
+    s.getVideoTracks().forEach(t => t.stop());
+    return s;
+  }
+
+  if (audioMode === 'both') {
+    // Merge mic + display audio
+    const [micStream, dispStream] = await Promise.all([
+      navigator.mediaDevices.getUserMedia(micConstraints),
+      navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+    ]);
+    dispStream.getVideoTracks().forEach(t => t.stop());
+    activeStreams.push(micStream, dispStream);
+
+    const ctx = new AudioContext();
+    tabAudioCtx = ctx;
+    const dest = ctx.createMediaStreamDestination();
+    ctx.createMediaStreamSource(micStream).connect(dest);
+    if (dispStream.getAudioTracks().length) ctx.createMediaStreamSource(dispStream).connect(dest);
+    return dest.stream;
+  }
+
+  // Fallback
+  const s = await navigator.mediaDevices.getUserMedia(micConstraints);
+  activeStreams.push(s);
+  return s;
+}
+
+async function startDeepgram() {
+  setListenStatus('🟣 Connecting to Deepgram…', 'dg');
+  dbg('Deepgram: opening WebSocket');
+
+  try {
+    dgStream = await getAudioStream();
+  } catch(e) {
+    dbg('getAudioStream error: ' + e.message);
+    setListenStatus('❌ Mic/audio access denied: ' + e.message, 'error');
+    stopListening();
+    return;
+  }
+
+  // Deepgram WebSocket — Nova-3, punctuation, interim results, smart formatting
+  const params = new URLSearchParams({
+    model: 'nova-3',
+    language: 'en',
+    encoding: 'linear16',
+    sample_rate: '16000',
+    channels: '1',
+    punctuate: 'true',
+    interim_results: 'true',
+    smart_format: 'true',
+    utterance_end_ms: '1200',
+    vad_events: 'true'
+  });
+
+  // Use token auth (Deepgram supports Bearer as subprotocol)
+  const wsUrl = `wss://api.deepgram.com/v1/listen?${params}`;
+  dbg('DG URL: ' + wsUrl);
+
+  dgSocket = new WebSocket(wsUrl, ['token', dgKey]);
+  dgSocket.binaryType = 'arraybuffer';
+
+  dgSocket.onopen = () => {
+    dbg('Deepgram WebSocket open');
+    setListenStatus('🟣 Deepgram Nova-3 — Listening…', 'dg');
+    // Set up AudioContext to pipe PCM16 to Deepgram
+    dgAudioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const source = dgAudioCtx.createMediaStreamSource(dgStream);
+    // ScriptProcessor (256 samples)
+    dgProcessor = dgAudioCtx.createScriptProcessor(4096, 1, 1);
+    dgProcessor.onaudioprocess = (e) => {
+      if (!dgSocket || dgSocket.readyState !== WebSocket.OPEN) return;
+      const float32 = e.inputBuffer.getChannelData(0);
+      // Convert float32 → int16 PCM
+      const pcm = new Int16Array(float32.length);
+      for (let i = 0; i < float32.length; i++) {
+        const s = Math.max(-1, Math.min(1, float32[i]));
+        pcm[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+      }
+      dgSocket.send(pcm.buffer);
+    };
+    source.connect(dgProcessor);
+    dgProcessor.connect(dgAudioCtx.destination);
+  };
+
+  dgSocket.onmessage = (evt) => {
+    let data;
+    try { data = JSON.parse(evt.data); } catch(e) { return; }
+
+    // VAD speech start event
+    if (data.type === 'SpeechStarted') {
+      dbg('DG: speech started');
+      clearTimeout(dgSilenceTimer);
+      return;
+    }
+
+    // Utterance end — treat buffered text as final
+    if (data.type === 'UtteranceEnd') {
+      dbg('DG: utterance end');
+      if (dgFinalBuffer.trim()) {
+        const text = dgFinalBuffer.trim();
+        dgFinalBuffer = '';
+        dgInterimText = '';
+        interimBox.className = 'interim-box';
+        interimBox.textContent = '';
+        handleTranscript(text);
+      }
+      return;
+    }
+
+    // Regular transcript
+    if (data.type !== 'Results') return;
+    const channel = data.channel || data.channels?.[0];
+    if (!channel) return;
+    const alt = channel.alternatives?.[0];
+    if (!alt || !alt.transcript) return;
+
+    const text = alt.transcript.trim();
+    const isFinal = data.is_final;
+    const speechFinal = data.speech_final;
+
+    if (!isFinal) {
+      // Show interim in the interim box
+      dgInterimText = text;
+      interimBox.textContent = '🎙️ ' + text;
+      interimBox.className = 'interim-box show';
+      // Reset silence timer
+      clearTimeout(dgSilenceTimer);
+      return;
+    }
+
+    // Final transcript
+    dgFinalBuffer += (dgFinalBuffer ? ' ' : '') + text;
+    dgInterimText = '';
+    interimBox.textContent = '✔ ' + dgFinalBuffer;
+
+    dbg(`DG final: "${text}" | speech_final=${speechFinal} | buffer="${dgFinalBuffer}"`);
+
+    if (speechFinal) {
+      // Deepgram says utterance is complete
+      const toSend = dgFinalBuffer.trim();
+      dgFinalBuffer = '';
+      interimBox.className = 'interim-box';
+      interimBox.textContent = '';
+      handleTranscript(toSend);
+    } else {
+      // Start silence timer — send after 1.5s of no new final results
+      clearTimeout(dgSilenceTimer);
+      dgSilenceTimer = setTimeout(() => {
+        const toSend = dgFinalBuffer.trim();
+        dgFinalBuffer = '';
+        interimBox.className = 'interim-box';
+        interimBox.textContent = '';
+        if (toSend) handleTranscript(toSend);
+      }, 1500);
+    }
+  };
+
+  dgSocket.onerror = (e) => {
+    dbg('Deepgram socket error');
+    setListenStatus('❌ Deepgram error — check key', 'error');
+  };
+
+  dgSocket.onclose = (e) => {
+    dbg(`Deepgram socket closed: ${e.code} ${e.reason}`);
+    if (isRecording) setListenStatus('⚠️ Deepgram disconnected — reconnecting…', 'info');
+  };
+}
+
+function stopDeepgram() {
+  clearTimeout(dgSilenceTimer);
+  if (dgProcessor) { try { dgProcessor.disconnect(); } catch(e){} dgProcessor = null; }
+  if (dgAudioCtx)  { try { dgAudioCtx.close(); } catch(e){} dgAudioCtx = null; }
+  if (dgSocket && dgSocket.readyState === WebSocket.OPEN) {
+    dgSocket.send(JSON.stringify({ type: 'CloseStream' }));
+    dgSocket.close();
+  }
+  dgSocket = null;
+  dgStream = null;
+  if (tabAudioCtx) { try { tabAudioCtx.close(); } catch(e){} tabAudioCtx = null; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BROWSER WEB SPEECH FALLBACK
+// ─────────────────────────────────────────────────────────────────────────────
+function startBrowserSTT() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    setListenStatus('❌ Web Speech API not available. Add a Deepgram key for cross-browser support.', 'error');
+    stopListening();
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = 'en-US';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  let finalBuffer = '';
+  let silenceTimer = null;
+
+  recognition.onstart = () => {
+    setListenStatus('🟢 Browser STT — Listening…', 'active');
+    dbg('Browser STT started');
+  };
+  recognition.onresult = (e) => {
+    let interim = '';
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript;
+      if (e.results[i].isFinal) final += t;
+      else interim += t;
+    }
+    if (interim) { interimBox.textContent = '🎙️ ' + interim; interimBox.className = 'interim-box show'; }
+    if (final) {
+      finalBuffer += ' ' + final;
+      interimBox.textContent = '✔ ' + finalBuffer.trim();
+      clearTimeout(silenceTimer);
+      silenceTimer = setTimeout(() => {
+        const text = finalBuffer.trim();
+        finalBuffer = '';
+        interimBox.className = 'interim-box';
+        if (text) handleTranscript(text);
+      }, 1200);
+    }
+  };
+  recognition.onerror = (e) => {
+    dbg('Browser STT error: ' + e.error);
+    if (e.error === 'not-allowed') setListenStatus('❌ Mic permission denied', 'error');
+    else if (e.error !== 'no-speech') setListenStatus('❌ STT error: ' + e.error, 'error');
+  };
+  recognition.onend = () => {
+    dbg('Browser STT ended');
+    if (isRecording) recognition.start(); // auto-restart
+  };
+  recognition.start();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HANDLE TRANSCRIPT → AI
+// ─────────────────────────────────────────────────────────────────────────────
+async function handleTranscript(text) {
+  if (!text || text === dgLastSentText) return;
+  dgLastSentText = text;
+  dbg(`Sending to AI: "${text}"`);
+
+  qDisplay.textContent = text;
+  qDisplay.className = 'q-display';
+  appendTranscript('Interviewer', text);
+  syncPip('thinking', 'Generating answer…', 'thinking…', text);
+  aiScriptBox.textContent = 'Generating answer…';
+  aiScriptBox.className = 'script-box loading';
+  providerBadge.textContent = 'thinking…';
+
+  const localGroq = document.getElementById('groq-key')?.value.trim();
+  const localGemini = document.getElementById('gemini-key')?.value.trim();
+  const localOpenRouter = document.getElementById('openrouter-key')?.value.trim();
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(localGroq       ? { 'x-groq-key': localGroq }             : {}),
+        ...(localGemini     ? { 'x-gemini-key': localGemini }         : {}),
+        ...(localOpenRouter ? { 'x-openrouter-key': localOpenRouter } : {}),
+      },
+      body: JSON.stringify({
+        cv: sessionCV,
+        job_role: sessionJobRole,
+        transcript: text,
+        context: conversationContext,
+        response_style: document.getElementById('response-style').value,
+        target_role_family: document.getElementById('role-family')?.value || 'auto'
+      })
+    });
+
+    const contentType = res.headers.get('content-type') || '';
+
+    // JSON response (skip, offline, error)
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      if (data.skip) {
+        aiScriptBox.textContent = 'Not a question — listening…';
+        aiScriptBox.className = 'script-box hint';
+        syncPip('idle', 'Listening…', '—');
+        providerBadge.textContent = 'filtered';
+        return;
+      }
+      if (data.answer) {
+        aiScriptBox.textContent = data.answer;
+        aiScriptBox.className = data.offline ? 'script-box hint' : 'script-box';
+        providerBadge.textContent = data.provider;
+        providerBadge.className = 'provider-badge' + (data.offline ? ' offline' : '');
+        syncPip('ready', data.answer, data.provider);
+        conversationContext.push({ role: 'interviewer', text }, { role: 'candidate', text: data.answer });
+        appendTranscript('Candidate', data.answer.slice(0, 120) + (data.answer.length > 120 ? '…' : ''));
+      }
+      return;
+    }
+
+    // Streaming SSE
+    if (!res.body) { aiScriptBox.textContent = 'Stream not supported.'; return; }
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    let provider = '';
+    aiScriptBox.textContent = '';
+    aiScriptBox.className = 'script-box';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split('\n')) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const payload = JSON.parse(line.slice(6));
+          if (payload.type === 'token') {
+            fullText += payload.content;
+            provider = payload.provider;
+            aiScriptBox.textContent = fullText;
+            syncPip('thinking', fullText, provider);
+          } else if (payload.type === 'done') {
+            provider = payload.provider;
+            providerBadge.textContent = provider;
+            providerBadge.className = 'provider-badge';
+            syncPip('ready', fullText, provider);
+            conversationContext.push({ role: 'interviewer', text }, { role: 'candidate', text: fullText });
+            if (conversationContext.length > 12) conversationContext = conversationContext.slice(-12);
+            appendTranscript('Candidate', fullText.slice(0, 120) + (fullText.length > 120 ? '…' : ''));
+          }
+        } catch(e) { /* skip malformed */ }
+      }
+    }
+  } catch(e) {
+    dbg('handleTranscript fetch error: ' + e.message);
+    offlineBar.style.display = 'block';
+    aiScriptBox.textContent = 'Network error — check connection.';
+    aiScriptBox.className = 'script-box error-box';
+    syncPip('error', 'Network error', '—');
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PiP
+// ─────────────────────────────────────────────────────────────────────────────
 function togglePip() {
   pipVisible = !pipVisible;
   pipOverlay.classList.toggle('active', pipVisible);
@@ -550,53 +1097,12 @@ function togglePipSize() {
 }
 function pipCopy() {
   const text = pipScript.textContent;
-  if (!text || text === 'Overlay ready. Start listening to see AI answers here.') return;
+  if (!text || text.includes('Overlay ready')) return;
   navigator.clipboard.writeText(text).then(() => {
     pipCopyBtn.textContent = 'Copied!'; pipCopyBtn.classList.add('copied');
     setTimeout(() => { pipCopyBtn.textContent = 'Copy'; pipCopyBtn.classList.remove('copied'); }, 1800);
   }).catch(() => {});
 }
-
-// ── PiP drag ───────────────────────────────────────────────────────────────────
-(function initDrag() {
-  const handle = document.getElementById('pip-drag-handle');
-  let dragging = false, ox = 0, oy = 0;
-  handle.addEventListener('mousedown', e => {
-    if (e.target.closest('button')) return;
-    dragging = true;
-    ox = e.clientX - pipOverlay.getBoundingClientRect().left;
-    oy = e.clientY - pipOverlay.getBoundingClientRect().top;
-    document.body.style.userSelect = 'none';
-  });
-  document.addEventListener('mousemove', e => {
-    if (!dragging) return;
-    let left = Math.max(0, Math.min(e.clientX - ox, window.innerWidth  - pipOverlay.offsetWidth));
-    let top  = Math.max(0, Math.min(e.clientY - oy, window.innerHeight - pipOverlay.offsetHeight));
-    pipOverlay.style.right = 'auto'; pipOverlay.style.bottom = 'auto';
-    pipOverlay.style.left = left + 'px'; pipOverlay.style.top = top + 'px';
-  });
-  document.addEventListener('mouseup', () => { dragging = false; document.body.style.userSelect = ''; });
-})();
-
-// ── PiP resize ─────────────────────────────────────────────────────────────────
-(function initResize() {
-  const handle = document.getElementById('pip-resize-handle');
-  let resizing = false, startX = 0, startY = 0, startW = 0, startH = 0;
-  handle.addEventListener('mousedown', e => {
-    resizing = true; e.preventDefault();
-    startX = e.clientX; startY = e.clientY;
-    startW = pipOverlay.offsetWidth; startH = pipOverlay.offsetHeight;
-    document.body.style.userSelect = 'none';
-  });
-  document.addEventListener('mousemove', e => {
-    if (!resizing) return;
-    pipOverlay.style.width = Math.max(260, startW + (e.clientX - startX)) + 'px';
-    pipScript.style.maxHeight = Math.max(80, startH + (e.clientY - startY) - 120) + 'px';
-  });
-  document.addEventListener('mouseup', () => { resizing = false; document.body.style.userSelect = ''; });
-})();
-
-// ── Sync PiP content ───────────────────────────────────────────────────────────
 function syncPip(state, text, provider, question) {
   pipDot.className = 'pip-dot' + (state === 'thinking' ? ' thinking' : state === 'error' ? ' error' : '');
   pipScript.className = 'pip-script' + (state === 'loading' ? ' loading' : state === 'hint' ? ' hint' : state === 'error' ? ' error-msg' : '');
@@ -611,405 +1117,47 @@ function syncPipListen(active) {
     : '<span class="pip-pulse" style="animation:none;opacity:.5"></span> Idle';
 }
 
-// ── Enumerate microphones ──────────────────────────────────────────────────────
-async function loadMicDevices() {
-  try {
-    const tmp = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    tmp.getTracks().forEach(t => t.stop());
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    const mics = devices.filter(d => d.kind === 'audioinput');
-    micSelect.innerHTML = mics.map((d, i) =>
-      `<option value="${d.deviceId}">${d.label || 'Microphone ' + (i+1)}</option>`
-    ).join('');
-    dbg(`Found ${mics.length} microphone(s)`);
-  } catch(e) {
-    micSelect.innerHTML = '<option value="">Default microphone</option>';
-    dbg('Mic enum error: ' + e.message);
-  }
+// PiP drag
+(function() {
+  const handle = document.getElementById('pip-drag-handle');
+  let dragging=false, ox=0, oy=0;
+  handle.addEventListener('mousedown', e => { if (e.target.closest('button')) return; dragging=true; ox=e.clientX-pipOverlay.getBoundingClientRect().left; oy=e.clientY-pipOverlay.getBoundingClientRect().top; document.body.style.userSelect='none'; });
+  document.addEventListener('mousemove', e => { if (!dragging) return; let l=Math.max(0,Math.min(e.clientX-ox,window.innerWidth-pipOverlay.offsetWidth)); let t=Math.max(0,Math.min(e.clientY-oy,window.innerHeight-pipOverlay.offsetHeight)); pipOverlay.style.right='auto'; pipOverlay.style.bottom='auto'; pipOverlay.style.left=l+'px'; pipOverlay.style.top=t+'px'; });
+  document.addEventListener('mouseup', () => { dragging=false; document.body.style.userSelect=''; });
+})();
+
+// PiP resize
+(function() {
+  const handle = document.getElementById('pip-resize-handle');
+  let resizing=false, sx=0, sy=0, sw=0, sh=0;
+  handle.addEventListener('mousedown', e => { resizing=true; e.preventDefault(); sx=e.clientX; sy=e.clientY; sw=pipOverlay.offsetWidth; sh=pipOverlay.offsetHeight; document.body.style.userSelect='none'; });
+  document.addEventListener('mousemove', e => { if (!resizing) return; pipOverlay.style.width=Math.max(260,sw+(e.clientX-sx))+'px'; pipScript.style.maxHeight=Math.max(80,sh+(e.clientY-sy)-120)+'px'; });
+  document.addEventListener('mouseup', () => { resizing=false; document.body.style.userSelect=''; });
+})();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOW TO
+// ─────────────────────────────────────────────────────────────────────────────
+function showHowTo() {
+  alert(
+    'How to connect Zoom/Teams audio:\n\n' +
+    '✅ WITH DEEPGRAM (recommended):\n' +
+    '1. Select "🎤+🖥️ Mic + Tab" audio mode\n' +
+    '2. Press Space to start listening\n' +
+    '3. Share your Zoom/Teams tab (tick "Share tab audio")\n' +
+    '4. Deepgram receives both your mic and interviewer audio directly\n\n' +
+    '🟢 BROWSER STT fallback (Chrome/Edge only):\n' +
+    'In "Mic + Tab" mode, tab audio plays through speakers so the mic can pick it up.\n' +
+    'Use headphones for best quality — avoids echo.'
+  );
 }
 
-// ── Mode switching ─────────────────────────────────────────────────────────────
-function switchMode(mode, btn) {
-  audioMode = mode;
-  document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('row-mic').style.display   = (mode==='mic'||mode==='both') ? 'flex' : 'none';
-  document.getElementById('hint-tab').className      = 'device-hint' + (mode==='tab'||mode==='both' ? ' show' : '');
-  document.getElementById('hint-system').className   = 'device-hint' + (mode==='system' ? ' show' : '');
-}
-
-// ── Toggle button & Spacebar ───────────────────────────────────────────────────
-toggleBtn.addEventListener('click', async () => { await toggleListening(); });
-document.addEventListener('keydown', async (e) => {
-  if (interviewSection.style.display === 'none') return;
-  const tag = document.activeElement.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-  if (e.code === 'Space') { e.preventDefault(); await toggleListening(); }
-});
-async function toggleListening() {
-  if (isRecording) stopListening(); else await startListening();
-}
-
-// ── Merge display audio + mic into combined stream (for Chrome STT) ────────────
-// Chrome's Web Speech API only listens to the default microphone.
-// To capture tab/system audio, we play it through the speakers via <audio>
-// so the microphone can pick it up (loopback). In "tab only" or "system" modes
-// we also unmute the audio element and warn user to use headphones.
-async function buildMergedStream(micStream, displayStream) {
-  // Close old AudioContext
-  if (audioCtx) { try { audioCtx.close(); } catch(_) {} audioCtx = null; }
-  audioCtx = new AudioContext();
-  const dest = audioCtx.createMediaStreamDestination();
-
-  if (micStream) {
-    const micSrc = audioCtx.createMediaStreamSource(micStream);
-    micSrc.connect(dest);
-  }
-  if (displayStream && displayStream.getAudioTracks().length > 0) {
-    const dispSrc = audioCtx.createMediaStreamSource(displayStream);
-    dispSrc.connect(dest);
-    // Also play display audio through speakers so it's audible AND loopback-captured
-    tabAudioEl.srcObject = displayStream;
-    tabAudioEl.muted = false;  // unmuted so speaker output feeds mic loopback
-    try { await tabAudioEl.play(); } catch(_) {}
-    dbg('Display audio routed to speaker (loopback for STT)');
-  }
-  return dest.stream;
-}
-
-// ── START listening ────────────────────────────────────────────────────────────
-async function startListening() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { setListenError('Web Speech API not available. Please use Chrome or Edge.'); return; }
-  setStatus('info', '⏳ Requesting audio access…');
-  dbg('startListening() — mode: ' + audioMode);
-
-  let micStream = null;
-  let displayStream = null;
-
-  try {
-    if (audioMode === 'mic') {
-      const deviceId = micSelect.value;
-      micStream = await navigator.mediaDevices.getUserMedia({
-        audio: deviceId ? { deviceId: { exact: deviceId } } : true, video: false
-      });
-      activeStreams.push(micStream);
-      dbg('Mic stream acquired');
-
-    } else if (audioMode === 'tab' || audioMode === 'system') {
-      setStatus('info', '⏳ Requesting screen share — tick "Share tab audio"…');
-      displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: true,
-        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
-      });
-      displayStream.getVideoTracks().forEach(t => t.stop());
-      if (displayStream.getAudioTracks().length === 0) {
-        stopAllStreams();
-        setListenError('No audio captured. Tick "Share tab audio" in the share dialog.');
-        return;
-      }
-      activeStreams.push(displayStream);
-      // Play display audio through speakers for loopback into STT mic
-      await buildMergedStream(null, displayStream);
-      dbg('Tab audio playing through speakers (STT uses mic loopback)');
-
-    } else if (audioMode === 'both') {
-      setStatus('info', '⏳ Requesting mic + screen share…');
-      [micStream, displayStream] = await Promise.all([
-        navigator.mediaDevices.getUserMedia({
-          audio: micSelect.value ? { deviceId: { exact: micSelect.value } } : true,
-          video: false
-        }),
-        navigator.mediaDevices.getDisplayMedia({
-          video: true,
-          audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 44100 }
-        })
-      ]);
-      displayStream.getVideoTracks().forEach(t => t.stop());
-      activeStreams.push(micStream);
-      if (displayStream.getAudioTracks().length > 0) {
-        activeStreams.push(displayStream);
-        await buildMergedStream(micStream, displayStream);
-        dbg('Mic + display audio merged; display routed to speaker');
-      } else {
-        dbg('Display had no audio — mic only');
-      }
-    }
-  } catch (err) {
-    dbg('Audio error: ' + err.name + ' — ' + err.message);
-    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') setListenError('Permission denied. Click "Allow" for microphone access.');
-    else if (err.name === 'NotFoundError') setListenError('No microphone found. Plug in a mic and try again.');
-    else if (err.name === 'AbortError' || err.name === 'NotSupportedError') setListenError('Screen share cancelled. Try Microphone mode instead.');
-    else setListenError('Audio error: ' + err.message);
-    return;
-  }
-
-  isRecording = true;
-  toggleBtn.textContent = '⏹ Stop Listening';
-  toggleBtn.classList.add('listening');
-  toggleBtn.classList.remove('btn-primary');
-  syncPipListen(true);
-  startRecognition();
-}
-
-// ── STOP listening ─────────────────────────────────────────────────────────────
-function stopListening() {
-  dbg('stopListening()');
-  isRecording = false;
-  toggleBtn.textContent = '▶ Start Listening';
-  toggleBtn.classList.remove('listening');
-  toggleBtn.classList.add('btn-primary');
-  listenStatus.className = 'listen-status';
-  syncPipListen(false);
-  if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} recognition = null; }
-  stopAllStreams();
-  tabAudioEl.srcObject = null;
-  if (audioCtx) { try { audioCtx.close(); } catch(_) {} audioCtx = null; }
-  appendTranscript('System', 'Listening stopped.');
-}
-function stopAllStreams() { activeStreams.forEach(s => s.getTracks().forEach(t => t.stop())); activeStreams = []; }
-
-// ── Web Speech Recognition ─────────────────────────────────────────────────────
-function startRecognition() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (recognition) { recognition.onend = null; try { recognition.abort(); } catch(e) {} recognition = null; }
-  recognition = new SR();
-  recognition.lang = 'en-US';
-  recognition.continuous = true;
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 1;
-  const modeLabel = { mic:'microphone', tab:'tab/call audio', system:'system audio', both:'mic + tab audio' }[audioMode];
-  let lastFinalText = '';
-
-  recognition.onstart = () => {
-    dbg('recognition.onstart — mode: ' + audioMode);
-    setStatus('active', `🔴 Listening via ${modeLabel}… (press Space to stop)`);
-    appendTranscript('System', `Listening started — source: ${modeLabel}`);
-  };
-
-  recognition.onresult = (event) => {
-    let interim = '', finalChunk = '';
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const t = event.results[i][0].transcript;
-      if (event.results[i].isFinal) finalChunk += t; else interim += t;
-    }
-    if (interim) {
-      qDisplay.className = 'q-display';
-      qDisplay.textContent = interim;
-      if (pipVisible) { pipQuestionText.textContent = interim; pipQuestion.className = 'pip-question show'; }
-    }
-    if (finalChunk) {
-      const cleaned = finalChunk.trim();
-      dbg('Final speech: "' + cleaned + '"');
-      if (cleaned && cleaned !== lastFinalText) {
-        lastFinalText = cleaned;
-        qDisplay.className = 'q-display';
-        qDisplay.textContent = cleaned;
-        appendTranscript('Interviewer', cleaned);
-        conversationContext.push({ role: 'interviewer', text: cleaned });
-        fetchAIAnswer(cleaned);
-      }
-    }
-  };
-
-  recognition.onerror = (e) => {
-    dbg('recognition.onerror: ' + e.error);
-    if (e.error === 'not-allowed') { setListenError('Microphone permission denied.'); isRecording = false; return; }
-    if (e.error === 'no-speech') { dbg('no-speech — continuing'); return; }
-    if (e.error === 'audio-capture') { setListenError('No microphone detected or in use by another app.'); isRecording = false; return; }
-    if (e.error === 'network') { dbg('Network error in SR — will retry'); return; }
-    dbg('SR error (non-fatal): ' + e.error);
-  };
-
-  recognition.onend = () => {
-    dbg('recognition.onend — isRecording: ' + isRecording);
-    if (isRecording) {
-      setTimeout(() => { if (isRecording) { dbg('Restarting recognition…'); startRecognition(); } }, 300);
-    }
-  };
-
-  try { recognition.start(); dbg('recognition.start() called'); }
-  catch(e) { dbg('recognition.start() threw: ' + e.message); setListenError('Could not start speech recognition: ' + e.message); }
-}
-
-// ── Status helpers ─────────────────────────────────────────────────────────────
-function setStatus(type, msg) { listenStatus.className = 'listen-status ' + type; listenStatus.textContent = msg; }
-function setListenError(msg) {
-  dbg('LISTEN ERROR: ' + msg);
-  setStatus('error', '❌ ' + msg);
-  isRecording = false;
-  stopAllStreams();
-  tabAudioEl.srcObject = null;
-  if (audioCtx) { try { audioCtx.close(); } catch(_) {} audioCtx = null; }
-  if (recognition) { recognition.onend = null; try { recognition.stop(); } catch(e) {} recognition = null; }
-  toggleBtn.textContent = '▶ Start Listening';
-  toggleBtn.classList.remove('listening');
-  toggleBtn.classList.add('btn-primary');
-  syncPipListen(false);
-}
-
-// ── AI answer fetch ────────────────────────────────────────────────────────────
-async function fetchAIAnswer(question) {
-  dbg('fetchAIAnswer: "' + question.slice(0, 60) + '"');
-  aiScriptBox.className = 'script-box loading';
-  aiScriptBox.textContent = 'Generating answer…';
-  providerBadge.textContent = 'thinking…';
-  providerBadge.className = 'provider-badge';
-  offlineBar.style.display = 'none';
-  syncPip('loading', 'Generating…', '…', question);
-  document.getElementById('llm-status-live').textContent = 'Generating…';
-
-  const groqKey       = document.getElementById('groq-key').value.trim();
-  const geminiKey     = document.getElementById('gemini-key').value.trim();
-  const openrouterKey = document.getElementById('openrouter-key').value.trim();
-
-  if (!groqKey && !geminiKey && !openrouterKey && !serverHasKeys) {
-    dbg('No keys anywhere — offline mode');
-    const hint = buildOfflineHint(question);
-    aiScriptBox.className = 'script-box hint';
-    aiScriptBox.textContent = hint;
-    providerBadge.textContent = '📋 Offline Hints';
-    providerBadge.className = 'provider-badge offline';
-    offlineBar.style.display = 'block';
-    syncPip('hint', hint, '📋 Offline Hints');
-    document.getElementById('llm-status-live').textContent = 'Offline hints';
-    return;
-  }
-
-  const headers = { 'Content-Type': 'application/json' };
-  if (groqKey)       headers['x-groq-key']       = groqKey;
-  if (geminiKey)     headers['x-gemini-key']      = geminiKey;
-  if (openrouterKey) headers['x-openrouter-key']  = openrouterKey;
-
-  const body = {
-    cv: sessionCV,
-    job_role: sessionJobRole,
-    transcript: question,
-    context: conversationContext.slice(-6),
-    response_style: document.getElementById('response-style').value,
-    target_role_family: document.getElementById('role-family') ? document.getElementById('role-family').value : 'auto'
-  };
-
-  try {
-    dbg('POST /api/chat …');
-    const res = await fetch('/api/chat', { method: 'POST', headers, body: JSON.stringify(body) });
-    dbg('Response: ' + res.status + ' content-type: ' + (res.headers.get('content-type') || ''));
-
-    if (res.ok && res.headers.get('content-type')?.includes('text/event-stream')) {
-      await consumeStream(res); return;
-    }
-    if (res.ok) {
-      const data = await res.json();
-      dbg('JSON response: provider=' + data.provider + ' skip=' + data.skip + ' offline=' + data.offline);
-
-      // ── SKIP: non-question phrase detected (mic test, greeting, etc.) ──
-      if (data.skip) {
-        aiScriptBox.className = 'script-box';
-        aiScriptBox.textContent = 'Press Start Listening and wait for an interview question.';
-        providerBadge.textContent = '⏭ Skipped (not a question)';
-        providerBadge.className = 'provider-badge offline';
-        syncPip('ready', '—', '⏭ Skipped');
-        document.getElementById('llm-status-live').textContent = 'Waiting for question…';
-        return;
-      }
-
-      if (data.answer) {
-        aiScriptBox.className = 'script-box' + (data.offline ? ' hint' : '');
-        aiScriptBox.textContent = data.answer;
-        providerBadge.textContent = data.provider || 'AI';
-        providerBadge.className = 'provider-badge' + (data.offline ? ' offline' : '');
-        if (data.offline) offlineBar.style.display = 'block';
-        syncPip(data.offline ? 'hint' : 'ready', data.answer, data.provider || 'AI');
-        document.getElementById('llm-status-live').textContent = data.provider || 'AI (ready)';
-        return;
-      }
-    }
-    const errText = await res.text().catch(() => res.status + '');
-    throw new Error('API error ' + res.status + ': ' + errText.slice(0, 200));
-  } catch(err) {
-    dbg('fetchAIAnswer error: ' + err.message);
-    const hint = buildOfflineHint(question);
-    aiScriptBox.className = 'script-box error-box';
-    aiScriptBox.textContent = '⚠️ ' + err.message + '\n\n' + hint;
-    providerBadge.textContent = '⚠️ Error — offline hints shown';
-    providerBadge.className = 'provider-badge offline';
-    syncPip('error', '⚠️ ' + err.message + '\n\n' + hint, '⚠️ Error');
-    document.getElementById('llm-status-live').textContent = 'Error — offline hints';
-  }
-}
-
-async function consumeStream(res) {
-  const reader = res.body.getReader();
-  const dec = new TextDecoder();
-  let buf = '', full = '', providerSet = false;
-  aiScriptBox.className = 'script-box'; aiScriptBox.textContent = '';
-  pipScript.className = 'pip-script'; pipScript.textContent = '';
-  dbg('consumeStream: started');
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += dec.decode(value, { stream: true });
-    const lines = buf.split('\n'); buf = lines.pop();
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      try {
-        const d = JSON.parse(line.slice(6));
-        if (d.type === 'token' && d.content) {
-          full += d.content;
-          aiScriptBox.textContent = full;
-          pipScript.textContent = full;
-          if (!providerSet && d.provider) {
-            providerBadge.textContent = d.provider; pipProvider.textContent = d.provider; providerSet = true;
-          }
-        }
-        if (d.type === 'done') {
-          providerBadge.textContent = d.provider || providerBadge.textContent;
-          pipProvider.textContent = d.provider || pipProvider.textContent;
-          pipDot.className = 'pip-dot';
-          document.getElementById('llm-status-live').textContent = d.provider || 'AI (ready)';
-          dbg('Stream done. provider=' + d.provider);
-        }
-      } catch(_) {}
-    }
-  }
-  if (!full) throw new Error('Empty stream response');
-  dbg('consumeStream: complete, chars=' + full.length);
-}
-
-// ── Offline hints ──────────────────────────────────────────────────────────────
-function buildOfflineHint(question) {
-  const q = question.toLowerCase();
-  const has = arr => arr.some(k => q.includes(k));
-  if (has(['tell me about','introduce','background','walk me through','yourself']))
-    return `📌 Introduction:\n• 5+ yrs supply chain: Ontex, Nike, Solvay, QuEST Global\n• Core: demand forecasting, S&OP, capacity planning\n• Tools: Arkieva, SAP, Kinaxis, Power BI, Tableau\n• MSc Supply Chain — EM Normandie, France\n• +27% forecast accuracy at Ontex (12 global sites)`;
-  if (has(['supply chain','s&op','planning','demand','supply']))
-    return `📌 Supply Chain:\n• Ontex: 12 global sites, Arkieva, +27% forecast accuracy\n• Nike: €2B EMEA retail, -20% holding costs\n• Solvay: €150M raw material MRP\n• QuEST: EOQ + safety stock, SAP ERP`;
-  if (has(['forecast','accuracy','statistical']))
-    return `📌 Forecasting:\n• +27% forecast accuracy — Ontex, Arkieva, 12 sites\n• €2B EMEA retail demand models — Nike\n• EOQ + safety stock — QuEST Global FMCG clients`;
-  if (has(['sap','erp','kinaxis','arkieva','tool','software']))
-    return `📌 Tools:\n• Arkieva — demand/supply planning\n• SAP ERP — implementation & planning\n• Kinaxis RapidResponse — functional consulting\n• Power BI + Tableau — OTIF, DIO, KPI dashboards`;
-  if (has(['kpi','dashboard','analytics','data','tableau','power bi']))
-    return `📌 Analytics:\n• Power BI/Tableau — OTIF, DIO, supply KPIs\n• Supplier KPI dashboards + demand optimizer (Nike)\n• Key metrics: OTIF, DIO, forecast accuracy, cost-to-serve`;
-  if (has(['challenge','difficult','problem','failure']))
-    return `📌 Challenge (STAR):\n• Situation: Post-COVID volatility, 12 Ontex sites\n• Task: Rebuild S&OP to restore accuracy\n• Action: 18-month rolling plan in Arkieva, aligned Sales/Finance/Ops\n• Result: +27% forecast accuracy, improved OTIF and DIO`;
-  if (has(['achiev','proud','success','impact','result']))
-    return `📌 Achievements:\n• +27% forecast accuracy — Ontex, 12 global sites\n• -20% holding costs — Nike €2B EMEA\n• Automated KPI dashboards saving manual reporting hours`;
-  return `📌 General framework:\n• Open with role/company context\n• Cite a specific tool or metric\n• End with the measurable outcome\n• Keep it 3-4 sentences, confident tone`;
-}
-
-// ── Transcript ─────────────────────────────────────────────────────────────────
-function appendTranscript(role, text) {
-  const div = document.createElement('div');
-  div.className = 'transcript-line';
-  const lbl = role==='Interviewer'?'lbl-interviewer':role==='Candidate'?'lbl-candidate':'lbl-system';
-  div.innerHTML = `<span class="${lbl}">${role}:</span> ${escapeHtml(text)}`;
-  transcriptBox.appendChild(div);
-  transcriptBox.scrollTop = transcriptBox.scrollHeight;
-}
-function escapeHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-// ── Init ───────────────────────────────────────────────────────────────────────
-checkServerKeys().then(updateKeyUI);
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+(async function init() {
+  await checkServerKeys();
+})();
 </script>
 </body>
 </html>
