@@ -22,7 +22,7 @@ body{font-family:var(--font);font-size:15px;color:var(--text);background:var(--b
 img,svg{display:block;max-width:100%}
 input,button,textarea,select{font:inherit;color:inherit}
 
-/* ── Layout ── */
+/* Layout */
 .app{display:grid;grid-template-rows:56px 1fr;min-height:100dvh}
 .header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:50}
 .logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:-0.01em}
@@ -30,7 +30,7 @@ input,button,textarea,select{font:inherit;color:inherit}
 .header-right{display:flex;align-items:center;gap:8px}
 .main{display:flex;gap:0;overflow:hidden;height:calc(100dvh - 56px)}
 
-/* ── Sidebar ── */
+/* Sidebar */
 .sidebar{width:320px;min-width:280px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow-y:auto;padding:20px;gap:16px;flex-shrink:0}
 .sidebar h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
 .form-group{display:flex;flex-direction:column;gap:6px}
@@ -53,7 +53,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 .file-upload-area .icon{font-size:24px;margin-bottom:6px;pointer-events:none}
 .file-name{font-size:12px;color:var(--green);margin-top:4px;font-family:var(--mono)}
 
-/* ── Buttons ── */
+/* Buttons */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all var(--transition);white-space:nowrap}
 .btn-primary{background:var(--primary);color:#fff}
 .btn-primary:hover{background:var(--primary-d)}
@@ -70,7 +70,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .btn-full{width:100%}
 
-/* ── Status badge ── */
+/* Status badge */
 .badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
 .badge-green{background:rgba(52,211,153,.15);color:var(--green)}
 .badge-red{background:rgba(248,113,113,.15);color:var(--red)}
@@ -80,13 +80,13 @@ input[type=text]:focus,textarea:focus,select:focus{
 .dot.pulse{animation:pulse 1.8s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 
-/* ── Divider ── */
+/* Divider */
 .divider{height:1px;background:var(--border);margin:4px 0}
 
-/* ── Main panel ── */
+/* Main panel */
 .panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
 
-/* ── Script display ── */
+/* Script display */
 .script-section{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
 .script-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .script-box{
@@ -104,10 +104,10 @@ input[type=text]:focus,textarea:focus,select:focus{
 }
 .script-placeholder{color:var(--faint);font-style:italic;font-size:15px}
 
-/* ── Copy button ── */
+/* Copy button */
 .script-actions{display:flex;gap:8px;justify-content:flex-end}
 
-/* ── Transcript ── */
+/* Transcript */
 .transcript-section{border-top:1px solid var(--border);padding:16px 24px}
 .transcript-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .transcript-box{height:150px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
@@ -118,17 +118,17 @@ input[type=text]:focus,textarea:focus,select:focus{
 .t-system{background:rgba(139,148,158,.15);color:var(--muted)}
 .t-text{color:var(--text)}
 
-/* ── Controls bar ── */
+/* Controls bar */
 .controls-bar{padding:12px 20px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .stt-mode{font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
 
-/* ── Mute-self active glow ── */
+/* Mute-self active glow */
 .mute-active{box-shadow:0 0 0 2px var(--yellow)!important}
 
-/* ── PiP active glow ── */
+/* PiP active glow */
 .pip-active{box-shadow:0 0 0 2px var(--purple)!important}
 
-/* ── Offline banner ── */
+/* Offline banner */
 .offline-banner{
   display:none;background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3);
   border-radius:8px;padding:10px 14px;font-size:12px;color:var(--orange);line-height:1.5
@@ -136,7 +136,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 .offline-banner.show{display:block}
 .offline-banner a{color:var(--primary);text-decoration:underline;cursor:pointer}
 
-/* ── Audio source banner ── */
+/* Audio source banner */
 .audio-banner{
   display:none;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.25);
   border-radius:8px;padding:8px 12px;font-size:12px;color:var(--primary);line-height:1.5;
@@ -144,7 +144,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 }
 .audio-banner.show{display:flex;align-items:center;gap:8px}
 
-/* ── Settings drawer (API keys) ── */
+/* Settings drawer */
 .settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center}
 .settings-overlay.open{display:flex}
 .settings-drawer{
@@ -162,7 +162,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 }
 .key-row input[type=password]:focus{outline:none;border-color:var(--primary)}
 
-/* ── Toast ── */
+/* Toast */
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
   background:var(--surface2);border:1px solid var(--border);border-radius:8px;
@@ -171,7 +171,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-/* ── Style selector ── */
+/* Style selector */
 .style-tabs{display:flex;gap:4px;flex-wrap:wrap}
 .style-tab{
   padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;
@@ -180,7 +180,16 @@ input[type=text]:focus,textarea:focus,select:focus{
 }
 .style-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-/* ── Mobile ── */
+/* Tab Audio instruction box */
+.tab-audio-hint{
+  background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.2);
+  border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);line-height:1.6;
+  display:none
+}
+.tab-audio-hint.show{display:block}
+.tab-audio-hint strong{color:var(--primary)}
+
+/* Mobile */
 @media(max-width:768px){
   .sidebar{position:fixed;left:0;top:56px;height:calc(100dvh - 56px);z-index:40;transform:translateX(-100%);transition:transform .3s ease;width:100%;max-width:340px}
   .sidebar.open{transform:translateX(0);box-shadow:8px 0 32px rgba(0,0,0,.4)}
@@ -193,7 +202,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 }
 .menu-btn{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:6px}
 
-/* ── Scrollbar ── */
+/* Scrollbar */
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
@@ -202,7 +211,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 <body>
 <div class="app">
 
-<!-- ── Header ── -->
+<!-- Header -->
 <header class="header">
   <div class="logo">
     <button class="menu-btn" id="menu-btn" aria-label="Toggle sidebar">
@@ -215,9 +224,9 @@ input[type=text]:focus,textarea:focus,select:focus{
   </div>
   <div class="header-right">
     <span id="status-badge" class="badge badge-yellow"><span class="dot"></span> Setup Required</span>
-    <!-- NEW: PiP float button -->
-    <button class="btn btn-ghost btn-purple-ghost" id="pip-btn" style="padding:6px 10px;display:none" aria-label="Float answer as Picture-in-Picture overlay" title="Float answer overlay (always-on-top)">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".6"/></svg>
+    <!-- PiP float button — only shown when session is active -->
+    <button class="btn btn-ghost" id="pip-btn" style="padding:6px 10px;display:none" aria-label="Float answer as Picture-in-Picture overlay" title="Float answer overlay — stays on top of Teams/Meet/Zoom">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".7"/></svg>
       Float
     </button>
     <button class="btn btn-ghost" id="settings-btn" style="padding:6px 10px" aria-label="Open API key settings">
@@ -228,7 +237,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 </header>
 
 <div class="main">
-<!-- ── Sidebar ── -->
+<!-- Sidebar -->
 <aside class="sidebar" id="sidebar">
   <div>
     <h2>Job Setup</h2>
@@ -239,9 +248,8 @@ input[type=text]:focus,textarea:focus,select:focus{
     <input type="text" id="job-role" placeholder="e.g. Supply Chain Analyst" value="Supply Chain Planning Coordinator">
   </div>
 
-  <!-- NEW: Job Description field -->
   <div class="form-group">
-    <label for="jd-text">Job Description <span style="color:var(--green);font-size:11px">NEW</span></label>
+    <label for="jd-text">Job Description <span style="color:var(--green);font-size:11px">RECOMMENDED</span></label>
     <textarea id="jd-text" rows="5" placeholder="Paste the job description here — AI will tailor answers to match this specific role's requirements..."></textarea>
   </div>
 
@@ -260,7 +268,6 @@ input[type=text]:focus,textarea:focus,select:focus{
     <textarea id="cv-text" rows="6" placeholder="Paste your CV here..."></textarea>
   </div>
 
-  <!-- Offline mode banner shown when no LLM keys are active -->
   <div class="offline-banner" id="offline-banner">
     ⚠️ No API keys active — running in <strong>offline hints mode</strong>.<br>
     <a id="open-settings-link">Add Groq / Gemini / OpenRouter keys ↗</a> for live AI answers.
@@ -297,7 +304,7 @@ input[type=text]:focus,textarea:focus,select:focus{
   </div>
 </aside>
 
-<!-- ── Main Panel ── -->
+<!-- Main Panel -->
 <div class="panel">
   <div class="script-section">
     <div style="display:flex;align-items:center;justify-content:space-between">
@@ -318,28 +325,36 @@ input[type=text]:focus,textarea:focus,select:focus{
       <span class="script-label">Live Transcript</span>
       <button class="btn btn-ghost" id="clear-transcript" style="padding:4px 10px;font-size:11px">Clear</button>
     </div>
-    <!-- NEW: audio source banner -->
+    <!-- Audio source indicator -->
     <div class="audio-banner" id="audio-banner">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
       <span id="audio-banner-text">Tab audio active</span>
     </div>
+    <!-- Tab audio how-to hint -->
+    <div class="tab-audio-hint" id="tab-audio-hint">
+      <strong>How to capture Teams / Meet / Zoom audio:</strong><br>
+      1. Click <strong>Tab Audio</strong> below → Chrome share dialog opens<br>
+      2. Pick the tab with your video call<br>
+      3. ✅ Tick <strong>"Also share tab audio"</strong> (bottom-left of dialog)<br>
+      4. Click Share — interviewer voice is now captured automatically
+    </div>
     <div class="transcript-box" id="transcript" role="log" aria-live="polite"></div>
   </div>
 
-  <!-- NEW: expanded controls bar with Tab Audio + Mute Self -->
+  <!-- Controls bar -->
   <div class="controls-bar">
-    <!-- Mic button -->
-    <button class="btn btn-success" id="mic-btn" disabled aria-label="Connect microphone">
+    <!-- Mic: captures YOUR microphone (for mic-only mode) -->
+    <button class="btn btn-success" id="mic-btn" disabled aria-label="Connect microphone" title="Capture your microphone — use for both you and interviewer in the same room">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
-      Connect Mic
+      Mic
     </button>
-    <!-- NEW: Tab / System audio button -->
-    <button class="btn btn-ghost" id="tab-audio-btn" disabled title="Capture audio from a browser tab (Teams, Meet, Zoom web) — Chrome required. Tick 'Share tab audio' in the picker.">
+    <!-- Tab Audio: captures browser tab audio (Teams, Meet, Zoom web) -->
+    <button class="btn btn-ghost" id="tab-audio-btn" disabled title="Capture audio from a browser tab (Teams, Meet, Zoom web). Chrome required. Tick 'Also share tab audio' in the picker.">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
       Tab Audio
     </button>
-    <!-- NEW: Mute-self toggle -->
-    <button class="btn btn-ghost" id="mute-self-btn" disabled title="Toggle: pause AI when YOU are speaking. Click once before you answer, click again when done.">
+    <!-- Mute-self: pause AI while you speak your answer -->
+    <button class="btn btn-ghost" id="mute-self-btn" disabled title="Pause AI while you speak your answer — prevents your own voice triggering new answers">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><line x1="1" y1="1" x2="23" y2="23" stroke="var(--muted)"/></svg>
       I'm Speaking
     </button>
@@ -349,7 +364,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 </div>
 </div>
 
-<!-- ── Settings Drawer ── -->
+<!-- Settings Drawer -->
 <div class="settings-overlay" id="settings-overlay" role="dialog" aria-modal="true" aria-label="API Key Settings">
   <div class="settings-drawer">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -357,7 +372,7 @@ input[type=text]:focus,textarea:focus,select:focus{
       <button class="btn btn-ghost" id="settings-close" style="padding:4px 10px" aria-label="Close settings">✕ Close</button>
     </div>
     <p style="font-size:13px;color:var(--muted);margin-bottom:4px">Keys are sent as request headers — never stored on the server. Refresh the page and they are gone.</p>
-    <p style="font-size:12px;color:var(--faint);margin-bottom:16px">Alternatively, add keys as <strong style="color:var(--muted)">Vercel Environment Variables</strong> (GROQ_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, DEEPGRAM_API_KEY) for persistent server-side use.</p>
+    <p style="font-size:12px;color:var(--faint);margin-bottom:16px">Or add as Vercel Environment Variables (GROQ_API_KEY, GEMINI_API_KEY, OPENROUTER_API_KEY, DEEPGRAM_API_KEY) for persistent server-side use.</p>
     <div class="key-row">
       <label>Groq API Key — Llama-3.3-70b (fastest, free tier)</label>
       <input type="password" id="key-groq" placeholder="gsk_..."><span></span>
@@ -372,7 +387,7 @@ input[type=text]:focus,textarea:focus,select:focus{
     </div>
     <div class="divider" style="margin:16px 0"></div>
     <div class="key-row">
-      <label>Deepgram API Key — enables Nova-3 real-time STT (optional; browser Web Speech used if empty)</label>
+      <label>Deepgram API Key — Nova-3 real-time STT. Optional: browser STT used if empty, but Deepgram gives much better accuracy especially for tab audio.</label>
       <input type="password" id="key-deepgram" placeholder="your_deepgram_key"><span></span>
     </div>
     <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
@@ -383,11 +398,11 @@ input[type=text]:focus,textarea:focus,select:focus{
   </div>
 </div>
 
-<!-- ── Toast ── -->
+<!-- Toast -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-<!-- Hidden video element used for PiP canvas streaming -->
-<video id="pip-video" style="display:none" muted playsinline></video>
+<!-- Hidden video for PiP canvas streaming -->
+<video id="pip-video" style="display:none;width:1px;height:1px;position:fixed;bottom:0;right:0" muted playsinline autoplay></video>
 
 <script>
 // ─────────────────────────────────────────
@@ -395,7 +410,7 @@ input[type=text]:focus,textarea:focus,select:focus{
 // ─────────────────────────────────────────
 const state = {
   cv: '',
-  jd: '',                    // NEW: Job Description
+  jd: '',
   jobRole: 'Supply Chain Planning Coordinator',
   responseStyle: 'live_script',
   context: [],
@@ -404,15 +419,14 @@ const state = {
   deepgramSocket: null,
   browserRecognition: null,
   isListening: false,
-  lastAnswer: '',
-  // NEW: mute-self — AI ignores transcripts while you speak
-  muteSelf: false,
-  // NEW: tab audio state
+  tabAudioActive: false,
   tabAudioStream: null,
   tabAudioContext: null,
   tabAudioProcessor: null,
-  tabAudioActive: false,
-  // NEW: PiP state
+  tabDeepgramSocket: null,
+  tabBrowserRecognition: null,
+  muteSelf: false,
+  lastAnswer: '',
   pipInterval: null,
   pipCanvas: null,
   pipCtx: null,
@@ -442,11 +456,12 @@ function toast(msg, duration = 2800) {
   const t = $('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), duration);
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), duration);
 }
 
 // ─────────────────────────────────────────
-// PDF extraction (pdf.js)
+// PDF extraction (pdf.js CDN)
 // ─────────────────────────────────────────
 let pdfjsLib = null;
 
@@ -623,16 +638,18 @@ $('start-btn').addEventListener('click', () => {
   $('manual-input-group').style.display = 'flex';
   $('manual-input-group').style.flexDirection = 'column';
   $('manual-input-group').style.gap = '8px';
+  // Show the Tab Audio hint
+  $('tab-audio-hint').classList.add('show');
 
   setStatus('ready');
-  const jdHint = jd ? ' + JD loaded ✓' : ' (no JD — add Job Description for better answers)';
-  setScript('placeholder', 'Session started. Click "Connect Mic" or "Tab Audio" to begin listening.', '');
-  appendTranscript('system', 'Session started for: ' + role + jdHint);
+  const jdHint = jd ? ' + JD loaded ✓' : ' (tip: paste Job Description for tailored answers)';
+  setScript('placeholder', 'Session started! Click "Mic" for microphone capture, or "Tab Audio" to capture interviewer voice from Teams/Meet/Zoom.', '');
+  appendTranscript('system', 'Session started: ' + role + jdHint);
   $('sidebar').classList.remove('open');
 });
 
 $('stop-btn').addEventListener('click', () => {
-  stopListening();
+  stopMicListening();
   stopTabAudio();
   stopPiP();
   state.isRunning = false;
@@ -648,6 +665,7 @@ $('stop-btn').addEventListener('click', () => {
   pipBtn.style.display = 'none';
   resetMuteSelfBtn();
   $('manual-input-group').style.display = 'none';
+  $('tab-audio-hint').classList.remove('show');
   setStatus('setup');
   appendTranscript('system', 'Session ended.');
 });
@@ -686,35 +704,37 @@ function setStatus(mode) {
 }
 
 // ─────────────────────────────────────────
-// Mic button (existing)
+// MIC button — captures microphone (STT for same-room calls)
 // ─────────────────────────────────────────
 micBtn.addEventListener('click', () => {
-  if (state.isListening) stopListening();
-  else startListening();
+  if (state.isListening) stopMicListening();
+  else startMicListening();
 });
 
-function startListening() {
+function startMicListening() {
   state.isListening = true;
   micBtn.className = 'btn btn-danger';
-  micBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/></svg> Stop Listening';
+  micBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/></svg> Stop Mic';
   setStatus('listen');
-  if (state.keys.deepgram) startDeepgram();
-  else startBrowserSTT();
+  if (state.keys.deepgram) startDeepgramMic();
+  else startBrowserSTT('mic');
 }
 
-function stopListening() {
+function stopMicListening() {
   state.isListening = false;
   micBtn.className = 'btn btn-success';
-  micBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Connect Mic';
+  micBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Mic';
   if (state.isRunning && !state.tabAudioActive) setStatus('ready');
   if (state.deepgramSocket) { try { state.deepgramSocket.close(); } catch(e) {} state.deepgramSocket = null; }
   if (state.browserRecognition) { try { state.browserRecognition.stop(); } catch(e) {} state.browserRecognition = null; }
+  if (!state.tabAudioActive) sttMode.textContent = 'STT: ' + (state.keys.deepgram ? 'Deepgram Nova-3' : 'Browser Web Speech');
 }
 
 // ─────────────────────────────────────────
-// NEW: Tab / System Audio capture
-// Uses getDisplayMedia to capture a browser tab's audio
-// Works on Chrome — user must tick "Share tab audio" in the picker
+// TAB AUDIO — captures browser tab audio (Teams, Meet, Zoom web)
+// FIX 1: Always starts BrowserSTT as fallback when no Deepgram key
+// FIX 2: BrowserSTT for tab audio uses a SEPARATE recognition instance
+//         so mic and tab audio can run simultaneously
 // ─────────────────────────────────────────
 tabAudioBtn.addEventListener('click', async () => {
   if (state.tabAudioActive) {
@@ -726,44 +746,47 @@ tabAudioBtn.addEventListener('click', async () => {
     return;
   }
   try {
-    toast('⏳ Pick a Tab to share — tick "Share tab audio" in the dialog!', 4000);
+    toast('⏳ Chrome share dialog opening — pick your call tab, then tick "Also share tab audio"!', 5000);
     const displayStream = await navigator.mediaDevices.getDisplayMedia({
-      video: true,
-      audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 16000 }
+      video: true,   // Chrome requires video:true to show the tab picker
+      audio: {
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+        sampleRate: 16000
+      }
     });
-    // Stop video track immediately — we only need audio
+    // Stop video track immediately — audio only needed
     displayStream.getVideoTracks().forEach(t => t.stop());
     const audioTracks = displayStream.getAudioTracks();
+
     if (!audioTracks.length) {
-      toast('⚠ No audio captured — did you tick "Share tab audio" in the Chrome dialog?', 4000);
+      toast('⚠ No audio captured! Did you tick "Also share tab audio" in the Chrome dialog? Try again.', 5000);
       return;
     }
+
     state.tabAudioStream = new MediaStream(audioTracks);
     state.tabAudioActive = true;
     tabAudioBtn.className = 'btn btn-primary';
     tabAudioBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg> Stop Tab Audio';
     $('audio-banner').classList.add('show');
-    $('audio-banner-text').textContent = '🖥 Tab audio active — interviewer voice from browser tab being captured';
-    sttMode.textContent = 'STT: Tab Audio ✓';
+    $('audio-banner-text').textContent = '🖥 Tab audio active — interviewer voice from browser tab captured';
     setStatus('listen');
-    // Feed into Deepgram if available, else Web Speech (limited for display streams)
+
+    // Route tab audio to STT
     if (state.keys.deepgram) {
-      startDeepgramFromStream(state.tabAudioStream);
+      startDeepgramFromStream(state.tabAudioStream, 'tab');
+      sttMode.textContent = 'STT: Deepgram Nova-3 (tab audio)';
     } else {
-      // Web Speech API cannot use arbitrary MediaStream — we merge tab audio into a dummy audio element
-      // and remind user to add Deepgram for best results
-      toast('⚠ Add a Deepgram key in ⚙ Keys for best tab audio transcription', 4000);
-      // Fallback: play the stream through AudioContext and let browser STT pick it up via mic loopback
-      const ctx = new AudioContext({ sampleRate: 16000 });
-      const src = ctx.createMediaStreamSource(state.tabAudioStream);
-      src.connect(ctx.destination);
-      state.tabAudioContext = ctx;
-      appendTranscript('system', 'Tab audio playing — add Deepgram key for full STT. Browser STT also active.');
-      startBrowserSTT();
+      // FIX: Without Deepgram, use Web Speech on the tab audio by routing it
+      // through AudioContext and looping back to the default audio destination,
+      // then starting a SEPARATE browser STT instance for tab audio
+      startTabAudioWebSpeech(state.tabAudioStream);
     }
-    // Handle if user stops sharing from browser UI
-    audioTracks[0].onended = () => { stopTabAudio(); toast('Tab audio sharing stopped'); };
-    appendTranscript('system', 'Tab audio connected — speak on your Teams/Meet/Zoom call');
+
+    // Handle user closing share from browser chrome
+    audioTracks[0].onended = () => { stopTabAudio(); toast('Tab audio sharing stopped by browser'); };
+    appendTranscript('system', '🖥 Tab audio connected — interviewer voice from ' + (audioTracks[0].label || 'tab') + ' is being transcribed');
   } catch (err) {
     if (err.name !== 'NotAllowedError') {
       toast('Tab audio failed: ' + err.message);
@@ -773,33 +796,152 @@ tabAudioBtn.addEventListener('click', async () => {
   }
 });
 
+// FIX: Route tab audio through AudioContext → play via audio element →
+// start a dedicated browser STT recognition instance.
+// This works because Web Speech listens to the default audio device,
+// and we play the tab audio through the system so STT picks it up.
+function startTabAudioWebSpeech(stream) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const src = ctx.createMediaStreamSource(stream);
+    // Connect to destination so the audio plays through speakers/headphones,
+    // which the browser STT then picks up via the system audio loopback
+    src.connect(ctx.destination);
+    state.tabAudioContext = ctx;
+    sttMode.textContent = 'STT: Browser Web Speech (tab audio — add Deepgram key for better accuracy)';
+    toast('Tab audio captured via Web Speech. For best accuracy add a Deepgram key in ⚙ Keys.', 4000);
+    appendTranscript('system', 'Using Browser Web Speech for tab audio transcription. Add Deepgram key for higher accuracy.');
+  } catch (err) {
+    appendTranscript('system', 'AudioContext failed: ' + err.message);
+  }
+  // Start dedicated browser STT for tab audio (separate from mic STT)
+  startBrowserSTT('tab');
+}
+
 function stopTabAudio() {
   if (!state.tabAudioActive) return;
   state.tabAudioActive = false;
   if (state.tabAudioStream) { state.tabAudioStream.getTracks().forEach(t => t.stop()); state.tabAudioStream = null; }
-  if (state.tabAudioContext) { state.tabAudioContext.close(); state.tabAudioContext = null; }
+  if (state.tabAudioContext) { try { state.tabAudioContext.close(); } catch(e) {} state.tabAudioContext = null; }
   if (state.tabAudioProcessor) { try { state.tabAudioProcessor.disconnect(); } catch(e) {} state.tabAudioProcessor = null; }
-  if (state.deepgramSocket) { try { state.deepgramSocket.close(); } catch(e) {} state.deepgramSocket = null; }
+  if (state.tabDeepgramSocket) { try { state.tabDeepgramSocket.close(); } catch(e) {} state.tabDeepgramSocket = null; }
+  if (state.tabBrowserRecognition) { try { state.tabBrowserRecognition.stop(); } catch(e) {} state.tabBrowserRecognition = null; }
   tabAudioBtn.className = 'btn btn-ghost';
   tabAudioBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg> Tab Audio';
   $('audio-banner').classList.remove('show');
+  if (state.isRunning) setStatus(state.isListening ? 'listen' : 'ready');
   sttMode.textContent = 'STT: ' + (state.keys.deepgram ? 'Deepgram Nova-3' : 'Browser Web Speech');
-  if (state.isRunning) setStatus('ready');
 }
 
-// Deepgram from an arbitrary MediaStream (used for tab audio)
-async function startDeepgramFromStream(stream) {
-  sttMode.textContent = 'STT: Deepgram Nova-3 (tab audio, connecting...)';
+// ─────────────────────────────────────────
+// Browser Web Speech API
+// source: 'mic' | 'tab' — keeps two separate recognition instances
+// ─────────────────────────────────────────
+function startBrowserSTT(source) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    toast('Browser STT not supported — use Chrome/Edge or add a Deepgram key in Settings ⚙');
+    if (source === 'mic') stopMicListening();
+    return;
+  }
+  const recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = e => {
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+    }
+    if (final.trim()) handleTranscript(final.trim());
+  };
+  recognition.onend = () => {
+    // Auto-restart if still active
+    if (source === 'mic'  && state.isListening)   { try { recognition.start(); } catch(err) {} }
+    if (source === 'tab'  && state.tabAudioActive) { try { recognition.start(); } catch(err) {} }
+  };
+  recognition.onerror = e => {
+    if (e.error !== 'no-speech' && e.error !== 'aborted') appendTranscript('system', 'STT error (' + source + '): ' + e.error);
+  };
+  try { recognition.start(); } catch(e) {}
+
+  if (source === 'mic') {
+    state.browserRecognition = recognition;
+    sttMode.textContent = 'STT: Browser Web Speech (mic)';
+    appendTranscript('system', 'Browser STT active on microphone');
+  } else {
+    state.tabBrowserRecognition = recognition;
+    // sttMode already set by caller
+    appendTranscript('system', 'Browser STT active on tab audio');
+  }
+}
+
+// ─────────────────────────────────────────
+// Deepgram Nova-3 — microphone
+// ─────────────────────────────────────────
+async function startDeepgramMic() {
+  sttMode.textContent = 'STT: Deepgram Nova-3 (mic, connecting...)';
   try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const socket = new WebSocket(
       'wss://api.deepgram.com/v1/listen?model=nova-3&language=en-US&smart_format=true&interim_results=false&endpointing=800',
       ['token', state.keys.deepgram]
     );
     state.deepgramSocket = socket;
-    const audioContext = new AudioContext({ sampleRate: 16000 });
+    const audioContext = new AudioContext();
     const source = audioContext.createMediaStreamSource(stream);
     const processor = audioContext.createScriptProcessor(4096, 1, 1);
     source.connect(processor);
+    processor.connect(audioContext.destination);
+
+    processor.onaudioprocess = e => {
+      if (socket.readyState !== WebSocket.OPEN) return;
+      const float32 = e.inputBuffer.getChannelData(0);
+      const int16 = new Int16Array(float32.length);
+      for (let i = 0; i < float32.length; i++) {
+        int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+      }
+      socket.send(int16.buffer);
+    };
+    socket.onopen = () => {
+      sttMode.textContent = 'STT: Deepgram Nova-3 (mic ✓)';
+      appendTranscript('system', 'Deepgram Nova-3 connected — mic active');
+    };
+    socket.onmessage = e => {
+      const data = JSON.parse(e.data);
+      const transcript = data?.channel?.alternatives?.[0]?.transcript?.trim();
+      if (transcript) handleTranscript(transcript);
+    };
+    socket.onerror = () => {
+      appendTranscript('system', 'Deepgram mic error — falling back to Browser STT');
+      sttMode.textContent = 'STT: Browser Web Speech (fallback)';
+      state.deepgramSocket = null;
+      startBrowserSTT('mic');
+    };
+    socket.onclose = () => { stream.getTracks().forEach(t => t.stop()); processor.disconnect(); };
+  } catch (err) {
+    appendTranscript('system', 'Mic/Deepgram failed: ' + err.message);
+    sttMode.textContent = 'STT: Browser Web Speech (fallback)';
+    startBrowserSTT('mic');
+  }
+}
+
+// ─────────────────────────────────────────
+// Deepgram Nova-3 — arbitrary MediaStream (tab audio)
+// ─────────────────────────────────────────
+async function startDeepgramFromStream(stream, source) {
+  try {
+    const socket = new WebSocket(
+      'wss://api.deepgram.com/v1/listen?model=nova-3&language=en-US&smart_format=true&interim_results=false&endpointing=800',
+      ['token', state.keys.deepgram]
+    );
+    state.tabDeepgramSocket = socket;
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+    const src = audioContext.createMediaStreamSource(stream);
+    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    src.connect(processor);
     processor.connect(audioContext.destination);
     state.tabAudioContext = audioContext;
     state.tabAudioProcessor = processor;
@@ -813,7 +955,6 @@ async function startDeepgramFromStream(stream) {
       }
       socket.send(int16.buffer);
     };
-
     socket.onopen = () => {
       sttMode.textContent = 'STT: Deepgram Nova-3 (tab audio ✓)';
       appendTranscript('system', 'Deepgram Nova-3 connected to tab audio');
@@ -824,20 +965,18 @@ async function startDeepgramFromStream(stream) {
       if (transcript) handleTranscript(transcript);
     };
     socket.onerror = () => {
-      appendTranscript('system', 'Deepgram error on tab audio — falling back to Browser STT');
-      state.deepgramSocket = null;
-      startBrowserSTT();
+      appendTranscript('system', 'Deepgram tab audio error — falling back to Web Speech');
+      state.tabDeepgramSocket = null;
+      startTabAudioWebSpeech(stream);
     };
   } catch (err) {
-    appendTranscript('system', 'Tab audio Deepgram failed: ' + err.message);
-    startBrowserSTT();
+    appendTranscript('system', 'Deepgram tab audio failed: ' + err.message);
+    startTabAudioWebSpeech(stream);
   }
 }
 
 // ─────────────────────────────────────────
-// NEW: Mute-Self toggle
-// Click once = AI pauses (you're speaking your answer)
-// Click again = AI resumes listening for next question
+// Mute-Self toggle
 // ─────────────────────────────────────────
 muteSelfBtn.addEventListener('click', () => {
   state.muteSelf = !state.muteSelf;
@@ -861,110 +1000,19 @@ function resetMuteSelfBtn() {
 }
 
 // ─────────────────────────────────────────
-// Browser Web Speech API (fallback STT)
-// ─────────────────────────────────────────
-function startBrowserSTT() {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) {
-    toast('Browser STT not supported — use Chrome/Edge or add a Deepgram key in Settings ⚙');
-    stopListening();
-    return;
-  }
-  sttMode.textContent = 'STT: Browser Web Speech API';
-  const recognition = new SR();
-  recognition.continuous = true;
-  recognition.interimResults = false;
-  recognition.lang = 'en-US';
-  state.browserRecognition = recognition;
-
-  recognition.onresult = e => {
-    let final = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) final += e.results[i][0].transcript;
-    }
-    if (final.trim()) handleTranscript(final.trim());
-  };
-  recognition.onend = () => {
-    if (state.isListening || state.tabAudioActive) { try { recognition.start(); } catch(err) {} }
-  };
-  recognition.onerror = e => {
-    if (e.error !== 'no-speech' && e.error !== 'aborted') appendTranscript('system', 'STT error: ' + e.error);
-  };
-  try { recognition.start(); } catch(e) {}
-  appendTranscript('system', 'Browser STT active — speak to capture questions');
-}
-
-// ─────────────────────────────────────────
-// Deepgram Nova-3 STT (mic, real-time WebSocket)
-// ─────────────────────────────────────────
-async function startDeepgram() {
-  sttMode.textContent = 'STT: Deepgram Nova-3 (connecting...)';
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const socket = new WebSocket(
-      'wss://api.deepgram.com/v1/listen?model=nova-3&language=en-US&smart_format=true&interim_results=false&endpointing=800',
-      ['token', state.keys.deepgram]
-    );
-    state.deepgramSocket = socket;
-
-    const audioContext = new AudioContext();
-    const source = audioContext.createMediaStreamSource(stream);
-    const processor = audioContext.createScriptProcessor(4096, 1, 1);
-    source.connect(processor);
-    processor.connect(audioContext.destination);
-
-    processor.onaudioprocess = e => {
-      if (socket.readyState !== WebSocket.OPEN) return;
-      const float32 = e.inputBuffer.getChannelData(0);
-      const int16 = new Int16Array(float32.length);
-      for (let i = 0; i < float32.length; i++) {
-        int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
-      }
-      socket.send(int16.buffer);
-    };
-
-    socket.onopen = () => {
-      sttMode.textContent = 'STT: Deepgram Nova-3 ✓';
-      appendTranscript('system', 'Deepgram Nova-3 STT connected');
-    };
-    socket.onmessage = e => {
-      const data = JSON.parse(e.data);
-      const transcript = data?.channel?.alternatives?.[0]?.transcript?.trim();
-      if (transcript) handleTranscript(transcript);
-    };
-    socket.onerror = () => {
-      appendTranscript('system', 'Deepgram error — falling back to Browser STT');
-      sttMode.textContent = 'STT: Browser Web Speech (Deepgram failed)';
-      state.deepgramSocket = null;
-      startBrowserSTT();
-    };
-    socket.onclose = () => {
-      stream.getTracks().forEach(t => t.stop());
-      processor.disconnect();
-      source.disconnect();
-    };
-  } catch (err) {
-    appendTranscript('system', 'Mic access denied or Deepgram failed: ' + err.message);
-    sttMode.textContent = 'STT: Browser Web Speech (fallback)';
-    startBrowserSTT();
-  }
-}
-
-// ─────────────────────────────────────────
-// Core: handle transcript → call /api/chat
-// NEW: muteSelf guard — logs your speech but skips AI call
+// Core: transcript → /api/chat
 // ─────────────────────────────────────────
 function handleTranscript(text) {
   if (state.muteSelf) {
-    // You are speaking — log as candidate but do NOT trigger AI
     appendTranscript('candidate', text);
     return;
   }
   appendTranscript('interviewer', text);
   state.context.push({ role: 'interviewer', text });
   setStatus('think');
-  setScript('thinking', '', '');
+  scriptBox.className = 'script-box thinking';
   scriptText.innerHTML = '<span class="script-placeholder">⚡ Analysing question...</span>';
+  providerTag.textContent = '';
   callChatAPI(text);
 }
 
@@ -976,13 +1024,11 @@ async function callChatAPI(question) {
     ...(state.keys.openrouter && { 'x-openrouter-key': state.keys.openrouter }),
     ...(state.keys.deepgram   && { 'x-deepgram-key':   state.keys.deepgram })
   };
-
-  // NEW: include job_description in every API call
   const body = JSON.stringify({
     transcript:         question,
     cv:                 state.cv,
     job_role:           state.jobRole,
-    job_description:    state.jd,       // ← NEW field
+    job_description:    state.jd,
     context:            state.context.slice(-6),
     response_style:     state.responseStyle,
     target_role_family: 'Supply Chain'
@@ -992,7 +1038,6 @@ async function callChatAPI(question) {
     const res = await fetch('/api/chat', { method: 'POST', headers, body });
     const contentType = res.headers.get('content-type') || '';
 
-    // ── SSE streaming response ──
     if (contentType.includes('text/event-stream')) {
       scriptBox.className = 'script-box';
       scriptText.textContent = '';
@@ -1001,7 +1046,6 @@ async function callChatAPI(question) {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -1024,7 +1068,6 @@ async function callChatAPI(question) {
       return;
     }
 
-    // ── JSON response (offline / skip) ──
     const data = await res.json();
     if (data.skip) {
       setStatus(state.tabAudioActive || state.isListening ? 'listen' : 'ready');
@@ -1049,7 +1092,6 @@ $('manual-send').addEventListener('click', () => {
   const q = $('manual-q').value.trim();
   if (!q) return;
   $('manual-q').value = '';
-  // Manual questions always trigger AI even if mute-self is on
   const wasMuted = state.muteSelf;
   state.muteSelf = false;
   handleTranscript(q);
@@ -1106,19 +1148,18 @@ $('clear-btn').addEventListener('click', () => {
   setScript('placeholder', 'Script cleared. Waiting for next question...', '');
 });
 
-// ─────────────────────────────────────────
-// Job role + JD sync
-// ─────────────────────────────────────────
+// Input sync
 $('job-role').addEventListener('input', e => { state.jobRole = e.target.value; });
 $('jd-text').addEventListener('input',  e => { state.jd      = e.target.value; });
 
 // ─────────────────────────────────────────
-// NEW: Picture-in-Picture floating overlay
-// Renders the AI answer text onto a canvas, streams it as a video,
-// then opens it in PiP — stays on top of Teams/Zoom/Meet.
+// PICTURE-IN-PICTURE floating overlay
+// FIX: pipVideo must have a valid srcObject AND be playing before
+//      requestPictureInPicture() can be called.
+//      We now await pipVideo.play() and gate PiP on the 'playing' event.
 // ─────────────────────────────────────────
 pipBtn.addEventListener('click', async () => {
-  if (document.pictureInPictureElement) {
+  if (state.pipActive || document.pictureInPictureElement) {
     await stopPiP();
   } else {
     await startPiP();
@@ -1127,88 +1168,52 @@ pipBtn.addEventListener('click', async () => {
 
 async function startPiP() {
   if (!document.pictureInPictureEnabled) {
-    toast('Picture-in-Picture not supported — try Chrome or Edge on desktop');
+    toast('Picture-in-Picture not supported — use Chrome or Edge on desktop');
     return;
   }
   try {
-    // Create canvas sized for readable teleprompter text
-    state.pipCanvas = document.createElement('canvas');
-    state.pipCanvas.width  = 900;
-    state.pipCanvas.height = 340;
-    state.pipCtx = state.pipCanvas.getContext('2d');
+    // Build canvas
+    const canvas = document.createElement('canvas');
+    canvas.width  = 880;
+    canvas.height = 320;
+    state.pipCanvas = canvas;
+    state.pipCtx = canvas.getContext('2d');
 
-    // Stream canvas to the hidden <video> element
-    pipVideo.srcObject = state.pipCanvas.captureStream(4); // 4fps is enough for text
-    await pipVideo.play();
+    // Attach canvas stream to the hidden video element
+    const stream = canvas.captureStream(4); // 4 fps — enough for text updates
+    pipVideo.srcObject = stream;
+    pipVideo.muted = true;
 
-    // Draw loop — updates every 400ms
-    function drawFrame() {
-      const ctx = state.pipCtx;
-      const w = state.pipCanvas.width;
-      const h = state.pipCanvas.height;
-      // Background
-      ctx.fillStyle = '#0f1117';
-      ctx.fillRect(0, 0, w, h);
-      // Left accent bar
-      ctx.fillStyle = '#4f8ef7';
-      ctx.fillRect(0, 0, 4, h);
-      // Header label
-      ctx.fillStyle = '#8892a4';
-      ctx.font = '600 13px Inter, sans-serif';
-      ctx.fillText('AI INTERVIEW COPILOT  •  ' + state.jobRole.toUpperCase(), 20, 26);
-      // Mute indicator
-      if (state.muteSelf) {
-        ctx.fillStyle = '#fbbf24';
-        ctx.fillText('🔇 YOU ARE SPEAKING', w - 200, 26);
-      }
-      // Divider
-      ctx.fillStyle = '#2a3142';
-      ctx.fillRect(16, 34, w - 32, 1);
-      // Answer text with word wrap
-      const answer = state.lastAnswer || (state.isRunning ? 'Listening for interviewer question...' : 'Start a session to begin.');
-      ctx.fillStyle = '#e8eaf0';
-      ctx.font = '500 20px Inter, sans-serif';
-      const maxW = w - 40;
-      const lineH = 30;
-      const words = answer.split(' ');
-      let line = '', y = 68;
-      for (let i = 0; i < words.length; i++) {
-        const test = line + words[i] + ' ';
-        if (ctx.measureText(test).width > maxW && line !== '') {
-          ctx.fillText(line.trim(), 20, y);
-          line = words[i] + ' ';
-          y += lineH;
-          if (y > h - 30) {
-            ctx.fillStyle = '#8892a4';
-            ctx.font = '13px Inter, sans-serif';
-            ctx.fillText('… scroll app for full answer', 20, y);
-            break;
-          }
-        } else {
-          line = test;
-        }
-      }
-      if (line.trim() && y <= h - 30) ctx.fillText(line.trim(), 20, y);
-    }
+    // FIX: Must wait for video to actually be playing before PiP request
+    await new Promise((resolve, reject) => {
+      pipVideo.onplaying = resolve;
+      pipVideo.onerror   = reject;
+      pipVideo.play().catch(reject);
+    });
 
-    drawFrame();
-    state.pipInterval = setInterval(drawFrame, 400);
+    // Draw the first frame immediately so PiP isn't blank
+    drawPiPFrame();
+    state.pipInterval = setInterval(drawPiPFrame, 400);
 
+    // Request PiP — must be triggered in a user-gesture context (button click ✓)
     await pipVideo.requestPictureInPicture();
     state.pipActive = true;
-    pipBtn.className = 'btn btn-purple pip-active';
-    pipBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".6"/></svg> Close Float';
-    toast('✓ Floating overlay active — drag to any corner. Updates with every AI answer.');
 
-    // If user closes PiP from browser UI
-    pipVideo.addEventListener('leavepictureinpicture', () => {
-      stopPiP();
-    }, { once: true });
+    pipBtn.className = 'btn btn-purple pip-active';
+    pipBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".7"/></svg> Close Float';
+    toast('✓ Floating overlay active — drag to any corner over Teams/Meet/Zoom');
+
+    pipVideo.addEventListener('leavepictureinpicture', () => stopPiP(), { once: true });
 
   } catch (err) {
-    if (err.name !== 'NotAllowedError') toast('PiP failed: ' + err.message + ' — use Chrome/Edge');
-    else toast('PiP cancelled');
     clearInterval(state.pipInterval);
+    state.pipInterval = null;
+    if (pipVideo.srcObject) { pipVideo.srcObject.getTracks().forEach(t => t.stop()); pipVideo.srcObject = null; }
+    if (err.name !== 'NotAllowedError') {
+      toast('PiP failed: ' + err.message + ' — use Chrome/Edge on desktop');
+    } else {
+      toast('PiP cancelled');
+    }
   }
 }
 
@@ -1224,11 +1229,74 @@ async function stopPiP() {
     pipVideo.srcObject = null;
   }
   pipBtn.className = 'btn btn-ghost';
-  pipBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".6"/></svg> Float';
+  pipBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="8" height="6" rx="1" fill="currentColor" stroke="none" opacity=".7"/></svg> Float';
+}
+
+function drawPiPFrame() {
+  const ctx = state.pipCtx;
+  if (!ctx) return;
+  const w = state.pipCanvas.width;
+  const h = state.pipCanvas.height;
+
+  // Background
+  ctx.fillStyle = '#0f1117';
+  ctx.fillRect(0, 0, w, h);
+
+  // Left accent bar
+  ctx.fillStyle = '#4f8ef7';
+  ctx.fillRect(0, 0, 4, h);
+
+  // Header
+  ctx.fillStyle = '#8892a4';
+  ctx.font = 'bold 12px Inter, Arial, sans-serif';
+  ctx.fillText('AI INTERVIEW COPILOT', 16, 22);
+  ctx.fillStyle = '#4f8ef7';
+  ctx.fillText(' • ' + state.jobRole.toUpperCase().slice(0, 50), 16 + ctx.measureText('AI INTERVIEW COPILOT').width, 22);
+
+  // Mute indicator
+  if (state.muteSelf) {
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 12px Inter, Arial, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('🔇 YOU ARE SPEAKING — AI PAUSED', w - 12, 22);
+    ctx.textAlign = 'left';
+  }
+
+  // Divider
+  ctx.fillStyle = '#2a3142';
+  ctx.fillRect(12, 30, w - 24, 1);
+
+  // Answer text with word wrap
+  const answer = state.lastAnswer ||
+    (state.isRunning ? '⏳ Listening for interviewer question...' : 'Start a session to begin.');
+
+  ctx.fillStyle = '#e8eaf0';
+  ctx.font = '500 19px Inter, Arial, sans-serif';
+  const maxW = w - 32;
+  const lineH = 28;
+  const words  = answer.split(' ');
+  let line = '', y = 60;
+  for (let i = 0; i < words.length; i++) {
+    const test = line + words[i] + ' ';
+    if (ctx.measureText(test).width > maxW && line !== '') {
+      ctx.fillText(line.trim(), 16, y);
+      line = words[i] + ' ';
+      y += lineH;
+      if (y > h - 24) {
+        ctx.fillStyle = '#8892a4';
+        ctx.font = '12px Inter, Arial, sans-serif';
+        ctx.fillText('… open app for full answer', 16, y);
+        break;
+      }
+    } else {
+      line = test;
+    }
+  }
+  if (line.trim() && y <= h - 24) ctx.fillText(line.trim(), 16, y);
 }
 
 // ─────────────────────────────────────────
-// Init on page load
+// Init
 // ─────────────────────────────────────────
 checkDeepgramAvailability();
 checkServerKeys();
