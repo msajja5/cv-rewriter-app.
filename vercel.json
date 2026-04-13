@@ -4,10 +4,9 @@
   "buildCommand": "echo 'no build'",
   "outputDirectory": "public",
   "functions": {
-    "api/chat.js": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 30
-    }
+    "api/chat.js":       { "runtime": "nodejs20.x", "maxDuration": 30 },
+    "api/health.js":     { "runtime": "nodejs20.x", "maxDuration": 10 },
+    "api/transcribe.js": { "runtime": "nodejs20.x", "maxDuration": 10 }
   },
   "routes": [
     {
