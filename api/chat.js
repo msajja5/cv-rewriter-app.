@@ -43,20 +43,23 @@ function isNonQuestion(text) {
   return false;
 }
 
-function buildSystemPrompt(cv, job_role, response_style, target_role_family) {
+function buildSystemPrompt(cv, job_role, job_description, response_style, target_role_family) {
+  const jdSection = job_description
+    ? `\nJob Description (tailor your answers to match these exact requirements):\n${job_description}\n`
+    : '';
   return `You are an expert AI Interview Copilot helping Manjunath Sajjan — a Senior Supply Chain professional — answer interview questions in real-time.
 
 He is applying for: "${job_role || 'a supply chain / planning role'}".
 Role family: ${target_role_family || 'Supply Chain'}.
 Response style: ${STYLES[response_style] || STYLES.live_script}
-
-His CV:
-${cv || "(not provided)"}
+${jdSection}
+His CV:\n${cv || "(not provided)"}
 
 RULES:
 - Answer ONLY the interview question asked
 - Always refer to his actual CV experience when relevant
-- Be specific: mention tools (Arkieva, SAP, Kinaxis, Power BI, Tableau), metrics (+27% forecast accuracy, -20% holding costs, €2B EMEA), and companies (Ontex, Nike, Solvay, QuEST Global)
+- When a Job Description is provided, explicitly mirror its key words, tools and requirements in your answer
+- Be specific: mention tools (Arkieva, SAP, Kinaxis, Power BI, Tableau), metrics (+27% forecast accuracy, -20% holding costs, \u20ac2B EMEA), and companies (Ontex, Nike, Solvay, QuEST Global)
 - Sound human, warm, and confident — never robotic
 - Never say "As an AI" or "I cannot"
 - Never repeat the question back
@@ -84,7 +87,7 @@ async function tryGroq(messages, key) {
     throw new Error(`Groq ${res.status}: ${err.slice(0, 200)}`);
   }
   const data = await res.json();
-  return { text: data.choices[0].message.content, provider: "⚡ Groq Llama-3.3" };
+  return { text: data.choices[0].message.content, provider: "\u26a1 Groq Llama-3.3" };
 }
 
 async function tryGemini(messages, key) {
@@ -113,7 +116,7 @@ async function tryGemini(messages, key) {
   const data = await res.json();
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error("Gemini empty response");
-  return { text, provider: "✨ Gemini 1.5 Flash" };
+  return { text, provider: "\u2728 Gemini 1.5 Flash" };
 }
 
 async function tryOpenRouter(messages, key) {
@@ -131,31 +134,31 @@ async function tryOpenRouter(messages, key) {
   const data = await res.json();
   const text = data.choices?.[0]?.message?.content;
   if (!text) throw new Error("OpenRouter empty response");
-  return { text, provider: "🔀 OpenRouter Llama-3.3" };
+  return { text, provider: "\ud83d\udd00 OpenRouter Llama-3.3" };
 }
 
 function buildOfflineHint(question) {
   const q = (question || "").toLowerCase();
   const has = arr => arr.some(k => q.includes(k));
   if (has(["tell me about","introduce","background","walk me through","yourself"]))
-    return "I have 7+ years in supply chain planning across Ontex, Nike, Solvay and QuEST Global — managing demand and supply planning for 12 global sites and a €2B EMEA retail portfolio. My core tools are Arkieva, SAP, Kinaxis RapidResponse, Power BI and Tableau. I hold an MSc in Supply Chain from EM Normandie. At Ontex I improved forecast accuracy by 27%, and at Nike I reduced holding costs by 20%.";
+    return "I have 7+ years in supply chain planning across Ontex, Nike, Solvay and QuEST Global — managing demand and supply planning for 12 global sites and a \u20ac2B EMEA retail portfolio. My core tools are Arkieva, SAP, Kinaxis RapidResponse, Power BI and Tableau. I hold an MSc in Supply Chain from EM Normandie. At Ontex I improved forecast accuracy by 27%, and at Nike I reduced holding costs by 20%.";
   if (has(["forecast","accuracy","demand plan"]))
-    return "At Ontex I led 18-month rolling demand plans using Arkieva across 12 global sites, improving forecast accuracy by 27%. At Nike I built statistical demand models for a €2B EMEA retail portfolio. I also developed EOQ and safety stock models at QuEST Global for FMCG clients.";
+    return "At Ontex I led 18-month rolling demand plans using Arkieva across 12 global sites, improving forecast accuracy by 27%. At Nike I built statistical demand models for a \u20ac2B EMEA retail portfolio. I also developed EOQ and safety stock models at QuEST Global for FMCG clients.";
   if (has(["supply chain","s&op","planning"]))
-    return "I managed end-to-end supply chain planning at Ontex (12 sites, Arkieva), Nike (€2B EMEA, -20% holding costs), Solvay (€150M raw material MRP) and QuEST Global (SAP ERP implementation).";
+    return "I managed end-to-end supply chain planning at Ontex (12 sites, Arkieva), Nike (\u20ac2B EMEA, -20% holding costs), Solvay (\u20ac150M raw material MRP) and QuEST Global (SAP ERP implementation).";
   if (has(["sap","erp","kinaxis","arkieva","tool","software","system"]))
     return "My planning toolset: Arkieva for demand/supply planning, SAP ERP for MRP and implementation, Kinaxis RapidResponse for functional consulting, and Power BI/Tableau for KPI dashboards tracking OTIF, DIO and cost-to-serve.";
   if (has(["challenge","difficult","problem","failure","mistake"]))
     return "At Ontex during post-COVID volatility, I rebuilt the S&OP process across 12 global sites. I introduced 18-month rolling plans in Arkieva and aligned Sales, Finance and Operations on a weekly cadence — resulting in +27% forecast accuracy and improved OTIF.";
   if (has(["achiev","proud","success","impact","result","accomplishment"]))
-    return "My top achievements: +27% forecast accuracy at Ontex across 12 global sites, -20% holding costs at Nike on a €2B EMEA portfolio, and automated Power BI dashboards that cut manual KPI reporting from 8 hours to 30 minutes per week.";
+    return "My top achievements: +27% forecast accuracy at Ontex across 12 global sites, -20% holding costs at Nike on a \u20ac2B EMEA portfolio, and automated Power BI dashboards that cut manual KPI reporting from 8 hours to 30 minutes per week.";
   if (has(["strength","good at","best at"]))
     return "My core strength is bridging data and operations — translating complex supply chain data into actionable plans that Sales, Finance and Operations all align on. I combine strong analytical skills (Power BI, Python, SQL) with cross-functional communication.";
   if (has(["weakness","improve","develop"]))
     return "I tend to go deep into data analysis before acting. I've learned to timebox my analysis phase — now I set a clear decision deadline and move to action even with imperfect data, aligning stakeholders faster.";
   if (has(["why","motivated","interest","leave","left"]))
     return "I'm passionate about supply chain because every optimisation has a direct impact on service levels, costs and people. I'm looking for a role where I can apply my planning and analytics expertise at scale across a global organisation.";
-  return "Draw on your 7+ years across Ontex, Nike, Solvay and QuEST Global. Mention specific tools (Arkieva, Kinaxis, SAP, Power BI), quantified results (+27% forecast accuracy, -20% holding costs, €2B EMEA), and your cross-functional leadership in S&OP and NPI.";
+  return "Draw on your 7+ years across Ontex, Nike, Solvay and QuEST Global. Mention specific tools (Arkieva, Kinaxis, SAP, Power BI), quantified results (+27% forecast accuracy, -20% holding costs, \u20ac2B EMEA), and your cross-functional leadership in S&OP and NPI.";
 }
 
 // ── Startup ENV check ──────────────────────────────────────────────────────────
@@ -179,7 +182,16 @@ module.exports = async function handler(req, res) {
   const openrouterKey = process.env.OPENROUTER_API_KEY || req.headers["x-openrouter-key"] || "";
 
   const body = req.body || {};
-  const { cv, job_role, transcript, context = [], response_style = "live_script", target_role_family = "Supply Chain" } = body;
+  // FIX: destructure job_description so it's passed into the system prompt
+  const {
+    cv,
+    job_role,
+    job_description = "",
+    transcript,
+    context = [],
+    response_style = "live_script",
+    target_role_family = "Supply Chain"
+  } = body;
 
   if (!transcript) { res.status(400).json({ error: "No transcript provided" }); return; }
 
@@ -192,13 +204,14 @@ module.exports = async function handler(req, res) {
   if (!groqKey && !geminiKey && !openrouterKey) {
     res.status(200).json({
       answer: buildOfflineHint(transcript),
-      provider: "📋 Offline Hints (no API key — add keys in Settings ⚙)",
+      provider: "\ud83d\udccb Offline Hints (no API key — add keys in Settings \u2699)",
       offline: true
     });
     return;
   }
 
-  const systemPrompt = buildSystemPrompt(cv, job_role, response_style, target_role_family);
+  // FIX: pass job_description into system prompt
+  const systemPrompt = buildSystemPrompt(cv, job_role, job_description, response_style, target_role_family);
   const messages = buildMessages(systemPrompt, transcript, context);
 
   let result = null;
@@ -219,7 +232,7 @@ module.exports = async function handler(req, res) {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
-    res.setHeader("X-Accel-Buffering", "no"); // disable nginx buffering on Vercel
+    res.setHeader("X-Accel-Buffering", "no");
     res.status(200);
 
     const words = result.text.split(" ");
@@ -234,7 +247,7 @@ module.exports = async function handler(req, res) {
   } else {
     res.status(200).json({
       answer: buildOfflineHint(transcript),
-      provider: "📋 Offline Hints (all APIs failed)",
+      provider: "\ud83d\udccb Offline Hints (all APIs failed)",
       offline: true,
       errors
     });
