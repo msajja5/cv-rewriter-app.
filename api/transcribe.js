@@ -1,38 +1,27 @@
-// api/transcribe.js — returns Deepgram key to frontend for WebSocket auth
-// Security: only exposes the key if DEEPGRAM_API_KEY is set server-side.
-// The client may also pass its own key via x-deepgram-key header.
-export const config = { runtime: "edge" };
+// api/transcribe.js — Node.js serverless (matches vercel.json runtime: nodejs20.x)
+// Returns Deepgram key to frontend for live STT WebSocket auth.
+// Security: server env key is preferred; client-supplied key accepted as fallback.
 
-export default function handler(req) {
-  const CORS = {
-    "Access-Control-Allow-Origin": "*",
-    "Content-Type": "application/json"
-  };
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-deepgram-key');
 
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS });
-  }
+  if (req.method === 'OPTIONS') { res.status(200).end(); return; }
 
-  // Client-supplied key takes priority (user entered it in the UI)
-  const clientKey = req.headers.get("x-deepgram-key")?.trim();
+  // Client-supplied key takes priority (user pasted it in Settings)
+  const clientKey = (req.headers['x-deepgram-key'] || '').trim();
   if (clientKey) {
-    return new Response(
-      JSON.stringify({ available: true, key: clientKey, source: "client" }),
-      { status: 200, headers: CORS }
-    );
+    res.status(200).json({ available: true, key: clientKey, source: 'client' });
+    return;
   }
 
-  // Fall back to server env var
-  const serverKey = process.env.DEEPGRAM_API_KEY?.trim();
+  // Server env var
+  const serverKey = (process.env.DEEPGRAM_API_KEY || '').trim();
   if (serverKey) {
-    return new Response(
-      JSON.stringify({ available: true, key: serverKey, source: "server" }),
-      { status: 200, headers: CORS }
-    );
+    res.status(200).json({ available: true, key: serverKey, source: 'server' });
+    return;
   }
 
-  return new Response(
-    JSON.stringify({ available: false, key: null, source: "none" }),
-    { status: 200, headers: CORS }
-  );
-}
+  res.status(200).json({ available: false, key: null, source: 'none' });
+};

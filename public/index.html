@@ -1,1 +1,799 @@
-WILL_BE_REPLACED
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Interview Copilot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c25;--surface2:#1e2330;--border:#2a3142;
+  --text:#e8eaf0;--muted:#8892a4;--faint:#4a5568;
+  --primary:#4f8ef7;--primary-d:#3a72d4;--green:#34d399;--red:#f87171;
+  --orange:#fb923c;--yellow:#fbbf24;
+  --radius:10px;--transition:180ms cubic-bezier(0.16,1,0.3,1);
+  --font:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{font-family:var(--font);font-size:15px;color:var(--text);background:var(--bg);min-height:100dvh;line-height:1.6}
+img,svg{display:block;max-width:100%}
+input,button,textarea,select{font:inherit;color:inherit}
+
+/* ── Layout ── */
+.app{display:grid;grid-template-rows:56px 1fr;min-height:100dvh}
+.header{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;font-size:15px;letter-spacing:-0.01em}
+.logo svg{color:var(--primary)}
+.header-right{display:flex;align-items:center;gap:8px}
+.main{display:flex;gap:0;overflow:hidden;height:calc(100dvh - 56px)}
+
+/* ── Sidebar ── */
+.sidebar{width:320px;min-width:280px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow-y:auto;padding:20px;gap:16px;flex-shrink:0}
+.sidebar h2{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+label{font-size:13px;color:var(--muted);font-weight:500}
+input[type=text],textarea,select{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:9px 12px;font-size:14px;color:var(--text);transition:border-color var(--transition);
+  resize:vertical
+}
+input[type=text]:focus,textarea:focus,select:focus{
+  outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(79,142,247,.15)
+}
+.file-upload-area{
+  border:1.5px dashed var(--border);border-radius:8px;padding:16px;
+  text-align:center;cursor:pointer;transition:all var(--transition);position:relative
+}
+.file-upload-area:hover{border-color:var(--primary);background:rgba(79,142,247,.05)}
+.file-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-upload-area p{font-size:13px;color:var(--muted);pointer-events:none}
+.file-upload-area .icon{font-size:24px;margin-bottom:6px;pointer-events:none}
+.file-name{font-size:12px;color:var(--green);margin-top:4px;font-family:var(--mono)}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 16px;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;border:none;transition:all var(--transition);white-space:nowrap}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-d)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:rgba(248,113,113,.15);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.btn-danger:hover{background:rgba(248,113,113,.25)}
+.btn-success{background:rgba(52,211,153,.15);color:var(--green);border:1px solid rgba(52,211,153,.3)}
+.btn-success:hover{background:rgba(52,211,153,.25)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-full{width:100%}
+
+/* ── Status badge ── */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:99px;text-transform:uppercase;letter-spacing:.05em}
+.badge-green{background:rgba(52,211,153,.15);color:var(--green)}
+.badge-red{background:rgba(248,113,113,.15);color:var(--red)}
+.badge-yellow{background:rgba(251,191,36,.15);color:var(--yellow)}
+.badge-blue{background:rgba(79,142,247,.15);color:var(--primary)}
+.dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:none}
+.dot.pulse{animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── Divider ── */
+.divider{height:1px;background:var(--border);margin:4px 0}
+
+/* ── Main panel ── */
+.panel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── Script display ── */
+.script-section{flex:1;padding:24px;display:flex;flex-direction:column;gap:16px;overflow-y:auto}
+.script-label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.script-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  padding:20px 24px;min-height:160px;font-size:16px;line-height:1.75;
+  border-left:3px solid var(--primary);position:relative;
+  transition:border-color var(--transition)
+}
+.script-box.thinking{border-left-color:var(--yellow)}
+.script-box.offline{border-left-color:var(--orange)}
+.script-box .provider-tag{
+  position:absolute;top:10px;right:12px;font-size:10px;font-weight:600;
+  color:var(--muted);font-family:var(--mono);letter-spacing:.04em
+}
+.script-placeholder{color:var(--faint);font-style:italic;font-size:15px}
+
+/* ── Copy button ── */
+.script-actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* ── Transcript ── */
+.transcript-section{border-top:1px solid var(--border);padding:16px 24px}
+.transcript-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.transcript-box{height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px}
+.t-line{display:flex;gap-x:8px;gap:8px;font-size:13px}
+.t-label{font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;flex-shrink:0;align-self:flex-start;margin-top:1px}
+.t-interviewer{background:rgba(248,113,113,.15);color:var(--red)}
+.t-candidate{background:rgba(79,142,247,.15);color:var(--primary)}
+.t-system{background:rgba(139,148,158,.15);color:var(--muted)}
+.t-text{color:var(--text)}
+
+/* ── Controls bar ── */
+.controls-bar{padding:12px 20px;border-top:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.stt-mode{font-size:12px;color:var(--muted);margin-left:auto;font-family:var(--mono)}
+
+/* ── Settings drawer (API keys) ── */
+.settings-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.settings-overlay.open{display:flex}
+.settings-drawer{
+  background:var(--surface);border:1px solid var(--border);border-radius:16px 16px 0 0;
+  padding:24px;width:100%;max-width:560px;max-height:85vh;overflow-y:auto;
+  animation:slideUp .25s ease
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.settings-drawer h3{font-size:16px;font-weight:600;margin-bottom:16px}
+.key-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-bottom:10px}
+.key-row label{font-size:13px;color:var(--muted);grid-column:1/-1}
+.key-row input[type=password]{
+  background:var(--bg);border:1px solid var(--border);border-radius:8px;
+  padding:8px 12px;font-size:13px;font-family:var(--mono)
+}
+.key-row input[type=password]:focus{outline:none;border-color:var(--primary)}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:10px 20px;font-size:13px;color:var(--text);z-index:200;
+  opacity:0;transition:all .3s ease;pointer-events:none;white-space:nowrap
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── Style selector ── */
+.style-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.style-tab{
+  padding:5px 12px;border-radius:6px;font-size:12px;font-weight:500;
+  cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted);
+  transition:all var(--transition)
+}
+.style-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ── Mobile ── */
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:56px;height:calc(100dvh - 56px);z-index:40;transform:translateX(-100%);transition:transform .3s ease;width:100%;max-width:340px}
+  .sidebar.open{transform:translateX(0);box-shadow:8px 0 32px rgba(0,0,0,.4)}
+  .panel{width:100%}
+  .transcript-section{padding:12px 16px}
+  .script-section{padding:16px}
+  .controls-bar{padding:10px 16px}
+  .menu-btn{display:flex!important}
+}
+.menu-btn{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:6px}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Header ── -->
+<header class="header">
+  <div class="logo">
+    <button class="menu-btn" id="menu-btn" aria-label="Toggle sidebar">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="19" cy="5" r="3" fill="currentColor" stroke="none"/>
+    </svg>
+    AI Interview Copilot
+  </div>
+  <div class="header-right">
+    <span id="status-badge" class="badge badge-yellow"><span class="dot"></span> Setup Required</span>
+    <button class="btn btn-ghost" id="settings-btn" style="padding:6px 10px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Keys
+    </button>
+  </div>
+</header>
+
+<div class="main">
+<!-- ── Sidebar ── -->
+<aside class="sidebar" id="sidebar">
+  <div>
+    <h2>Job Setup</h2>
+  </div>
+
+  <div class="form-group">
+    <label for="job-role">Job Role</label>
+    <input type="text" id="job-role" placeholder="e.g. Supply Chain Analyst" value="Supply Chain Planning Coordinator">
+  </div>
+
+  <div class="form-group">
+    <label>CV / Resume</label>
+    <div class="file-upload-area" id="file-upload-area">
+      <input type="file" id="cv-file" accept=".txt,.pdf,.doc,.docx">
+      <div class="icon">📄</div>
+      <p>Drop PDF or TXT, or click to browse</p>
+      <div class="file-name" id="file-name" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label for="cv-text">Or paste CV text</label>
+    <textarea id="cv-text" rows="8" placeholder="Paste your CV here..."></textarea>
+  </div>
+
+  <div class="divider"></div>
+
+  <div>
+    <h2>Response Style</h2>
+    <div class="style-tabs" id="style-tabs">
+      <button class="style-tab active" data-style="live_script">Teleprompter</button>
+      <button class="style-tab" data-style="concise">Concise</button>
+      <button class="style-tab" data-style="detailed">STAR Method</button>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <button class="btn btn-primary btn-full" id="start-btn">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    Start Interview Session
+  </button>
+
+  <button class="btn btn-danger btn-full" id="stop-btn" disabled style="display:none">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/></svg>
+    End Session
+  </button>
+
+  <div class="form-group" id="manual-input-group" style="display:none">
+    <div class="divider"></div>
+    <h2 style="margin-bottom:8px">Manual Question</h2>
+    <textarea id="manual-q" rows="3" placeholder="Type a question and press Enter..."></textarea>
+    <button class="btn btn-ghost btn-full" id="manual-send">Send Question</button>
+  </div>
+</aside>
+
+<!-- ── Main Panel ── -->
+<div class="panel">
+  <div class="script-section">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <span class="script-label">AI Answer Script</span>
+      <div class="script-actions">
+        <button class="btn btn-ghost" id="copy-btn" style="padding:5px 12px;font-size:12px">Copy</button>
+        <button class="btn btn-ghost" id="clear-btn" style="padding:5px 12px;font-size:12px">Clear</button>
+      </div>
+    </div>
+    <div class="script-box" id="script-box">
+      <span class="script-placeholder">Set up your job role and CV on the left, then start a session. The AI will generate teleprompter-ready answer scripts as the interviewer speaks.</span>
+    </div>
+  </div>
+
+  <div class="transcript-section">
+    <div class="transcript-header">
+      <span class="script-label">Live Transcript</span>
+      <button class="btn btn-ghost" id="clear-transcript" style="padding:4px 10px;font-size:11px">Clear</button>
+    </div>
+    <div class="transcript-box" id="transcript"></div>
+  </div>
+
+  <div class="controls-bar">
+    <button class="btn btn-success" id="mic-btn" disabled>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      Connect Mic
+    </button>
+    <span class="stt-mode" id="stt-mode">STT: Browser Web Speech API</span>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- ── Settings Drawer ── -->
+<div class="settings-overlay" id="settings-overlay">
+  <div class="settings-drawer">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3>API Keys</h3>
+      <button class="btn btn-ghost" id="settings-close" style="padding:4px 10px">✕ Close</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Keys are sent as request headers — never stored. At least one LLM key required. Deepgram enables real microphone STT (vs browser Web Speech).</p>
+    <div class="key-row">
+      <label>Groq API Key (Llama-3.3-70b — fastest, free)</label>
+      <input type="password" id="key-groq" placeholder="gsk_..."><span></span>
+    </div>
+    <div class="key-row">
+      <label>Gemini API Key (Gemini 1.5 Flash — fallback)</label>
+      <input type="password" id="key-gemini" placeholder="AIza..."><span></span>
+    </div>
+    <div class="key-row">
+      <label>OpenRouter Key (Llama-3.3 free tier — fallback)</label>
+      <input type="password" id="key-openrouter" placeholder="sk-or-..."><span></span>
+    </div>
+    <div class="divider" style="margin:16px 0"></div>
+    <div class="key-row">
+      <label>Deepgram API Key — enables real-time mic STT (optional, browser STT used if empty)</label>
+      <input type="password" id="key-deepgram" placeholder="your_deepgram_key"><span></span>
+    </div>
+    <div style="margin-top:16px;display:flex;gap:8px">
+      <button class="btn btn-primary" id="save-keys">Save Keys</button>
+      <button class="btn btn-ghost" id="check-health">Check Server Status</button>
+    </div>
+    <div id="health-result" style="margin-top:12px;font-size:12px;font-family:var(--mono);color:var(--muted);display:none"></div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────
+// State
+// ─────────────────────────────────────────
+const state = {
+  cv: '',
+  jobRole: 'Supply Chain Planning Coordinator',
+  responseStyle: 'live_script',
+  context: [],
+  isRunning: false,
+  keys: { groq: '', gemini: '', openrouter: '', deepgram: '' },
+  deepgramSocket: null,
+  browserRecognition: null,
+  isListening: false
+};
+
+// ─────────────────────────────────────────
+// DOM refs
+// ─────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const scriptBox     = $('script-box');
+const transcriptBox = $('transcript');
+const statusBadge   = $('status-badge');
+const sttMode       = $('stt-mode');
+const micBtn        = $('mic-btn');
+
+// ─────────────────────────────────────────
+// Toast
+// ─────────────────────────────────────────
+function toast(msg, duration = 2500) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+// ─────────────────────────────────────────
+// PDF text extraction (client-side via FileReader)
+// ─────────────────────────────────────────
+async function extractTextFromFile(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    if (file.type === 'application/pdf') {
+      // Read as ArrayBuffer then extract text lines via simple pattern
+      reader.onload = e => {
+        const bytes = new Uint8Array(e.target.result);
+        let text = '';
+        for (let i = 0; i < bytes.length; i++) {
+          if (bytes[i] >= 32 && bytes[i] < 127) text += String.fromCharCode(bytes[i]);
+          else if (bytes[i] === 10 || bytes[i] === 13) text += ' ';
+        }
+        // Extract readable strings (sequences of printable chars >=4)
+        const matches = text.match(/[\x20-\x7E]{4,}/g) || [];
+        resolve(matches.join(' ').replace(/\s+/g, ' ').trim());
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.onload = e => resolve(e.target.result);
+      reader.readAsText(file);
+    }
+  });
+}
+
+// ─────────────────────────────────────────
+// File upload handler
+// ─────────────────────────────────────────
+$('cv-file').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  $('file-name').textContent = '⏳ Reading ' + file.name + '...';
+  $('file-name').style.display = 'block';
+  try {
+    const text = await extractTextFromFile(file);
+    $('cv-text').value = text;
+    $('file-name').textContent = '✓ ' + file.name + ' (' + Math.round(text.length / 1000) + 'k chars)';
+    toast('CV loaded from ' + file.name);
+  } catch (err) {
+    $('file-name').textContent = '✗ Failed to read file';
+    toast('Failed to read file — try pasting text instead');
+  }
+});
+
+// ─────────────────────────────────────────
+// Style tabs
+// ─────────────────────────────────────────
+document.querySelectorAll('.style-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.style-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.responseStyle = btn.dataset.style;
+  });
+});
+
+// ─────────────────────────────────────────
+// Settings drawer
+// ─────────────────────────────────────────
+$('settings-btn').addEventListener('click', () => $('settings-overlay').classList.add('open'));
+$('settings-close').addEventListener('click', () => $('settings-overlay').classList.remove('open'));
+$('settings-overlay').addEventListener('click', e => { if (e.target === $('settings-overlay')) $('settings-overlay').classList.remove('open'); });
+
+$('save-keys').addEventListener('click', () => {
+  state.keys.groq       = $('key-groq').value.trim();
+  state.keys.gemini     = $('key-gemini').value.trim();
+  state.keys.openrouter = $('key-openrouter').value.trim();
+  state.keys.deepgram   = $('key-deepgram').value.trim();
+  $('settings-overlay').classList.remove('open');
+  toast('Keys saved for this session');
+});
+
+$('check-health').addEventListener('click', async () => {
+  const r = $('health-result');
+  r.style.display = 'block';
+  r.textContent = 'Checking...';
+  try {
+    const res = await fetch('/api/health');
+    const data = await res.json();
+    r.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    r.textContent = 'Error: ' + e.message;
+  }
+});
+
+// ─────────────────────────────────────────
+// Mobile sidebar
+// ─────────────────────────────────────────
+$('menu-btn').addEventListener('click', () => $('sidebar').classList.toggle('open'));
+document.addEventListener('click', e => {
+  if (!$('sidebar').contains(e.target) && !$('menu-btn').contains(e.target)) {
+    $('sidebar').classList.remove('open');
+  }
+});
+
+// ─────────────────────────────────────────
+// Start / Stop session
+// ─────────────────────────────────────────
+$('start-btn').addEventListener('click', () => {
+  const cv = $('cv-text').value.trim();
+  const role = $('job-role').value.trim();
+  if (!role) { toast('Please enter a job role'); return; }
+  state.cv = cv;
+  state.jobRole = role;
+  state.context = [];
+  state.isRunning = true;
+
+  $('start-btn').style.display = 'none';
+  $('stop-btn').style.display = 'flex';
+  $('stop-btn').disabled = false;
+  micBtn.disabled = false;
+  $('manual-input-group').style.display = 'flex';
+  $('manual-input-group').style.flexDirection = 'column';
+  $('manual-input-group').style.gap = '8px';
+
+  setStatus('ready');
+  scriptBox.className = 'script-box';
+  scriptBox.innerHTML = '<span class="script-placeholder">Session started. Click "Connect Mic" to begin listening, or type a question manually below.</span>';
+  appendTranscript('system', 'Session started for: ' + role);
+  $('sidebar').classList.remove('open');
+});
+
+$('stop-btn').addEventListener('click', () => {
+  stopListening();
+  state.isRunning = false;
+  state.context = [];
+  $('stop-btn').style.display = 'none';
+  $('start-btn').style.display = 'flex';
+  $('stop-btn').disabled = true;
+  micBtn.disabled = true;
+  $('manual-input-group').style.display = 'none';
+  setStatus('setup');
+  appendTranscript('system', 'Session ended.');
+});
+
+// ─────────────────────────────────────────
+// Status badge
+// ─────────────────────────────────────────
+function setStatus(mode) {
+  const badge = statusBadge;
+  badge.className = 'badge';
+  if (mode === 'setup')  { badge.className += ' badge-yellow'; badge.innerHTML = '<span class="dot"></span> Setup Required'; }
+  if (mode === 'ready')  { badge.className += ' badge-blue';   badge.innerHTML = '<span class="dot"></span> Ready'; }
+  if (mode === 'listen') { badge.className += ' badge-green';  badge.innerHTML = '<span class="dot pulse"></span> Listening'; }
+  if (mode === 'think')  { badge.className += ' badge-yellow'; badge.innerHTML = '<span class="dot pulse"></span> Thinking'; }
+}
+
+// ─────────────────────────────────────────
+// Mic button
+// ─────────────────────────────────────────
+micBtn.addEventListener('click', () => {
+  if (state.isListening) {
+    stopListening();
+  } else {
+    startListening();
+  }
+});
+
+function startListening() {
+  state.isListening = true;
+  micBtn.className = 'btn btn-danger';
+  micBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/></svg> Stop Listening';
+  setStatus('listen');
+
+  if (state.keys.deepgram) {
+    startDeepgram();
+  } else {
+    startBrowserSTT();
+  }
+}
+
+function stopListening() {
+  state.isListening = false;
+  micBtn.className = 'btn btn-success';
+  micBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Connect Mic';
+  if (state.isRunning) setStatus('ready');
+
+  if (state.deepgramSocket) {
+    try { state.deepgramSocket.close(); } catch(e) {}
+    state.deepgramSocket = null;
+  }
+  if (state.browserRecognition) {
+    try { state.browserRecognition.stop(); } catch(e) {}
+    state.browserRecognition = null;
+  }
+}
+
+// ─────────────────────────────────────────
+// Browser Web Speech API (fallback STT)
+// ─────────────────────────────────────────
+function startBrowserSTT() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    toast('Browser STT not supported — use Chrome/Edge or add a Deepgram key');
+    stopListening();
+    return;
+  }
+  sttMode.textContent = 'STT: Browser Web Speech API';
+  const recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = false;
+  recognition.lang = 'en-US';
+  state.browserRecognition = recognition;
+
+  recognition.onresult = e => {
+    let final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+    }
+    if (final.trim()) handleTranscript(final.trim());
+  };
+  recognition.onend = () => {
+    if (state.isListening) {
+      try { recognition.start(); } catch(err) {}
+    }
+  };
+  recognition.onerror = e => {
+    if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      appendTranscript('system', 'STT error: ' + e.error);
+    }
+  };
+  try { recognition.start(); } catch(e) {}
+  appendTranscript('system', 'Browser STT active — speak to capture questions');
+}
+
+// ─────────────────────────────────────────
+// Deepgram Nova-3 STT (real-time WebSocket)
+// ─────────────────────────────────────────
+async function startDeepgram() {
+  sttMode.textContent = 'STT: Deepgram Nova-3 (connecting...)';
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const socket = new WebSocket(
+      'wss://api.deepgram.com/v1/listen?model=nova-3&language=en-US&smart_format=true&interim_results=false&endpointing=800',
+      ['token', state.keys.deepgram]
+    );
+    state.deepgramSocket = socket;
+
+    const audioContext = new AudioContext();
+    const source = audioContext.createMediaStreamSource(stream);
+    const processor = audioContext.createScriptProcessor(4096, 1, 1);
+    source.connect(processor);
+    processor.connect(audioContext.destination);
+
+    processor.onaudioprocess = e => {
+      if (socket.readyState !== WebSocket.OPEN) return;
+      const float32 = e.inputBuffer.getChannelData(0);
+      const int16 = new Int16Array(float32.length);
+      for (let i = 0; i < float32.length; i++) {
+        int16[i] = Math.max(-32768, Math.min(32767, float32[i] * 32768));
+      }
+      socket.send(int16.buffer);
+    };
+
+    socket.onopen = () => {
+      sttMode.textContent = 'STT: Deepgram Nova-3 ✓';
+      appendTranscript('system', 'Deepgram Nova-3 STT connected');
+    };
+    socket.onmessage = e => {
+      const data = JSON.parse(e.data);
+      const transcript = data?.channel?.alternatives?.[0]?.transcript?.trim();
+      if (transcript) handleTranscript(transcript);
+    };
+    socket.onerror = () => {
+      appendTranscript('system', 'Deepgram error — falling back to Browser STT');
+      sttMode.textContent = 'STT: Browser Web Speech API (Deepgram failed)';
+      state.deepgramSocket = null;
+      startBrowserSTT();
+    };
+    socket.onclose = () => {
+      stream.getTracks().forEach(t => t.stop());
+      processor.disconnect();
+      source.disconnect();
+    };
+  } catch (err) {
+    appendTranscript('system', 'Mic access denied or Deepgram failed: ' + err.message);
+    sttMode.textContent = 'STT: Browser Web Speech API (fallback)';
+    startBrowserSTT();
+  }
+}
+
+// ─────────────────────────────────────────
+// Core: handle incoming transcript → call /api/chat via SSE
+// ─────────────────────────────────────────
+function handleTranscript(text) {
+  appendTranscript('interviewer', text);
+  state.context.push({ role: 'interviewer', text });
+  setStatus('think');
+  scriptBox.className = 'script-box thinking';
+  scriptBox.innerHTML = '<span class="script-placeholder">⚡ Analysing question...</span>';
+  callChatAPI(text);
+}
+
+async function callChatAPI(question) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(state.keys.groq       && { 'x-groq-key':       state.keys.groq }),
+    ...(state.keys.gemini     && { 'x-gemini-key':     state.keys.gemini }),
+    ...(state.keys.openrouter && { 'x-openrouter-key': state.keys.openrouter }),
+    ...(state.keys.deepgram   && { 'x-deepgram-key':   state.keys.deepgram })
+  };
+
+  const body = JSON.stringify({
+    transcript:       question,
+    cv:               state.cv,
+    job_role:         state.jobRole,
+    context:          state.context.slice(-6),
+    response_style:   state.responseStyle,
+    target_role_family: 'Supply Chain'
+  });
+
+  try {
+    const res = await fetch('/api/chat', { method: 'POST', headers, body });
+    const contentType = res.headers.get('content-type') || '';
+
+    // ── SSE streaming response ──
+    if (contentType.includes('text/event-stream')) {
+      scriptBox.className = 'script-box';
+      scriptBox.innerHTML = '';
+      let providerTag = '';
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const evt = JSON.parse(line.slice(6));
+            if (evt.type === 'token') {
+              scriptBox.textContent += evt.content;
+              if (!providerTag && evt.provider) providerTag = evt.provider;
+            } else if (evt.type === 'done') {
+              if (providerTag) {
+                const tag = document.createElement('span');
+                tag.className = 'provider-tag';
+                tag.textContent = providerTag;
+                scriptBox.appendChild(tag);
+              }
+              const answer = scriptBox.textContent.replace(providerTag, '').trim();
+              state.context.push({ role: 'candidate', text: answer });
+            }
+          } catch(e) {}
+        }
+      }
+      setStatus('listen');
+      return;
+    }
+
+    // ── JSON response (offline / skip) ──
+    const data = await res.json();
+    if (data.skip) {
+      setStatus('listen');
+      scriptBox.className = 'script-box';
+      scriptBox.innerHTML = '<span class="script-placeholder">Non-question detected — listening...</span>';
+      return;
+    }
+    if (data.answer) {
+      scriptBox.className = data.offline ? 'script-box offline' : 'script-box';
+      scriptBox.textContent = data.answer;
+      const tag = document.createElement('span');
+      tag.className = 'provider-tag';
+      tag.textContent = data.provider || '';
+      scriptBox.appendChild(tag);
+      state.context.push({ role: 'candidate', text: data.answer });
+    }
+    setStatus('listen');
+  } catch (err) {
+    scriptBox.className = 'script-box offline';
+    scriptBox.textContent = 'Network error: ' + err.message;
+    setStatus('ready');
+  }
+}
+
+// ─────────────────────────────────────────
+// Manual question input
+// ─────────────────────────────────────────
+$('manual-send').addEventListener('click', () => {
+  const q = $('manual-q').value.trim();
+  if (!q) return;
+  $('manual-q').value = '';
+  handleTranscript(q);
+});
+$('manual-q').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    $('manual-send').click();
+  }
+});
+
+// ─────────────────────────────────────────
+// Transcript helpers
+// ─────────────────────────────────────────
+function appendTranscript(type, text) {
+  const line = document.createElement('div');
+  line.className = 't-line';
+  const label = document.createElement('span');
+  label.className = 't-label t-' + type;
+  label.textContent = type === 'interviewer' ? 'Q' : type === 'candidate' ? 'A' : '⚙';
+  const span = document.createElement('span');
+  span.className = 't-text';
+  span.textContent = text;
+  line.appendChild(label);
+  line.appendChild(span);
+  transcriptBox.appendChild(line);
+  transcriptBox.scrollTop = transcriptBox.scrollHeight;
+}
+
+$('clear-transcript').addEventListener('click', () => {
+  transcriptBox.innerHTML = '';
+  state.context = [];
+});
+
+// ─────────────────────────────────────────
+// Copy / Clear script
+// ─────────────────────────────────────────
+$('copy-btn').addEventListener('click', () => {
+  const text = scriptBox.textContent.trim();
+  if (!text || text.includes('Set up your job role')) return;
+  navigator.clipboard.writeText(text).then(() => toast('Copied to clipboard ✓'));
+});
+$('clear-btn').addEventListener('click', () => {
+  scriptBox.className = 'script-box';
+  scriptBox.innerHTML = '<span class="script-placeholder">Script cleared. Waiting for next question...</span>';
+});
+
+// ─────────────────────────────────────────
+// Job role sync
+// ─────────────────────────────────────────
+$('job-role').addEventListener('input', e => { state.jobRole = e.target.value; });
+</script>
+</body>
+</html>
