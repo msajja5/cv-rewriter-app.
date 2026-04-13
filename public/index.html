@@ -999,6 +999,40 @@ function resetMuteSelfBtn() {
   muteSelfBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><line x1="1" y1="1" x2="23" y2="23" stroke="var(--muted)"/></svg> I\'m Speaking';
 }
 
+  // ───────────────────────────────────────── 
+  // Spacebar push-to-talk for mute-self
+  // ───────────────────────────────────────── 
+  let spacebarDown = false;
+
+  document.addEventListener('keydown', e => {
+      // Only trigger if session is running and spacebar pressed (not in an input field)
+      if (e.code === 'Space' && !e.repeat && state.isRunning && 
+                !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+            e.preventDefault(); // Prevent page scroll
+            if (!spacebarDown) {
+                    spacebarDown = true;
+                    // MUTE AI — you're speaking
+                    if (!state.muteSelf) {
+                              state.muteSelf = true;
+                              muteSelfBtn.className = 'btn btn-warning mute-active';
+                              muteSelfBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><line x1="1" y1="1" x2="23" y2="23"/></svg> AI Paused';
+                              setStatus('muted');
+                            }
+                  }
+          }
+    });
+
+  document.addEventListener('keyup', e => {
+          if (e.code === 'Space' && state.isRunning) {
+      spacebarDown = false;
+      // UNMUTE AI — resume listening
+      if (state.muteSelf) {
+        resetMuteSelfBtn();
+        if (state.isListening || state.tabAudioActive) setStatus('listen');
+        else if (state.isRunning) setStatus('ready');
+      }
+    }
+                        });
 // ─────────────────────────────────────────
 // Core: transcript → /api/chat
 // ─────────────────────────────────────────
